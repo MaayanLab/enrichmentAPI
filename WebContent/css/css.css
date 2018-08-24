@@ -1,0 +1,329 @@
+#bulb {
+
+    width: 260px;
+    height: 260px;
+    background-color: white;
+
+	visibility: hidden;
+
+    position: absolute;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    margin: auto;
+    
+    border-radius: 25px;
+    border: 3px solid #dddddd;
+    padding: 20px;
+    
+    text-align: center;
+}
+
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: green;
+    color: #444444;
+    text-align: center;
+    border-radius: 3px;
+    padding: 5px 2;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+
+div.content {
+	margin-top: 1em;
+	position: relative;
+	margin-bottom: 0.75em;
+}
+
+/* Download links */
+div.downloadbox {
+	float: right;
+}
+
+div.inner.downloadbox{
+	float: right;
+}
+
+div.hidden.downloadbox{
+	width: 100%
+}
+
+div.downloadbox a {
+	color: #aaa;
+	font-size: 0.6em;
+	margin-left: 0.6em;
+	-webkit-transition: all 0.3s ease;
+	-moz-transition: all 0.3s ease;
+	-o-transition: all 0.3s ease;
+	transition: all 0.3s ease;
+}
+
+div.downloadbox a:hover {
+	color: #000;
+}
+
+/* Session warning */
+div#session-warning {
+	margin-bottom: 1em;
+}
+
+div#session-warning img {
+	vertical-align: text-bottom;
+}
+
+div#session-warning span {
+	color: #000;
+	margin-left: 0.2em;
+}
+
+a.title {
+	font-size: 20pt;
+	color: #D90000;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+/* Navbar */
+#navbar {
+	float: right;
+    padding: 10px;
+}
+
+#navbar td a {
+	font-size: 22pt;
+	color: #999;
+	padding: 10px;
+}
+
+#navbar td.shown a {
+	color: #444;
+}
+
+table.nav {	
+	font-size: 1em;
+	margin-top: 5px;
+	margin-right: 5px;
+	float: right;
+	display: none;
+}
+
+table.nav td {
+	padding-left: 1em;
+	font-size: 14pt;
+}
+
+/* Table properties */
+div.table div.method {
+	margin-bottom: 0.5em;
+}
+
+div.export {
+	margin-top: 1em;
+	font-size: 14px;
+	float: left;
+}
+
+div.export a:hover {
+	text-decoration: underline;
+}
+
+div.asterix {
+	font-size: 18px;
+	float: left;
+}
+
+div.gene-overlap {
+	max-width: 400px;
+	font-size: 0.7em;
+	text-align: justify;
+}
+
+/* Description */
+#description {
+	margin-bottom: 1em;
+	font-weight: bold;
+}
+
+#description td#red {
+	padding: 0.1em 0.2em;
+	border: 1px solid #D90000;
+	background-color: #D90000;
+	color: #fff;
+	vertical-align: middle;
+}
+
+#description td#black {
+	padding: 0.1em 0.2em;
+	border-width: 1px;
+	border-style: solid none;
+	width: 100%;
+}
+
+/* Thumbnail properties*/
+div.svg-container-thumb
+{
+	font-size: 10px;
+	margin-top: 7px;
+}
+
+/* Bar graph properties */
+div.bar-graph div.method {
+	float: left;
+}
+
+div.bar-graph div.method span {
+	font-weight: bold;
+}
+
+div.method-desc {
+	max-width: 400px;
+	font-size: 0.7em;
+	text-align: justify;
+}
+
+/* Grid properties */
+div.grid div.svg-container {
+	text-align: center;
+}
+
+div.grid td.scores {
+	padding-left: 2em;
+	font-weight: bold;
+}
+
+div.grid td.scores span {
+	color: #ddd;
+}
+
+/* Grid-network properties */
+div.grid-network div.svg-container {
+	text-align: center;
+}
+
+/* Share */
+#share, #save, #view {
+	background: #000;
+	border: 1px solid #000;
+}
+
+#share:hover, #save:hover, #view:hover {
+	background: #D90000;
+	border: 1px solid #D90000;
+}
+
+#share img, #save img, #view img {
+	vertical-align: middle;
+}
+
+#save.saved {
+	background: #ccc !important;
+	border-color: #ccc !important;
+}
+
+#save.saved a {
+	cursor: default;
+}
+
+#blanket {
+	background-color: #111;
+	filter: alpha(opacity=65);
+	position: fixed;
+	z-index: 9001;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	display: none;
+}
+
+div.popup {
+	background-color: #fff;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	z-index: 9002;
+	display: none;
+}
+
+div.popup div#advice {
+	font-size: 0.8em;
+}
+
+div.popup input {
+	width: 30em;
+	outline: none;
+	border: 1px solid #ccc;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	padding: 0.4em;
+}
+
+#contribute-form, #delete-form, textarea[name="description"] {
+	width: 220px;
+}
+
+#contribute input[type=checkbox] {
+	width: auto;
+	margin-right: 0.25em;
+}
+
+/* Color settings */
+div.settings {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+td.settings a:hover {
+	background: none;
+}
+
+#aToolTip {
+    max-width: 350px;
+}
+
+img.loader {
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 46%;
+	height: 16px;
+	width: 16px;
+	margin: auto auto;
+}
+
+.svg-container-thumb {
+	position: absolute;
+    bottom: 13px;
+}
+
+#instructions{
+	 min-height: 420px;
+}
+
+#inputform{
+	float: right;
+	padding-left: 40px;
+}
+
+citation{
+	float: left;
+	
+}
+
+.red{
+	color: #ce081c;
+}

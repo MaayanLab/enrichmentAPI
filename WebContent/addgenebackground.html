@@ -1,0 +1,91 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Enrichment - Upload background</title>
+
+<link rel="stylesheet" href="css/css.css">
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+
+
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+
+<script src="scripts/enrichment.js"></script>
+
+<style>
+
+#formPane{
+	width: 460px;
+	display: block;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #ffffff;
+    box-shadow: 5px 5px 5px lightgrey;
+}
+
+#uploadgmtPane{
+	padding: 20px;
+	padding-left: 50px;
+	padding-right: 50px;
+}
+
+body{
+	padding: 40px;
+	background-color: #eeeeee;
+}
+
+#submitbutton{
+	margin-top: 10px;
+	width: 100%;
+}
+
+</style>
+
+</head>
+<body>
+
+	<div class="panel panel-info" id="formPane">
+	<div class="panel-heading">Upload background gene set</div>
+	<div class="panel-body" id="uploadgmtPane" >
+
+	Here background genesets can be uploaded. These are sets that can be used to filter all gene set libraries and input gene lists. Currently filtering is automated and there is no option to select them separately. It slows the enrichment calculation down significantly or increases memory requirements.
+	<br><br>
+	
+	<form action="uploadbackground" method="post" enctype="multipart/form-data">
+	
+	<input type="hidden" name="mock" value="nothing"/>
+	
+	<label for="backgroundname">Name</label>
+	<input class="form-control" type="text" name="backgroundname" /><br>
+	
+	<label for="description">Description</label>
+    <input class="form-control" type="text" name="description" /><br>
+    
+    <div class="bs-callout bs-callout-info" id="callout-navbar-breakpoint">
+    <h4>Select file for upload</h4>
+    <div class="form-group">
+	    <input type="file" class="form-control-file" id="file">
+	</div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary" id="submitbutton">Submit</button>
+    
+	</form>
+	
+	
+</div>
+</div> 
+
+
+</body>
+</html>
