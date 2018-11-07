@@ -45,9 +45,9 @@
 <div>
 
 <div id="inputform">
-<form action="enrichment" method="post" id="genelistform" onsubmit="return showBulb();">
+<form action="api/enrich/" method="post" id="genelistform" onsubmit="return showBulb();">
 <input type="hidden" name="mock" value="nothing"/>
-<textarea rows="10" cols="30" name="text" default="Enter gene symbols" class="form-control input-lg" autocorrect="off">
+<textarea rows="10" cols="30" name="geneset" default="Enter gene symbols" class="form-control input-lg" autocorrect="off">
 TP53
 TNF
 EGFR

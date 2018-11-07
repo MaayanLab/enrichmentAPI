@@ -61,9 +61,9 @@ public class FastFisher {
     }
     
     public static double exp5(double x) {
-  	  x = 1.0 + x / 32;
-  	  x *= x; x *= x; x *= x; x *= x; x *= x;
-  	  return x;
+    	x = 1.0 + x / 32;
+    	x *= x; x *= x; x *= x; x *= x; x *= x;
+    	return x;
   	}
     
     public static double exp10(double x) {
@@ -72,17 +72,17 @@ public class FastFisher {
     	  x *= x; x *= x; x *= x; x *= x;
     	  x *= x; x *= x;
     	  return x;
-    	}
+    }
     
     public static double exp20(double x) {
-  	  x = 1.0 + x / 1048576;
-  	  x *= x; x *= x; x *= x; x *= x;
-  	  x *= x; x *= x; x *= x; x *= x;
-  	  x *= x; x *= x;
-  	  x *= x; x *= x; x *= x; x *= x;
-	  x *= x; x *= x; x *= x; x *= x;
-	  x *= x; x *= x;
-  	  return x;
+    	x = 1.0 + x / 1048576;
+    	x *= x; x *= x; x *= x; x *= x;
+    	x *= x; x *= x; x *= x; x *= x;
+    	x *= x; x *= x;
+    	x *= x; x *= x; x *= x; x *= x;
+    	x *= x; x *= x; x *= x; x *= x;
+    	x *= x; x *= x;
+    	return x;
   	}
     
     /**

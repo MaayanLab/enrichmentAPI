@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import jsp.EnrichmentResults;
@@ -42,6 +45,8 @@ public class EnrichmentCore extends HttpServlet {
     public FastFisher f;
 	
 	public boolean initialized = false;
+	
+	Enrichment enrich = null;
 	
 	public HashMap<String, HashMap<String, String>> genemap;
 	public HashMap<String, HashMap<String, String>> genemaprev;
@@ -77,17 +82,14 @@ public class EnrichmentCore extends HttpServlet {
 		
 		sql = new SQLmanager();
 		try {
-			connection = DriverManager.getConnection("jdbc:mysql://"+sql.database+"?rewriteBatchedStatements=true", sql.user, sql.password);
+			//connection = DriverManager.getConnection("jdbc:mysql://"+sql.database+"?rewriteBatchedStatements=true", sql.user, sql.password);
 			
 			System.out.println("Start buffering libraries");
-			long time = System.currentTimeMillis();
 			loadGenetranslation();
-			loadGenemapping();
-			loadGMT();
-			loadBackground();
-			System.out.println("Background load: "+background.size()+"\nGMTs loaded: "+gmts.size()+"\nElapsed time: "+(System.currentTimeMillis() - time));
+			enrich = new Enrichment();
+			System.out.println("... and ready!");
 			
-			connection.close();
+			//connection.close();
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -131,7 +133,7 @@ public class EnrichmentCore extends HttpServlet {
 			out.write(json);
 		}
 		else if(pathInfo.matches("^/listlibs")){
-			//localhost:8080/EnrichmentAPI/enrichment/listgmts
+			//localhost:8080/EnrichmentAPI/api/listlibs
 			PrintWriter out = response.getWriter();
 			response.setHeader("Content-Type", "application/json");
 			String json = "{ \"library\": [";
@@ -175,7 +177,7 @@ public class EnrichmentCore extends HttpServlet {
 			out.write(json);
 		}
 		else if(pathInfo.matches("^/translate/.*")){
-			//http://localhost:8080/EnrichmentAPI/enrichment/translate/213730_x_at,220184_at,211300_s_at,213721_at
+			//http://localhost:8080/EnrichmentAPI/api/translate/213730_x_at,220184_at,211300_s_at,213721_at
 			
 			String idlistString = pathInfo.replace("/translate/", "");
 			String[] idlist = idlistString.split(",");
@@ -210,21 +212,17 @@ public class EnrichmentCore extends HttpServlet {
 			
 			out.write(json);
 		}
-		else if(pathInfo.matches("^/enrich/.*")){
-			//http://localhost:8080/EnrichmentAPI/enrichment/enrich/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/KEA
+		else if(pathInfo.matches("^/enrich/l1000/rank/.*")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/l1000rank/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/
+			long  time = System.currentTimeMillis();
 			
-			String truncPathInfo = pathInfo.replace("/enrich", "");
+			String truncPathInfo = pathInfo.replace("/enrich/l1000/rank", "");
 			
-			PrintWriter out = response.getWriter();
-			response.setHeader("Content-Type", "application/json");
-			
-			Pattern p = Pattern.compile("/(.*)/lib/(.*)");
+			Pattern p = Pattern.compile("/(.*)/uid/(.*)");
 		    Matcher m = p.matcher(truncPathInfo);
 		    
-		    HashMap<String, HashMap<Integer, Overlap>> enrichment = new HashMap<String, HashMap<Integer, Overlap>>();
-		    
 		    String[] gene_split = new String[0];
-		    HashSet<String> gmt_strings = new HashSet<String>();
+		    HashSet<String> uid_strings = new HashSet<String>();
 		    
 		    // if our pattern matches the URL extract groups
 		    if (m.find()){
@@ -232,46 +230,198 @@ public class EnrichmentCore extends HttpServlet {
 		    	gene_split = gene_identifiers.split(",");
 		    	
 		        String libString = m.group(2);
-		        gmt_strings = new HashSet<String>(Arrays.asList(libString.split(",")));
+		        System.out.println(libString);
+		        uid_strings = new HashSet<String>(Arrays.asList(libString.split(",")));
 		    }
 		    else{	// enrichment over all geneset libraries
 		    	gene_split = truncPathInfo.split(",");
-		    	for(GMT gmt : gmts){
-		    		gmt_strings.add(gmt.name);
+		    }
+			
+			HashMap<String, Double> enrichResult = enrich.calculateSetSignatureEnrichment(gene_split, uid_strings);
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : enrichResult.keySet()){
+				sb.append("\""+ui+"\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"queryTimeSec\": "+((System.currentTimeMillis()*1.0 - time)/1000)+", \"results\": {");
+			
+			for(String signature : enrichResult.keySet()){
+				
+				String genesetName = signature;
+				double pval = enrichResult.get(signature);
+				
+				sb.append("\""+genesetName+"\" : {\"p-value\":"+pval+"}, ");
+			}
+			sb.append("}}");
+			
+			PrintWriter out = response.getWriter();
+			response.setHeader("Content-Type", "application/json");
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
+			out.write(json);
+		}
+		else if(pathInfo.matches("^/enrich/l1000fwd/rank/.*")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/l1000fwd/rank/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/
+			long  time = System.currentTimeMillis();
+			
+			String truncPathInfo = pathInfo.replace("/enrich/l1000fwd/rank", "");
+			
+			Pattern p = Pattern.compile("/(.*)/uid/(.*)");
+		    Matcher m = p.matcher(truncPathInfo);
+		    
+		    String[] gene_split = new String[0];
+		    HashSet<String> uid_strings = new HashSet<String>();
+		    
+		    // if our pattern matches the URL extract groups
+		    if (m.find()){
+		    	String gene_identifiers = m.group(1);
+		    	gene_split = gene_identifiers.split(",");
+		    	
+		        String libString = m.group(2);
+		        System.out.println(libString);
+		        uid_strings = new HashSet<String>(Arrays.asList(libString.split(",")));
+		    }
+		    else{	// enrichment over all geneset libraries
+		    	gene_split = truncPathInfo.split(",");
+		    }
+			
+			HashMap<String, Double> enrichResult = enrich.calculateSetSignatureEnrichment(gene_split, uid_strings);
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : enrichResult.keySet()){
+				sb.append("\""+ui+"\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"queryTimeSec\": "+((System.currentTimeMillis()*1.0 - time)/1000)+", \"results\": {");
+			
+			for(String signature : enrichResult.keySet()){
+				
+				String genesetName = signature;
+				double pval = enrichResult.get(signature);
+				
+				sb.append("\""+genesetName+"\" : {\"p-value\":"+pval+"}, ");
+			}
+			sb.append("}}");
+			
+			PrintWriter out = response.getWriter();
+			response.setHeader("Content-Type", "application/json");
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
+			out.write(json);
+		}
+		else if(pathInfo.matches("^/enrich/.*")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/0592d5be-c1a1-11e8-91f5-0242ac170004,0592f610-c1a1-11e8-9d19-0242ac170004
+			long  time = System.currentTimeMillis();
+			String truncPathInfo = pathInfo.replace("/enrich", "");
+			
+			PrintWriter out = response.getWriter();
+			response.setHeader("Content-Type", "application/json");
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			
+			Pattern p = Pattern.compile("/(.*)/uid/(.*)");
+		    Matcher m = p.matcher(truncPathInfo);
+		    
+		    String[] gene_split = new String[0];
+		    HashSet<String> uid_strings = new HashSet<String>();
+		    
+		    // if our pattern matches the URL extract groups
+		    if (m.find()){
+		    	String gene_identifiers = m.group(1);
+		    	gene_split = gene_identifiers.split(",");
+		    	
+		        String libString = m.group(2);
+		        uid_strings = new HashSet<String>(Arrays.asList(libString.split(",")));
+		    }
+		    else{	// enrichment over all geneset libraries
+		    	gene_split = truncPathInfo.split(",");
+		    }
+		    
+		    HashSet<Short> geneidsOb = new HashSet<Short>();
+		    HashSet<String> dontknow = new HashSet<String>();
+		    HashSet<String> matchGene = new HashSet<String>();
+		    for(String s : gene_split) {
+		    	if(enrich.dictionary.containsKey(s)) {
+		    		geneidsOb.add(enrich.dictionary.get(s));
+		    		matchGene.add(s);
+		    	}
+		    	else {
+		    		dontknow.add(s);
 		    	}
 		    }
 		    
-			for(GMT gmt : gmts){
-				if(gmt_strings.contains(gmt.name)){
-					enrichment.put(gmt.name, calculateEnrichmentLib(gene_split, gmt.name));
-				}
-			}
+		    short[] geneId = new short[geneidsOb.size()];
+		    Short[] temp = geneidsOb.toArray(new Short[0]);
+		    for(int i=0; i<geneidsOb.size(); i++) {
+		    	geneId[i] = (short)temp[i];
+		    }
 		    
-			String json = "{";
+		    System.out.println(uid_strings.toString());
+		    HashSet<Overlap> enrichResult = enrich.calculateEnrichment(geneId, uid_strings.toArray(new String[0]));
 			
-			for(String gmtName : enrichment.keySet()){
-				json += "\""+gmtName+"\" : {";
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			for(Overlap over : enrichResult){
 				
-				for(Integer genesetId : enrichment.get(gmtName).keySet()){
-					String genesetName = enrichment.get(gmtName).get(genesetId).name;
-					double pval = enrichment.get(gmtName).get(genesetId).pval;
-					HashSet<String> overlap = enrichment.get(gmtName).get(genesetId).overlap;
-					
-					if(pval < 0.05 && overlap.size() > 4){
-						json += "\""+genesetName+"\" : {";
-						json += "\"p-value\" : \""+pval+"\", ";
-						json += "\"overlap\" : [";
-						for(String overgene : overlap){
-								json += "\""+overgene+"\", ";	
-						}
-						json += "]}, ";
-					}
+				String genesetName = over.name;
+				double pval = over.pval;
+				short[] overlap = over.overlap;
+				double oddsratio = over.oddsRatio;
+				int setsize = over.setsize;	
+				
+				//if(overlap.length > 4){
+				
+				sb.append("\"uids\" : [");
+				for(String ui : uid_strings){
+					sb.append("\""+ui+"\", ");	
 				}
-				json += "}, ";
+				sb.append("], ");
+				
+				sb.append("\"matchingGenes\" : [");
+				for(String match : matchGene){
+					sb.append("\""+match+"\", ");	
+				}
+				sb.append("], ");
+				
+				sb.append("\"unknownGenes\" : [");
+				for(String unknown : dontknow){
+					sb.append("\""+unknown+"\", ");	
+				}
+				sb.append("], ");
+				
+				sb.append("\""+genesetName+"\" : {");
+				sb.append("\"p-value\" : \""+pval+"\", ");
+				sb.append("\"oddsratio\" : \""+oddsratio+"\", ");
+				sb.append("\"setsize\" : \""+setsize+"\", ");
+				sb.append("\"overlap\" : [");
+				
+				for(short overgene : overlap){
+					sb.append("\""+enrich.revDictionary[overgene-Short.MIN_VALUE]+"\", ");	
+				}
+				sb.append("]}, ");
+				//}
 			}
-			json += "}";
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
+			sb.append("}");
+			String json = sb.toString();
+			json = json.replaceAll(", }", "}");
+			json = json.replaceAll(", ]", "]");
+			
+			System.out.println(System.currentTimeMillis() - time);
 			out.write(json);
 		}
 		else {
@@ -287,6 +437,7 @@ public class EnrichmentCore extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
+		System.out.println("POST");
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		String pathInfo = request.getPathInfo();
 		System.out.println(pathInfo);
@@ -371,63 +522,293 @@ public class EnrichmentCore extends HttpServlet {
 			}
 			System.out.println("Done");
 		}
-		else if(pathInfo.matches("^/enrich/.*")){
-			//http://localhost:8080/EnrichmentAPI/enrichment/enrich/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/KEA
+		else if(pathInfo.matches("^/enrich/l1000/rank")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/l1000rank/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/
+			long  time = System.currentTimeMillis();
 			
-			String libString = request.getParameter("library");
-			String geneset = request.getParameter("geneset");
+			StringBuffer jb = new StringBuffer();
+			String line = null;
+			try {
+				BufferedReader reader = request.getReader();
+				while ((line = reader.readLine()) != null)
+					jb.append(line);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			
-			HashMap<String, HashMap<Integer, Overlap>> enrichment = new HashMap<String, HashMap<Integer, Overlap>>();
+			String queryjson = jb.toString();
+			String[] entityArray = new String[0];
+			String[] signatureArray = new String[0];
+			ArrayList<String> signatures = new ArrayList<String>();
+			try {
 
-		    String[] gene_split = new String[0];
-		    HashSet<String> gmt_strings = new HashSet<String>();
-		    
-		    gene_split = geneset.split("\\s*\\r?\\n\\s*");
-		    
-		    // if our pattern matches the URL extract groups
-		    if (libString != null){
-		        gmt_strings = new HashSet<String>(Arrays.asList(libString.split(",")));
+				final JSONObject obj = new JSONObject(queryjson);
+			    
+				final JSONArray querygenes = obj.getJSONArray("entities");
+			    int n = querygenes.length();
+			    ArrayList<String> entity = new ArrayList<String>();
+			    for (int i = 0; i < n; ++i) {
+			      entity.add(querygenes.getString(i));
+			    }
+			    entityArray = entity.toArray(new String[0]);
+			    
+			    final JSONArray querySignatures = obj.getJSONArray("signatures");
+			    n = querySignatures.length();
+			    
+			    for (int i = 0; i < n; ++i) {
+			    	signatures.add(querySignatures.getString(i));
+			    }
+			    signatureArray = signatures.toArray(new String[0]);
+
+			}
+		    catch(Exception e) {
+		    	e.printStackTrace();
+		    	PrintWriter out = response.getWriter();
+				response.addHeader("Content-Type", "application/json");
+				response.addHeader("Access-Control-Allow-Origin", "*");
+				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
+				out.write(json);
 		    }
-		    else{	// enrichment over all geneset libraries
-		    	for(GMT gmt : gmts){
-		    		gmt_strings.add(gmt.name);
+			
+		    String[] gene_split = entityArray;
+		    HashSet<String> uid_strings = new HashSet<String>(signatures);
+		    
+			HashMap<String, Double> enrichResult = enrich.calculateSetSignatureEnrichment(gene_split, uid_strings);
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : enrichResult.keySet()){
+				sb.append("\""+ui+"\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"queryTimeSec\": "+((System.currentTimeMillis()*1.0 - time)/1000)+", \"results\": {");
+			
+			for(String signature : enrichResult.keySet()){
+				
+				String genesetName = signature;
+				double pval = enrichResult.get(signature);
+				
+				sb.append("\""+genesetName+"\" : {\"p-value\":"+pval+"}, ");
+			}
+			sb.append("}}");
+			
+			PrintWriter out = response.getWriter();
+			response.addHeader("Content-Type", "application/json");
+			//response.addHeader("Access-Control-Allow-Origin", "*");
+			
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
+			out.write(json);
+		}
+		else if(pathInfo.matches("^/enrich/l1000fwd/rank")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/l1000fwd/rank/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/
+			long  time = System.currentTimeMillis();
+			
+			StringBuffer jb = new StringBuffer();
+			String line = null;
+			try {
+				BufferedReader reader = request.getReader();
+				while ((line = reader.readLine()) != null)
+					jb.append(line);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			String queryjson = jb.toString();
+			String[] entityArray = new String[0];
+			String[] signatureArray = new String[0];
+			ArrayList<String> signatures = new ArrayList<String>();
+			try {
+
+				final JSONObject obj = new JSONObject(queryjson);
+			    
+				final JSONArray querygenes = obj.getJSONArray("entities");
+			    int n = querygenes.length();
+			    ArrayList<String> entity = new ArrayList<String>();
+			    for (int i = 0; i < n; ++i) {
+			      entity.add(querygenes.getString(i));
+			    }
+			    entityArray = entity.toArray(new String[0]);
+			    
+			    final JSONArray querySignatures = obj.getJSONArray("signatures");
+			    n = querySignatures.length();
+			    
+			    for (int i = 0; i < n; ++i) {
+			    	signatures.add(querySignatures.getString(i));
+			    }
+			    signatureArray = signatures.toArray(new String[0]);
+
+			}
+		    catch(Exception e) {
+		    	e.printStackTrace();
+		    	PrintWriter out = response.getWriter();
+				response.addHeader("Content-Type", "application/json");
+				response.addHeader("Access-Control-Allow-Origin", "*");
+				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
+				out.write(json);
+		    }
+			
+		    String[] gene_split = entityArray;
+		    HashSet<String> uid_strings = new HashSet<String>(signatures);
+		    
+			
+			HashMap<String, Double> enrichResult = enrich.calculateSetSignatureEnrichmentFWD(gene_split, uid_strings);
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : enrichResult.keySet()){
+				sb.append("\""+ui+"\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"queryTimeSec\": "+((System.currentTimeMillis()*1.0 - time)/1000)+", \"results\": {");
+			
+			for(String signature : enrichResult.keySet()){
+				
+				String genesetName = signature;
+				double pval = enrichResult.get(signature);
+				
+				sb.append("\""+genesetName+"\" : {\"p-value\":"+pval+"}, ");
+			}
+			sb.append("}}");
+			
+			PrintWriter out = response.getWriter();
+			response.addHeader("Content-Type", "application/json");
+			//response.addHeader("Access-Control-Allow-Origin", "*");
+			
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
+			out.write(json);
+		}
+		else if(pathInfo.matches("^/enrich")){
+			//http://localhost:8080/EnrichmentAPI/api/enrich/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/KEA
+			long  time = System.currentTimeMillis();
+			
+			StringBuffer jb = new StringBuffer();
+			String line = null;
+			try {
+				BufferedReader reader = request.getReader();
+				while ((line = reader.readLine()) != null)
+					jb.append(line);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			String queryjson = jb.toString();
+			String[] entityArray = new String[0];
+			String[] signatureArray = new String[0];
+			
+			System.out.println("Enrich API post");
+			System.out.println(queryjson);
+			
+			try {
+
+				final JSONObject obj = new JSONObject(queryjson);
+			    
+				final JSONArray querygenes = obj.getJSONArray("entities");
+			    int n = querygenes.length();
+			    ArrayList<String> entity = new ArrayList<String>();
+			    for (int i = 0; i < n; ++i) {
+			      entity.add(querygenes.getString(i));
+			    }
+			    entityArray = entity.toArray(new String[0]);
+			    
+			    final JSONArray querySignatures = obj.getJSONArray("signatures");
+			    n = querySignatures.length();
+			    ArrayList<String> signatures = new ArrayList<String>();
+			    for (int i = 0; i < n; ++i) {
+			    	signatures.add(querySignatures.getString(i));
+			    }
+			    signatureArray = signatures.toArray(new String[0]);
+
+			}
+		    catch(Exception e) {
+		    	e.printStackTrace();
+		    	PrintWriter out = response.getWriter();
+				response.addHeader("Content-Type", "application/json");
+				response.addHeader("Access-Control-Allow-Origin", "*");
+				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
+				out.write(json);
+		    }
+			
+		    HashSet<Short> geneidsOb = new HashSet<Short>();
+		    HashSet<String> dontknow = new HashSet<String>();
+		    HashSet<String> matchGene = new HashSet<String>();
+		    for(String s : entityArray) {
+		    	if(enrich.dictionary.containsKey(s)) {
+		    		geneidsOb.add(enrich.dictionary.get(s));
+		    		matchGene.add(s);
+		    	}
+		    	else {
+		    		dontknow.add(s);
 		    	}
 		    }
 		    
-			for(GMT gmt : gmts){
-				if(gmt_strings.contains(gmt.name)){
-					enrichment.put(gmt.name, calculateEnrichmentLib(gene_split, gmt.name));
-				}
-			}
+		    short[] geneId = new short[geneidsOb.size()];
+		    Short[] temp = geneidsOb.toArray(new Short[0]);
+		    for(int i=0; i<geneidsOb.size(); i++) {
+		    	geneId[i] = (short)temp[i];
+		    }
 		    
-			String json = "{";
+		    HashSet<Overlap> enrichResult = enrich.calculateEnrichment(geneId, signatureArray);
 			
-			for(String gmtName : enrichment.keySet()){
-				json += "\""+gmtName+"\" : {";
-				
-				for(Integer genesetId : enrichment.get(gmtName).keySet()){
-					String genesetName = enrichment.get(gmtName).get(genesetId).name;
-					double pval = enrichment.get(gmtName).get(genesetId).pval;
-					HashSet<String> overlap = enrichment.get(gmtName).get(genesetId).overlap;
-					
-					if(pval < 0.05 && overlap.size() > 4){
-						json += "\""+genesetName+"\" : {";
-						json += "\"p-value\" : \""+pval+"\", ";
-						json += "\"overlap\" : [";
-						for(String overgene : overlap){
-								json += "\""+overgene+"\", ";	
-						}
-						json += "]}, ";
-					}
-				}
-				json += "}, ";
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : signatureArray){
+				sb.append("\""+ui+"\", ");	
 			}
-			json += "}";
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
+			sb.append("], ");
+			
+			sb.append("\"matchingEntities\" : [");
+			for(String match : matchGene){
+				sb.append("\""+match+"\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"unknownEntities\" : [");
+			for(String unknown : dontknow){
+				sb.append("\""+unknown+"\", ");	
+			}
+			sb.append("], \"queryTimeSec\": "+((System.currentTimeMillis()*1.0 - time)/1000)+", \"results\": {");
+			
+			for(Overlap over : enrichResult){
+				
+				String genesetName = over.name;
+				double pval = over.pval;
+				short[] overlap = over.overlap;
+				double oddsratio = over.oddsRatio;
+				int setsize = over.setsize;	
+				
+				sb.append("\""+genesetName+"\" : {");
+				sb.append("\"p-value\" : "+pval+", ");
+				sb.append("\"oddsratio\" : "+oddsratio+", ");
+				sb.append("\"setsize\" : "+setsize+", ");
+				sb.append("\"overlap\" : [");
+				
+				for(short overgene : overlap){
+					sb.append("\""+enrich.revDictionary[overgene-Short.MIN_VALUE]+"\", ");	
+				}
+				sb.append("]}, ");
+				
+			}
 			
 			PrintWriter out = response.getWriter();
 			response.setHeader("Content-Type", "application/json");
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			
+			sb.append("}}");
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
 			out.write(json);
 		}
 		else {
@@ -491,7 +872,6 @@ public class EnrichmentCore extends HttpServlet {
 			while((line = br.readLine())!= null){
 				
 				idx++;
-				
 				String[] sp = line.split("\t");
 				
 				if(sp.length == 6){
@@ -592,132 +972,6 @@ public class EnrichmentCore extends HttpServlet {
 		return result;
 	}
 	
-	public HashMap<Integer, Overlap> calculateEnrichmentLib(String[] _geneset, String _gmtName) {
-		HashSet<String> genesetSet = new HashSet<String>(Arrays.asList(_geneset));
-		HashMap<Integer, Overlap> gmtenrichment = new HashMap<Integer, Overlap>();
-		int counter = 0;
-		
-		for(GMT gmt : gmts) {
-			if(gmt.name.equals(_gmtName)){
-				for(Integer gmtlistid : gmt.genelists.keySet()) {
-					GMTGeneList gmtlist = gmt.genelists.get(gmtlistid);
-					HashSet<String> overlap = new HashSet<String>();
-					if(_geneset.length < gmtlist.genearray.length) {
-						for(int i=0; i< _geneset.length; i++) {
-							if(gmtlist.genes.contains(_geneset[i])) {
-								overlap.add(_geneset[i]);
-							}
-						}
-					}
-					else {
-						for(int i=0; i< gmtlist.genearray.length; i++) {
-							if(genesetSet.contains(gmtlist.genearray[i])) {
-								overlap.add(gmtlist.genearray[i]);
-							}
-						}
-					}
-					
-					int numGenelist = _geneset.length;
-	    			int totalBgGenes = 20000;
-	    			int gmtListSize =  gmtlist.genearray.length;
-	    			int numOverlap = overlap.size();
-	    			//double oddsRatio = (numOverlap*1.0/(totalInputGenes - numOverlap))/(numGenelist*1.0/(totalBgGenes - numGenelist));
-	    			double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-	    			
-	    			if(pvalue < 0.05) {
-	    				counter++;
-	    			}
-	    			
-	    			Overlap over = new Overlap(gmtlist.id, overlap, pvalue);
-	    			over.name = gmtlist.name;
-	    			gmtenrichment.put(gmtlist.id, over);
-				}
-				break;
-			}
-		}
-		
-		System.out.println("Significant overlaps: "+counter);
-		
-		return gmtenrichment;
-	}
-	
-	public HashMap<Integer, HashMap<Integer, Overlap>> calculateEnrichment(UserGeneList _list) {
-		
-		HashMap<Integer, HashMap<Integer, Overlap>> enrichment = new HashMap<Integer, HashMap<Integer, Overlap>>();
-		int counter = 0;
-		for(GMT gmt : gmts) {
-			HashMap<Integer, Overlap> gmtenrichment = new HashMap<Integer, Overlap>();
-			for(Integer gmtlistid : gmt.genelists.keySet()) {
-				GMTGeneList gmtlist = gmt.genelists.get(gmtlistid);
-				HashSet<String> overlap = new HashSet<String>();
-				if(_list.genearray.length < gmtlist.genearray.length) {
-					for(int i=0; i< _list.genearray.length; i++) {
-						if(gmtlist.genes.contains(_list.genearray[i])) {
-							overlap.add(_list.genearray[i]);
-						}
-					}
-				}
-				else {
-					for(int i=0; i< gmtlist.genearray.length; i++) {
-						if(_list.genes.contains(gmtlist.genearray[i])) {
-							overlap.add(gmtlist.genearray[i]);
-						}
-					}
-				}
-				
-				int numGenelist = _list.genearray.length;
-	    			int totalBgGenes = 20000;
-	    			int gmtListSize =  gmtlist.genearray.length;
-	    			int numOverlap = overlap.size();
-	    			//double oddsRatio = (numOverlap*1.0/(totalInputGenes - numOverlap))/(numGenelist*1.0/(totalBgGenes - numGenelist));
-	    			double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-	    			
-	    			if(pvalue < 0.05) {
-	    				counter++;
-	    			}
-	    			
-	    			Overlap over = new Overlap(gmtlist.id, overlap, pvalue);
-	    			gmtenrichment.put(gmtlist.id, over);
-			}
-			enrichment.put(gmt.id, gmtenrichment);
-			
-		}
-		
-		System.out.println("Significant overlaps: "+counter);
-		
-		return enrichment;
-	}
-	
-	public void loadBackground() {
-		background = new HashMap<String, GeneBackground>();
-		HashSet<Integer> backgroundids = new HashSet<Integer>();
-		
-		try { 
-			
-
-			// create the java statement and execute
-			String query = "SELECT id FROM genebackgroundinfo";
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(query);
-
-			while (rs.next()) {
-				int id = rs.getInt("id");
-				backgroundids.add(id);
-			}
-			stmt.close();
-			
-			for(Integer i : backgroundids) {
-				GeneBackground bg = new GeneBackground();
-		        bg.load(sql, (int)i);
-		        background.put(bg.name, bg);
-			}
-			
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public UserGeneList saveUserList(String _user, String _description, String _genetext) {
 		
 	    UserGeneList list = null;
@@ -756,57 +1010,5 @@ public class EnrichmentCore extends HttpServlet {
 		return list;
 	}
 	
-	public void loadGMT() {
-		
-		HashSet<Integer> gmtids = new HashSet<Integer>();
-		gmts = new HashSet<GMT>();
-		
-		try { 
-			// create the java statement and execute
-			String query = "SELECT id FROM gmtinfo";
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(query);
-
-			while (rs.next()) {
-				int id = rs.getInt("id");
-				gmtids.add(id);
-			}
-			stmt.close();
-		
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		for(Integer i : gmtids) {
-			System.out.println("Load "+i);
-			GMT gmt = new GMT(this);
-	        gmt.loadGMT(sql, (int)i);
-	        gmts.add(gmt);
-	        System.out.println(gmt.category);
-		}
-	}
 	
-	public void loadGenemapping(){
-		
-		try {
-			
-			String query = "SELECT * FROM genemapping";
-			
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(query);
-			
-			while (rs.next()){
-			    String gene = rs.getString("genesymbol");
-			    int geneid = rs.getInt("geneid");
-			    symbolToId.put(gene, geneid);
-			    idToSymbol.put(geneid, gene);
-			}
-			stmt.close();
-			
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
 }

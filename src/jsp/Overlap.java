@@ -1,16 +1,19 @@
 package jsp;
-import java.util.HashSet;
 
 public class Overlap implements Comparable<Overlap>{
-	public HashSet<String> overlap;
+	public short[] overlap;
 	public double pval = 0;
 	public int id = 0;
 	public String name = "";
+	public int setsize = 0;
+	public double oddsRatio = 0;
 	
-	public Overlap(int _id, HashSet<String> _overlap, double _pval) {
+	public Overlap(String _name, short[] _overlap, double _pval, int _setsize, double _odds) {
 		pval = _pval;
 		overlap = _overlap;
-		id = _id;
+		name = _name;
+		setsize = _setsize;
+		oddsRatio = _odds;
 	}
 	
 	public int compareTo(Overlap over) {
