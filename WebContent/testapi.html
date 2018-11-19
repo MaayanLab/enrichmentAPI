@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SignatureAPI</title>
+
+<script
+  src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+<link rel="shortcut icon" href="images/signatureicon.png?v=1" type="image/x-icon">
+
+<!-- DataTables -->
+<script
+  src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script
+  src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+
+
+
+<link rel="stylesheet"
+  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet"
+  href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+
+
+<link rel="stylesheet" href="css/style.css">
+<script
+  src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<link rel="stylesheet"
+  href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
+</head>
+
+
+<style>
+  #boundbox{
+    width: 1400px;
+    padding: 20px;
+    margin: auto;
+    /*background-color: #3460a8b3;*/
+    background-color: #777777b3;
+    
+    border-radius: 5px;
+    border: 1px solid #3460a8;
+  }
+  
+  .grid-container {
+    display: grid;
+    grid-template-areas: 
+    'header header header'
+    'left middle right'
+    'footer footer footer';
+    grid-gap: 12px;
+  }
+  
+  .grid-item{
+    background-color: white;
+  }
+  
+  .header,
+  .left,
+  .middle,
+  .right,
+  .footer {
+    padding: 20px;
+    
+    background-color: #ffffffe3;
+    
+  }
+  
+  .header{
+    grid-area: header;
+  }
+  .left{
+    grid-area: left;
+  }
+  .middle{
+    grid-area: middle;
+  }
+  .right{
+    grid-area: right;
+  }
+  .footer{
+    grid-area: footer;
+    
+    padding-top: 10px;
+    padding-left: 100px;
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: auto auto auto;
+  }
+  
+  .table{
+    min-width: 100px;
+  }
+  
+  #enrichrTable_wrapper{
+    width: 370px;
+  }
+  
+  #enrichrSearchStat{
+    color: coral;
+  }
+  
+  #l1000Table_wrapper{
+    width: 370px;
+  }
+  
+  #l1000SearchStat{
+    color: coral;
+  }
+  
+  #l1000fwdTable_wrapper{
+    width: 370px;
+  }
+  
+  #l1000fwdSearchStat{
+    color: coral;
+  }
+  
+  body {
+    background-image: url('images/arrowbackground.png');
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    
+    padding: 20px;
+  }
+</style>
+
+<script>
+
+enrichrSubmit = function() {
+    
+    var frm = $("#signaturequery");
+    var entities = $("#entity").val().replace(/ /g, "").replace("\n$", "").split("\n");
+    var signatures = $("#signatures").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
+    var queryd = {"entities" : entities, "signatures": signatures}
+    
+    var dat = JSON.stringify(queryd);
+    
+    $.ajax({
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich",
+        type: "POST",
+        data: dat,
+        success: function(result) {
+           
+           var results = result["results"]
+           var counter = 1;
+           
+           var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='enrichrTable' class='table table-striped table-bordered compact'>\n";
+           tabletext += "<thead>\n";
+           tabletext += "<tr><th>UID</th><th>Overlap</th><th>p-Value</th><th>OR</th></tr>\n";
+           tabletext += "</thead>\n";
+           tabletext += "<tbody>\n";
+           
+           for(var key in results){
+              tabletext += "<tr><td>"+key.substring(1,8)+"...</td><td>"+results[key]["overlap"].length+"/"+(results[key]["setsize"])+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td>"+Number(results[key]["oddsratio"]).toFixed(2)+"</td></tr>";
+              counter++;
+           }
+           
+           var resultSetSize = result["results"].length;
+           var queryTime = result["queryTimeSec"];
+           
+           $("#enrichrSearchStat").html("<h4>Matching signatures: "+(counter-1)+"<br>Query Time: "+queryTime+"sec </h4>");
+           
+           
+           tabletext += "</tbody></table>\n";
+           $("#enirchrResult").html(tabletext);
+           
+           $('#enrichrTable').DataTable({
+            "autoWidth": true,
+              "order": [[ 2, "asc" ]],
+              "aoColumns" : [
+                  { sWidth: '50px' },
+                  { sWidth: '100px' },
+                  { sWidth: '120px' },
+                  { sWidth: '30px' }
+              ]
+           });
+        }
+    });
+}
+
+
+l1000Submit = function() {
+    
+    var frm = $("#signaturequery2");
+    var entities = $("#entity2").val().replace(/ /g, "").replace("\n$", "").split("\n");
+    var signatures = $("#signatures2").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
+    var queryd = {"entities" : entities, "signatures": signatures}
+    
+    var dat = JSON.stringify(queryd);
+    
+    $.ajax({
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/l1000/rank",
+        type: "POST",
+        data: dat,
+        success: function(result) {
+           console.log(result);
+           var results = result["results"]
+           var counter = 1;
+           
+           var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='l1000Table' class='table table-striped table-bordered compact'>\n";
+           tabletext += "<thead>\n";
+           tabletext += "<tr><th>UID</th><th>p-Value</th></tr>\n";
+           tabletext += "</thead>\n";
+           tabletext += "<tbody>\n";
+           
+           for(var key in results){
+              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td></tr>";
+              counter++;
+           }
+           
+           var resultSetSize = result["results"].length;
+           var queryTime = result["queryTimeSec"];
+           
+           $("#l1000SearchStat").html("<h4>Matching signatures: "+(counter-1)+"<br>Query Time: "+queryTime+"sec </h4>");
+           
+           
+           tabletext += "</tbody></table>\n";
+           $("#l1000Result").html(tabletext);
+           
+           $('#l1000Table').DataTable({
+            "autoWidth": true,
+              "order": [[ 1, "asc" ]]
+           });
+        }
+    });
+}
+
+l1000fwdSubmit = function() {
+    
+    var frm = $("#signaturequery3");
+    var entities = $("#entity3").val().replace(/ /g, "").replace("\n$", "").split("\n");
+    var signatures = $("#signatures3").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
+    var queryd = {"entities" : entities, "signatures": signatures}
+    
+    var dat = JSON.stringify(queryd);
+    
+    $.ajax({
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/l1000fwd/rank",
+        type: "POST",
+        data: dat,
+        success: function(result) {
+           console.log(result);
+           var results = result["results"]
+           var counter = 1;
+           
+           var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='l1000fwdTable' class='table table-striped table-bordered compact'>\n";
+           tabletext += "<thead>\n";
+           tabletext += "<tr><th>UID</th><th>p-Value</th></tr>\n";
+           tabletext += "</thead>\n";
+           tabletext += "<tbody>\n";
+           
+           for(var key in results){
+              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td></tr>";
+              counter++;
+           }
+           
+           var resultSetSize = result["results"].length;
+           var queryTime = result["queryTimeSec"];
+           
+           $("#l1000fwdSearchStat").html("<h4>Matching signatures: "+(counter-1)+"<br>Query Time: "+queryTime+"sec </h4>");
+           
+           
+           tabletext += "</tbody></table>\n";
+           $("#l1000fwdResult").html(tabletext);
+           
+           $('#l1000fwdTable').DataTable({
+            "autoWidth": true,
+              "order": [[ 1, "asc" ]]
+           });
+        }
+    });
+}
+
+
+</script>
+
+</head>
+<body>
+
+
+<div id="boundbox" class="grid-container">
+
+<div class="grid-item header">
+  <img src="images/signatureicon.png" width=80 style="float: left; margin-top: 20px; margin-right: 20px;">
+<h1><font style="color: #4477dd">Signature Commons Query API Demo</font></h1>
+
+<p>
+  Test page to benchmark large signature queries in real time. Calculates rank and gene-set enrichment. Current databases are <b>Enrichr gene-sets</b>, <b>L1000 from CLUE.io</b>, and <b>L1000 from FWD</b>.
+</p>
+</div>
+
+<div class="grid-item left">
+<img src="images/enrichr.png" width=200 style="margin-left: 85px; padding-bottom: 10px; margin-top: 20px;">
+<h3>Enrichr lists</h3>
+<h4>192710 gene-sets</h4>
+<form id="signaturequery" method="POST" action="api/enrich">
+
+  <div class="form-group">
+    <label for="entity">Genes</label>
+  	<textarea class="form-control" rows="5" id="entity">
+MDM2
+MAPT
+CCND1
+JAK2
+BIRC5
+FAS
+NOTCH1
+MAPK14
+MAPK3
+ATM
+NFE2L2
+ITGB1
+SIRT1
+LRRK2
+IGF1R
+GSK3B
+RELA
+CDKN1B
+NR3C1
+BAX
+CASP3
+JUN
+SP1
+RAC1
+CAV1
+RB1
+PARP1
+EZh3
+RHOA
+PGR
+SRC
+MAPK8
+PTK2
+</textarea>
+    <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
+  </div>
+
+  <div class="form-group">
+    <label for="signatures">Signature IDs to calculate enrichment against</label>
+  	<textarea class="form-control" rows="5" id="signatures">
+0592d5be-c1a1-11e8-91f5-0242ac170004
+0592f610-c1a1-11e8-9d19-0242ac170004
+</textarea>
+    <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
+  </div>
+
+  <button type="button" class="btn btn-primary btn-block" onclick="enrichrSubmit()">Submit query</button>
+</form>
+
+<div id="enrichrSearchStat">
+  
+</div>
+
+<div id="enirchrResult"></div>
+
+</div>
+
+<div class="grid-item middle">
+  <img src="images/clue.png" width=100 style="margin-left: 125px; padding-bottom: 10px; margin-top: 10px;">
+  <h3>L1000 rank (Mann-Whitney U)</h3>
+  <h4>118050 signatures</h4>
+  
+<form id="signaturequery" method="POST" action="api/enrich">
+
+  <div class="form-group">
+    <label for="entity2">Genes</label>
+    <textarea class="form-control" rows="5" id="entity2">
+MDM2
+MAPT
+CCND1
+JAK2
+BIRC5
+FAS
+NOTCH1
+MAPK14
+MAPK3
+ATM
+NFE2L2
+ITGB1
+SIRT1
+LRRK2
+IGF1R
+GSK3B
+RELA
+CDKN1B
+NR3C1
+BAX
+CASP3
+JUN
+SP1
+RAC1
+CAV1
+RB1
+PARP1
+EZh3
+RHOA
+PGR
+SRC
+MAPK8
+PTK2
+</textarea>
+    <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
+  </div>
+
+  <div class="form-group">
+    <label for="signatures2">Signature IDs to calculate enrichment against</label>
+    <textarea class="form-control" rows="5" id="signatures2">
+REP.A001_PC3_24H:F05
+REP.A011_HA1E_24H:N12
+LJP005_MDAMB231_24H:K02
+LJP008_NEU_24H:K13
+</textarea>
+    <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
+  </div>
+
+   <button type="button" class="btn btn-primary btn-block" onclick="l1000Submit()">Submit query</button>
+</form>
+
+
+<div id="l1000SearchStat">
+  
+</div>
+
+<div id="l1000Result"></div>
+
+</div>
+
+<div class="grid-item right">
+  <img src="images/l1000fwd.png" width=100 style="margin-left: 135px; margin-top: -15px;">
+  <h3>L1000FWD rank (Mann-Whitney U)</h3>
+  <h4>42809 signatures</h4>
+  
+
+<form id="signaturequery3" method="POST" action="api/enrich">
+
+  <div class="form-group">
+    <label for="entity3">Genes</label>
+    <textarea class="form-control" rows="5" id="entity3">
+MDM2
+MAPT
+CCND1
+JAK2
+BIRC5
+FAS
+NOTCH1
+MAPK14
+MAPK3
+ATM
+NFE2L2
+ITGB1
+SIRT1
+LRRK2
+IGF1R
+GSK3B
+RELA
+CDKN1B
+NR3C1
+BAX
+CASP3
+JUN
+SP1
+RAC1
+CAV1
+RB1
+PARP1
+EZh3
+RHOA
+PGR
+SRC
+MAPK8
+PTK2
+</textarea>
+    <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
+  </div>
+
+  <div class="form-group">
+    <label for="signatures3">Signature IDs to calculate enrichment against</label>
+    <textarea class="form-control" rows="5" id="signatures3">
+HOG003_MCF7_6H:BRD-K81418486-001-32-7:3.33
+CPC017_A375_6H:BRD-K81418486:10
+CPC006_MCF7_24H:BRD-K19894101-001-01-6:11.1
+</textarea>
+    <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
+  </div>
+
+  <button type="button" class="btn btn-primary btn-block" onclick="l1000fwdSubmit()">Submit query</button>
+</form>
+
+<div id="l1000fwdSearchStat">
+  
+</div>
+
+<div id="l1000fwdResult"></div>
+
+</div>
+
+
+<div class="grid-item footer">
+    <div>
+         <img src="images/mountsinai.png" height=130>
+    </div>
+      
+    <div>
+           <ul style="padding-left: 30px; list-style: none; text-align: left;">
+              <li class="fl"><a href="http://icahn.mssm.edu/research/labs/maayan-laboratory" target="_blank">The Ma'ayan Lab</a></li>
+              <li class="fl"><a href="http://www.lincs-dcic.org/" target="_blank">BD2K-LINCS Data Coordination and Integration Center (DCIC)</a></li>
+              <li class="fl"><a href="http://www.lincsproject.org/">NIH LINCS program</a></li>
+              <li class="fl"><a href="https://commonfund.nih.gov/commons">NIH Data Commons Pilot Project Consortium (DCPPC)</a></li>
+              <li class="fl"><a href="http://bd2k.nih.gov/" target="_blank">NIH Big Data to Knowledge (BD2K)</a></li>
+              <li class="fl"><a href="https://commonfund.nih.gov/idg/index" target="_blank">NIH Illuminating the Druggable Genome (IDG) Program</a></li>
+              <li class="fl"><a href="http://icahn.mssm.edu/" target="_blank">Icahn School of Medicine at Mount Sinai</a></li>
+          </ul>
+      </div>
+      <div>
+          <img src="images/dcic.png" height=130><br>
+          © Ma'ayan Lab.
+      </div>
+</div>
+
+
+</body>
+</html>

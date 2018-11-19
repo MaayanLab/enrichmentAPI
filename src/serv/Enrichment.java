@@ -96,7 +96,7 @@ public class Enrichment {
 		return pvals;
 	}
 	
-public HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _genes, HashSet<String> _uids) {
+	public HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _genes, HashSet<String> _uids) {
 		
 		long time = System.currentTimeMillis();
 		//String[] inputgenes = "MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2".split(",");
@@ -199,8 +199,8 @@ public HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _gene
 		downloadFile(revdic_url, revdic_file);
 		
 		System.out.println("Download L1000");
-		//downloadFile(lincs_url, lincs_file);
-		//downloadFile(lincsfwd_url, lincsfwd_file);
+		downloadFile(lincs_url, lincs_file);
+		downloadFile(lincsfwd_url, lincsfwd_file);
 		
 		System.out.println("Deserialize");
 		genelists = (HashMap<String, short[]>) deserialize(geneset_file);
@@ -220,6 +220,8 @@ public HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _gene
 		lincsfwdSamples = (String[]) lincsTemp.get("signatureid");
 		
 		System.out.println("Complete");
+		System.out.println("LWD length: "+lincsfwdGenes.length);
+		System.out.println("L1000 length: "+lincsGenes.length);
 	}
 	
 	private void downloadFile(String _url, String _destination){
