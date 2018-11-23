@@ -25,9 +25,9 @@ public class SerializeCorrelation {
 		SerializeCorrelation sc = new SerializeCorrelation();
 //		sc.readLincs();
 		
-//		sc.readLincsRank();
+		sc.readLincsRank();
 		
-		sc.readCorrelation();
+//		sc.readCorrelation();
 //		long time = System.currentTimeMillis();
 //		sc.deserialize();
 //		System.out.println(System.currentTimeMillis() - time);
@@ -37,6 +37,15 @@ public class SerializeCorrelation {
 		
 	}
 	
+	public static short[] findRank(float[] inp) {
+	    short[] outp = new short[inp.length];
+	    for(int i = 0; i < inp.length; i++) {
+	        for(int k = 0; k < inp.length; k++) {
+	            if(inp[k] < inp[i]) outp[i]++;
+	        }
+	    }
+	    return outp;
+	}
 	
 	public void rankArray() {
 		float[] arr = {9, 1, 3, 10, 2};
@@ -44,7 +53,7 @@ public class SerializeCorrelation {
 		System.out.println(Arrays.toString(rr));
 	}
 
-	private short[] ranks(float[] _a) {
+	private static short[] ranks(float[] _a) {
 		
 		float[] sc = new float[_a.length];
 		System.arraycopy(_a, 0, sc, 0, _a.length);
@@ -107,13 +116,30 @@ public class SerializeCorrelation {
 		float[][] l1000 = new float[0][0];
 		short[][] rankl1000 = new short[0][0];
 		String[] samplenames = null;
+		long time = System.currentTimeMillis();
+		
 		try{
+			
+			
+			
+			BufferedReader br = new BufferedReader(new FileReader(new File("/Users/maayanlab/OneDrive/sigcommons/human_genes_uid.tsv")));
+			String line = "";
+			HashMap<String, String> genemap = new HashMap<String, String>();
+			while((line = br.readLine())!= null){
+				String[] sp = line.split("\t");
+				String uid = sp[0];
+				String gene_symbol = sp[1];
+				genemap.put(gene_symbol, uid);
+			}
+			br.close();
+			
 			int numberGenes = 0;
-			BufferedReader br = new BufferedReader(new FileReader(new File("/Users/maayanlab/OneDrive/sigcommons/l1000fwd.tsv")));
-			String line = br.readLine(); // read header
+			br = new BufferedReader(new FileReader(new File("/Users/maayanlab/OneDrive/sigcommons/l1000fwd.tsv")));
+			line = br.readLine(); // read header
 			samplenames = line.split("\t");
 			while((line = br.readLine())!= null){
-				numberGenes++;
+				String[] sp = line.split("\t");
+				if(genemap.containsKey(sp[0])) numberGenes++;
 			}
 			br.close();
 			
@@ -130,13 +156,16 @@ public class SerializeCorrelation {
 			int idx = 0;
 			while((line = br.readLine())!= null){
 				String[] sp = line.split("\t");
-				genes.add(sp[0]);
-				for(int i=1; i<sp.length; i++) {
-					l1000[i-1][idx] = Float.parseFloat(sp[i]);
-				}
-				idx++;
-				if(idx % 1000 == 0) {
-					System.out.println(idx);
+				
+				if(genemap.containsKey(sp[0])) {
+					genes.add(genemap.get(sp[0]));
+					for(int i=1; i<sp.length; i++) {
+						l1000[i-1][idx] = Float.parseFloat(sp[i]);
+					}
+					idx++;
+					if(idx % 1000 == 0) {
+						System.out.println(idx);
+					}
 				}
 			}
 			br.close();
@@ -144,7 +173,10 @@ public class SerializeCorrelation {
 			System.out.println("Rank");
 			
 			for(int i=0; i<l1000.length; i++) {
-				rankl1000[i] = ranks(l1000[i]);
+				rankl1000[i] = findRank(l1000[i]);
+				if(i % 1000 == 0) {
+					System.out.println(idx);
+				}
 			}
 		}
 		catch(Exception e){
@@ -155,12 +187,13 @@ public class SerializeCorrelation {
 		
 		HashMap<String, Object> lincsData = new HashMap<String, Object>();
 		//lincsData.put("l1000signatures", l1000);
-		lincsData.put("l1000signaturesRank", rankl1000);
-		lincsData.put("signatureid", samplenames);
-		lincsData.put("lincsgenes", genes.toArray(new String[0]));
+		lincsData.put("rank", rankl1000);
+		lincsData.put("signature_id", samplenames);
+		lincsData.put("entity_id", genes.toArray(new String[0]));
 		
-		serialize(lincsData, "lincsfwd.so");
+		serialize(lincsData, "lincsfwd_uid.so");
 		
+		System.out.println("minutes: "+(System.currentTimeMillis() - time)/3600);
 		
 		//serialize(rankl1000, "lincsranked.so");
 		//serialize(genes.toArray(new String[0]), "lincsgenes.so");
