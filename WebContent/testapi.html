@@ -35,7 +35,7 @@
 
 <style>
   #boundbox{
-    width: 1400px;
+    width: 1800px;
     padding: 20px;
     margin: auto;
     /*background-color: #3460a8b3;*/
@@ -48,9 +48,9 @@
   .grid-container {
     display: grid;
     grid-template-areas: 
-    'header header header'
-    'left middle right'
-    'footer footer footer';
+    'header header header header'
+    'farleft left middle right'
+    'footer footer footer footer';
     grid-gap: 12px;
   }
   
@@ -59,6 +59,7 @@
   }
   
   .header,
+  .farleft,
   .left,
   .middle,
   .right,
@@ -71,6 +72,9 @@
   
   .header{
     grid-area: header;
+  }
+  .farleft{
+    grid-area: farleft;
   }
   .left{
     grid-area: left;
@@ -88,11 +92,19 @@
     padding-left: 100px;
     display: grid;
     grid-gap: 20px;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: auto auto auto auto;
   }
   
   .table{
     min-width: 100px;
+  }
+  
+  #creedsTable_wrapper{
+    width: 370px;
+  }
+  
+  #creedsSearchStat{
+    color: coral;
   }
   
   #enrichrTable_wrapper{
@@ -136,12 +148,12 @@ enrichrSubmit = function() {
     var frm = $("#signaturequery");
     var entities = $("#entity").val().replace(/ /g, "").replace("\n$", "").split("\n");
     var signatures = $("#signatures").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
-    var queryd = {"entities" : entities, "signatures": signatures}
+    var queryd = {"entities" : entities, "signatures": signatures, "database": "enrichr"}
     
     var dat = JSON.stringify(queryd);
     
     $.ajax({
-        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich",
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/overlap",
         type: "POST",
         data: dat,
         success: function(result) {
@@ -156,7 +168,7 @@ enrichrSubmit = function() {
            tabletext += "<tbody>\n";
            
            for(var key in results){
-              tabletext += "<tr><td>"+key.substring(1,8)+"...</td><td>"+results[key]["overlap"].length+"/"+(results[key]["setsize"])+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td>"+Number(results[key]["oddsratio"]).toFixed(2)+"</td></tr>";
+              tabletext += "<tr><td>"+key.substring(0,7)+"...</td><td>"+results[key]["overlap"].length+"/"+(results[key]["setsize"])+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td>"+Number(results[key]["oddsratio"]).toFixed(2)+"</td></tr>";
               counter++;
            }
            
@@ -183,22 +195,75 @@ enrichrSubmit = function() {
     });
 }
 
+creedsSubmit = function() {
+    
+    var frm = $("#signaturequery");
+    var entities = $("#entitycreeds").val().replace(/ /g, "").replace("\n$", "").split("\n");
+    var signatures = $("#signaturescreeds").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
+    var queryd = {"entities" : entities, "signatures": signatures, "database": "creeds"}
+    
+    console.log(entities, signatures, "creeds");
+    
+    var dat = JSON.stringify(queryd);
+    
+    $.ajax({
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/overlap",
+        type: "POST",
+        data: dat,
+        success: function(result) {
+           
+           var results = result["results"]
+           var counter = 1;
+           
+           var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='creedsTable' class='table table-striped table-bordered compact'>\n";
+           tabletext += "<thead>\n";
+           tabletext += "<tr><th>UID</th><th>Overlap</th><th>p-Value</th><th>OR</th></tr>\n";
+           tabletext += "</thead>\n";
+           tabletext += "<tbody>\n";
+           
+           for(var key in results){
+              tabletext += "<tr><td>"+key.substring(0,7)+"...</td><td>"+results[key]["overlap"].length+"/"+(results[key]["setsize"])+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td>"+Number(results[key]["oddsratio"]).toFixed(2)+"</td></tr>";
+              counter++;
+           }
+           
+           var resultSetSize = result["results"].length;
+           var queryTime = result["queryTimeSec"];
+           
+           $("#creedsSearchStat").html("<h4>Matching signatures: "+(counter-1)+"<br>Query Time: "+queryTime+"sec </h4>");
+           
+           
+           tabletext += "</tbody></table>\n";
+           $("#creedsResult").html(tabletext);
+           
+           $('#creedsTable').DataTable({
+            "autoWidth": true,
+              "order": [[ 2, "asc" ]],
+              "aoColumns" : [
+                  { sWidth: '50px' },
+                  { sWidth: '100px' },
+                  { sWidth: '120px' },
+                  { sWidth: '30px' }
+              ]
+           });
+        }
+    });
+}
 
 l1000Submit = function() {
     
     var frm = $("#signaturequery2");
     var entities = $("#entity2").val().replace(/ /g, "").replace("\n$", "").split("\n");
     var signatures = $("#signatures2").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
-    var queryd = {"entities" : entities, "signatures": signatures}
+    var queryd = {"entities" : entities, "signatures": signatures, "database" : "lincs"}
     
     var dat = JSON.stringify(queryd);
     
     $.ajax({
-        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/l1000/rank",
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/rank",
         type: "POST",
         data: dat,
         success: function(result) {
-           console.log(result);
+           
            var results = result["results"]
            var counter = 1;
            
@@ -235,12 +300,12 @@ l1000fwdSubmit = function() {
     var frm = $("#signaturequery3");
     var entities = $("#entity3").val().replace(/ /g, "").replace("\n$", "").split("\n");
     var signatures = $("#signatures3").val().replace(/ /g, "").replace(/\n$/, "").split("\n");
-    var queryd = {"entities" : entities, "signatures": signatures}
+    var queryd = {"entities" : entities, "signatures": signatures, "database": "lincsfwd"}
     
     var dat = JSON.stringify(queryd);
     
     $.ajax({
-        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/l1000fwd/rank",
+        url: "https://amp.pharm.mssm.edu/enrichmentapi/api/enrich/rank",
         type: "POST",
         data: dat,
         success: function(result) {
@@ -302,49 +367,37 @@ l1000fwdSubmit = function() {
 
   <div class="form-group">
     <label for="entity">Genes</label>
-  	<textarea class="form-control" rows="5" id="entity">
-MDM2
-MAPT
-CCND1
-JAK2
-BIRC5
-FAS
-NOTCH1
-MAPK14
-MAPK3
-ATM
-NFE2L2
-ITGB1
-SIRT1
-LRRK2
-IGF1R
-GSK3B
-RELA
-CDKN1B
-NR3C1
-BAX
-CASP3
-JUN
-SP1
-RAC1
-CAV1
-RB1
-PARP1
-EZh3
-RHOA
-PGR
-SRC
-MAPK8
-PTK2
+    <textarea class="form-control" rows="5" id="entity">
+c983350c-ed1c-11e8-9ca1-787b8ad942f3
+c98d3868-ed1c-11e8-be3e-787b8ad942f3
+c98eae28-ed1c-11e8-96fb-787b8ad942f3
+c9b31ca4-ed1c-11e8-99a0-787b8ad942f3
+c98ee87a-ed1c-11e8-b7f6-787b8ad942f3
+c98d4f06-ed1c-11e8-bbcd-787b8ad942f3
+c9853c62-ed1c-11e8-be48-787b8ad942f3
+c987531c-ed1c-11e8-88d5-787b8ad942f3
+c992cd00-ed1c-11e8-9759-787b8ad942f3
+c981913e-ed1c-11e8-82a0-787b8ad942f3
+c98d4928-ed1c-11e8-99e4-787b8ad942f3
+c98d4e02-ed1c-11e8-a518-787b8ad942f3
+c98d31f6-ed1c-11e8-af8b-787b8ad942f3
+c9860662-ed1c-11e8-b65f-787b8ad942f3
+c98d5034-ed1c-11e8-aa46-787b8ad942f3
+c985830c-ed1c-11e8-a427-787b8ad942f3
+c98d3ab6-ed1c-11e8-9e44-787b8ad942f3
+c993096e-ed1c-11e8-98ab-787b8ad942f3
+c9952db6-ed1c-11e8-be1c-787b8ad942f3
+c98adf3a-ed1c-11e8-ac1a-787b8ad942f3
 </textarea>
     <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
   </div>
 
   <div class="form-group">
     <label for="signatures">Signature IDs to calculate enrichment against</label>
-  	<textarea class="form-control" rows="5" id="signatures">
-0592d5be-c1a1-11e8-91f5-0242ac170004
-0592f610-c1a1-11e8-9d19-0242ac170004
+    <textarea class="form-control" rows="5" id="signatures">
+4c2c5bad-0b86-4d6a-8ca0-003cf027ee4d
+4da15934-028f-4526-bab0-70edea115d0b
+c42fe583-29a9-4d8f-8325-2fb8e2f3542f
 </textarea>
     <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
   </div>
@@ -360,49 +413,90 @@ PTK2
 
 </div>
 
+<div class="grid-item farleft">
+<img src="images/creeds.png" width=50 style="margin-left: 85px; padding-bottom: 10px; margin-top: 20px; float: left;"> <div style="font-size: 36px; margin-top: 10px; float: left;">CREEDS</div>
+<br><br><br><br><h3>Creeds lists</h3>
+<h4>7750 gene-sets</h4>
+<form id="signaturequery" method="POST" action="api/enrich">
+
+  <div class="form-group">
+    <label for="entity">Genes</label>
+    <textarea class="form-control" rows="5" id="entitycreeds">
+c983350c-ed1c-11e8-9ca1-787b8ad942f3
+c98d3868-ed1c-11e8-be3e-787b8ad942f3
+c98eae28-ed1c-11e8-96fb-787b8ad942f3
+c9b31ca4-ed1c-11e8-99a0-787b8ad942f3
+c98ee87a-ed1c-11e8-b7f6-787b8ad942f3
+c98d4f06-ed1c-11e8-bbcd-787b8ad942f3
+c9853c62-ed1c-11e8-be48-787b8ad942f3
+c987531c-ed1c-11e8-88d5-787b8ad942f3
+c992cd00-ed1c-11e8-9759-787b8ad942f3
+c981913e-ed1c-11e8-82a0-787b8ad942f3
+c98d4928-ed1c-11e8-99e4-787b8ad942f3
+c98d4e02-ed1c-11e8-a518-787b8ad942f3
+c98d31f6-ed1c-11e8-af8b-787b8ad942f3
+c9860662-ed1c-11e8-b65f-787b8ad942f3
+c98d5034-ed1c-11e8-aa46-787b8ad942f3
+c985830c-ed1c-11e8-a427-787b8ad942f3
+c98d3ab6-ed1c-11e8-9e44-787b8ad942f3
+c993096e-ed1c-11e8-98ab-787b8ad942f3
+c9952db6-ed1c-11e8-be1c-787b8ad942f3
+c98adf3a-ed1c-11e8-ac1a-787b8ad942f3
+</textarea>
+    <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
+  </div>
+
+  <div class="form-group">
+    <label for="signatures">Signature IDs to calculate enrichment against</label>
+    <textarea class="form-control" rows="5" id="signaturescreeds">
+44391406-fb21-4881-9fad-294748bdd9fb
+51b4fd9e-6bd2-44e6-aa45-c931dcecd81c
+e7464fd4-1030-4b3f-9830-538f89a1db75
+</textarea>
+    <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
+  </div>
+
+  <button type="button" class="btn btn-primary btn-block" onclick="creedsSubmit()">Submit query</button>
+</form>
+
+<div id="creedsSearchStat">
+  
+</div>
+
+<div id="creedsResult"></div>
+
+</div>
+
 <div class="grid-item middle">
   <img src="images/clue.png" width=100 style="margin-left: 125px; padding-bottom: 10px; margin-top: 10px;">
   <h3>L1000 rank (Mann-Whitney U)</h3>
-  <h4>118050 signatures</h4>
+  <h4>473647 signatures</h4>
   
 <form id="signaturequery" method="POST" action="api/enrich">
 
   <div class="form-group">
     <label for="entity2">Genes</label>
     <textarea class="form-control" rows="5" id="entity2">
-MDM2
-MAPT
-CCND1
-JAK2
-BIRC5
-FAS
-NOTCH1
-MAPK14
-MAPK3
-ATM
-NFE2L2
-ITGB1
-SIRT1
-LRRK2
-IGF1R
-GSK3B
-RELA
-CDKN1B
-NR3C1
-BAX
-CASP3
-JUN
-SP1
-RAC1
-CAV1
-RB1
-PARP1
-EZh3
-RHOA
-PGR
-SRC
-MAPK8
-PTK2
+c983350c-ed1c-11e8-9ca1-787b8ad942f3
+c98d3868-ed1c-11e8-be3e-787b8ad942f3
+c98eae28-ed1c-11e8-96fb-787b8ad942f3
+c9b31ca4-ed1c-11e8-99a0-787b8ad942f3
+c98ee87a-ed1c-11e8-b7f6-787b8ad942f3
+c98d4f06-ed1c-11e8-bbcd-787b8ad942f3
+c9853c62-ed1c-11e8-be48-787b8ad942f3
+c987531c-ed1c-11e8-88d5-787b8ad942f3
+c992cd00-ed1c-11e8-9759-787b8ad942f3
+c981913e-ed1c-11e8-82a0-787b8ad942f3
+c98d4928-ed1c-11e8-99e4-787b8ad942f3
+c98d4e02-ed1c-11e8-a518-787b8ad942f3
+c98d31f6-ed1c-11e8-af8b-787b8ad942f3
+c9860662-ed1c-11e8-b65f-787b8ad942f3
+c98d5034-ed1c-11e8-aa46-787b8ad942f3
+c985830c-ed1c-11e8-a427-787b8ad942f3
+c98d3ab6-ed1c-11e8-9e44-787b8ad942f3
+c993096e-ed1c-11e8-98ab-787b8ad942f3
+c9952db6-ed1c-11e8-be1c-787b8ad942f3
+c98adf3a-ed1c-11e8-ac1a-787b8ad942f3
 </textarea>
     <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
   </div>
@@ -410,10 +504,14 @@ PTK2
   <div class="form-group">
     <label for="signatures2">Signature IDs to calculate enrichment against</label>
     <textarea class="form-control" rows="5" id="signatures2">
-REP.A001_PC3_24H:F05
-REP.A011_HA1E_24H:N12
-LJP005_MDAMB231_24H:K02
-LJP008_NEU_24H:K13
+aa68fb9a-52e5-42e2-a127-1b7f245b4007
+f2c27842-9b6e-4508-93f4-3adb8c91acf2
+c7108868-aacf-4354-9773-9e37d0d88c6b
+27cadffc-c329-4f41-9490-a6abfb116751
+eb955dd0-5fd6-4937-a9ba-b11f14845f0e
+9951567c-8d1e-4917-bbd6-24805532f77a
+ba12f83f-8ab1-46b5-bae6-9499aed06c5b
+7c60caaa-fd4b-4822-863a-f3d87bb9e67f
 </textarea>
     <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
   </div>
@@ -441,39 +539,26 @@ LJP008_NEU_24H:K13
   <div class="form-group">
     <label for="entity3">Genes</label>
     <textarea class="form-control" rows="5" id="entity3">
-MDM2
-MAPT
-CCND1
-JAK2
-BIRC5
-FAS
-NOTCH1
-MAPK14
-MAPK3
-ATM
-NFE2L2
-ITGB1
-SIRT1
-LRRK2
-IGF1R
-GSK3B
-RELA
-CDKN1B
-NR3C1
-BAX
-CASP3
-JUN
-SP1
-RAC1
-CAV1
-RB1
-PARP1
-EZh3
-RHOA
-PGR
-SRC
-MAPK8
-PTK2
+c983350c-ed1c-11e8-9ca1-787b8ad942f3
+c98d3868-ed1c-11e8-be3e-787b8ad942f3
+c98eae28-ed1c-11e8-96fb-787b8ad942f3
+c9b31ca4-ed1c-11e8-99a0-787b8ad942f3
+c98ee87a-ed1c-11e8-b7f6-787b8ad942f3
+c98d4f06-ed1c-11e8-bbcd-787b8ad942f3
+c9853c62-ed1c-11e8-be48-787b8ad942f3
+c987531c-ed1c-11e8-88d5-787b8ad942f3
+c992cd00-ed1c-11e8-9759-787b8ad942f3
+c981913e-ed1c-11e8-82a0-787b8ad942f3
+c98d4928-ed1c-11e8-99e4-787b8ad942f3
+c98d4e02-ed1c-11e8-a518-787b8ad942f3
+c98d31f6-ed1c-11e8-af8b-787b8ad942f3
+c9860662-ed1c-11e8-b65f-787b8ad942f3
+c98d5034-ed1c-11e8-aa46-787b8ad942f3
+c985830c-ed1c-11e8-a427-787b8ad942f3
+c98d3ab6-ed1c-11e8-9e44-787b8ad942f3
+c993096e-ed1c-11e8-98ab-787b8ad942f3
+c9952db6-ed1c-11e8-be1c-787b8ad942f3
+c98adf3a-ed1c-11e8-ac1a-787b8ad942f3
 </textarea>
     <small id="geneHelp" class="form-text text-muted">Genes that are up-regulated in signature or overlap with gene-set.</small>
   </div>
@@ -481,9 +566,14 @@ PTK2
   <div class="form-group">
     <label for="signatures3">Signature IDs to calculate enrichment against</label>
     <textarea class="form-control" rows="5" id="signatures3">
-HOG003_MCF7_6H:BRD-K81418486-001-32-7:3.33
-CPC017_A375_6H:BRD-K81418486:10
-CPC006_MCF7_24H:BRD-K19894101-001-01-6:11.1
+aa68fb9a-52e5-42e2-a127-1b7f245b4007
+f2c27842-9b6e-4508-93f4-3adb8c91acf2
+c7108868-aacf-4354-9773-9e37d0d88c6b
+27cadffc-c329-4f41-9490-a6abfb116751
+eb955dd0-5fd6-4937-a9ba-b11f14845f0e
+9951567c-8d1e-4917-bbd6-24805532f77a
+ba12f83f-8ab1-46b5-bae6-9499aed06c5b
+7c60caaa-fd4b-4822-863a-f3d87bb9e67f
 </textarea>
     <small id="signatureHelp" class="form-text text-muted">Signature IDs to calculate enrichment against. If empty calculate all.</small>
   </div>

@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import jsp.Overlap;
+import jsp.Result;
 
 public class Enrichment {
 	
@@ -22,6 +24,8 @@ public class Enrichment {
 	int stepSize = 100000;
 	
 	private FastFisher f = new FastFisher(50000);
+	
+	public HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
 	
 	public HashMap<String, short[]> genelists = new HashMap<String, short[]>();
 	public HashMap<String, Short> dictionary = new HashMap<String, Short>();
@@ -154,17 +158,28 @@ public class Enrichment {
 	
 	public Enrichment() {
 		
+		String lincs_broad = "lincs_clue_uid.so";
+		String lincs_fwd = "lincsfwd_uid.so";
+		String creeds = "creeds_uid.so";
+		String enrichr = "enrichr_uid.so";	
+		
+		//String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
+		String[] datasetsStrings = {creeds, lincs_fwd};
+		
+		for(String str : datasetsStrings) {
+			datasets.put(str.split("_")[0], initFile(str));
+		}
+		
+		System.out.println("Initialization complete.");
+	}
+	
+	private HashMap<String, Object> initFile(String _file) {
+		
+		System.out.println("Init "+_file);
+		
 		String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
 		String datafolder = basedir+"data/";
 		String awsbucket = "https://s3.amazonaws.com/mssm-data/";
-		
-		String human_bio_url = awsbucket+"human_mapping_biomart.tsv";
-		String mouse_bio_url = awsbucket+"mouse_mapping_biomart.tsv";
-		String geneset_url = awsbucket+"geneset.so";
-		String dic_url = awsbucket+"dictionary.so";
-		String revdic_url = awsbucket+"revdictionary.so";
-		String lincs_url = awsbucket+"lincs.so";
-		String lincsfwd_url = awsbucket+"lincsfwd.so";
 		
 		if(System.getenv("deployment") != null){
 			if(System.getenv("deployment").equals("marathon_deployed")){
@@ -182,46 +197,10 @@ public class Enrichment {
 			e.printStackTrace();
 		}
 		
-		String human_bio_file = datafolder+"human_mapping_biomart.tsv";
-		String mouse_bio_file = datafolder+"mouse_mapping_biomart.tsv";
-		String geneset_file = datafolder+"geneset.so";
-		String dic_file = datafolder+"dictionary.so";
-		String revdic_file = datafolder+"revdictionary.so";
+		//downloadFile(awsbucket+_file, datafolder+_file);
+		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
 		
-		String lincs_file = datafolder+"lincs.so";
-		String lincsfwd_file = datafolder+"lincsfwd.so";
-		
-		System.out.println("Download resources");
-		downloadFile(human_bio_url, human_bio_file);
-		downloadFile(mouse_bio_url, mouse_bio_file);
-		downloadFile(geneset_url, geneset_file);
-		downloadFile(dic_url, dic_file);
-		downloadFile(revdic_url, revdic_file);
-		
-		System.out.println("Download L1000");
-		downloadFile(lincs_url, lincs_file);
-		downloadFile(lincsfwd_url, lincsfwd_file);
-		
-		System.out.println("Deserialize");
-		genelists = (HashMap<String, short[]>) deserialize(geneset_file);
-		dictionary = (HashMap<String, Short>) deserialize(dic_file);
-		revDictionary = (String[]) deserialize(revdic_file);
-		
-		System.out.println("Deserialize L1000");
-		HashMap<String, Object> lincsTemp = (HashMap<String, Object>) deserialize(lincs_file);
-		//lincsSignature = (float[][]) lincsTemp.get("l1000signatures");
-		lincsSignatureRank = (short[][]) lincsTemp.get("l1000signaturesRank");
-		lincsGenes = (String[]) lincsTemp.get("lincsgenes");
-		lincsSamples = (String[]) lincsTemp.get("signatureid");
-		
-		lincsTemp = (HashMap<String, Object>) deserialize(lincsfwd_file);
-		lincsfwdSignatureRank = (short[][]) lincsTemp.get("l1000signaturesRank");
-		lincsfwdGenes = (String[]) lincsTemp.get("lincsgenes");
-		lincsfwdSamples = (String[]) lincsTemp.get("signatureid");
-		
-		System.out.println("Complete");
-		System.out.println("LWD length: "+lincsfwdGenes.length);
-		System.out.println("L1000 length: "+lincsGenes.length);
+		return dataTemp;
 	}
 	
 	private void downloadFile(String _url, String _destination){
@@ -248,6 +227,175 @@ public class Enrichment {
 	
 	public String translate(int _s) {
 		return revDictionary[_s];
+	}
+	
+	public HashMap<String, Result> calculateEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
+		
+		 if(datasets.containsKey(_db)) {
+			 
+			 if(datasets.get(_db).containsKey("geneset")) {
+				 // The database is a gene set collection
+				 return calculateOverlapEnrichment(_db, _entity, _signatures);
+			 }
+			 else {
+				 // The database contains rank transformed signatures
+				 return calculateRankEnrichment(_db, _entity, _signatures);
+			 }
+			
+		 }
+		
+		return null;
+	}
+	
+	public HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures) {
+		
+		HashMap<String, Result> results = new HashMap<String, Result>();
+		
+		HashMap<String, Object> db = datasets.get(_db);
+		HashMap<String, short[]> genelist = (HashMap<String, short[]>)db.get("geneset");
+		HashMap<String, Short> dictionary = (HashMap<String, Short>) db.get("dictionary");
+		
+		HashSet<Short> entityMapped = new HashSet<Short>();
+		
+	    for(String s : _entities) {
+	    	if(dictionary.containsKey(s)) {
+	    		entityMapped.add(dictionary.get(s));
+	    	}
+	    }
+	    
+	    short[] geneId = new short[entityMapped.size()];
+	    Short[] temp = entityMapped.toArray(new Short[0]);
+	    for(int i=0; i<entityMapped.size(); i++) {
+	    	geneId[i] = (short) temp[i];
+	    }
+	    
+	    short stepup = Short.MIN_VALUE;
+		
+		boolean[] boolgenelist = new boolean[65000];
+		for(int i=0; i< geneId.length; i++) {
+			boolgenelist[geneId[i] - stepup] = true;
+		}
+		
+		short overlap = 0;
+		boolean showAll = false;
+		
+		HashSet<String> signaturefilter = new HashSet<String>();
+		if(_signatures.size() == 0) {
+			signaturefilter = new HashSet<String>(genelist.keySet());
+		}
+		else {
+			signaturefilter = new HashSet<String>(_signatures);
+			showAll = true;
+		}
+		
+		// create overlap buffer
+		short[] overset = new short[Short.MAX_VALUE*2];
+		
+		for(String key : signaturefilter) {
+			
+			short[] gl = genelist.get(key);
+			overlap = 0;
+			
+			for(int i=0; i< gl.length; i++) {
+				if(boolgenelist[gl[i]-Short.MIN_VALUE]) {
+					overset[overlap] = gl[i];
+					overlap++;
+				}
+			}
+			
+			int numGenelist = geneId.length;
+			int totalBgGenes = 21000;
+			int gmtListSize =  gl.length;
+			int numOverlap = overlap;
+			
+			double pvalue = f.getRightTailedP(numOverlap, (gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));
+			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
+			
+			if(((pvalue < 0.05) && (overlap > 4)) || showAll) {
+				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0);
+				results.put(key, o);
+			}
+		}
+		
+		System.out.println("Result size: "+results.size());
+		
+		return results;
+	}
+	
+	public HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
+		
+		HashMap<String, Result> results = new HashMap<String, Result>();
+		
+		HashMap<String, Object> db = datasets.get(_db);
+		String[] entity_id = (String[]) db.get("entity_id");
+		String[] signature_id = (String[]) db.get("signature_id");
+		short[][] ranks = (short[][]) db.get("rank");
+		
+		long time = System.currentTimeMillis();
+		//String[] inputgenes = "MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2".split(",");
+		String[] inputgenes = _entity;
+		
+		HashSet<String> inputgeneset = new HashSet<String>();
+		HashSet<String> inputgenesetreject = new HashSet<String>();
+		
+		HashSet<String> uids = new HashSet<String>();
+		for(int i=0; i<signature_id.length; i++) {
+			uids.add(signature_id[i]);
+		}
+		
+		uids.retainAll(_signatures);
+		boolean showAll = uids.size() > 0;
+		
+		
+		HashMap<String, Short> dictionary = new HashMap<String, Short>();
+		for(short i=0; i<entity_id.length; i++) {
+			dictionary.put(entity_id[i], i);
+		}
+		
+		for(int i=0; i<inputgenes.length; i++) {
+			if(dictionary.containsKey(inputgenes[i])) {
+				inputgeneset.add(inputgenes[i]);
+			}
+			else {
+				inputgenesetreject.add(inputgenes[i]);
+			}
+		}
+		
+		short[] inputShort = new short[inputgeneset.size()];
+		String[] input = inputgeneset.toArray(new String[0]);
+		
+		for(int i=0; i<input.length; i++) {
+			inputShort[i] = dictionary.get(input[i]);
+		}
+		
+		float correctionCount = uids.size();
+		if(correctionCount == 0) {
+			correctionCount = ranks.length;
+		}
+		
+		int counter = 0;
+		
+		for(int i=0; i<ranks.length; i++) {
+			if(uids.contains(signature_id[i]) || uids.size() == 0) {
+				double p = Math.min(1, mannWhitney(inputShort, ranks[i])*(correctionCount/100));
+				counter++;
+				
+				int direction = 1;
+				if(p < 0) {
+					direction = -1;
+				}
+				
+				if(p < 0.05 || showAll) {
+					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction);
+					results.put(signature_id[i], r);
+				}
+			}
+		}
+		System.out.println("Counter: "+counter);
+		System.out.println(results.size());
+		System.out.println("Elapsed time: "+(System.currentTimeMillis() - time));
+		
+		return results;
 	}
 	
 	public HashSet<Overlap> calculateEnrichment(short[] _genelist, String[] _uids) {
@@ -393,6 +541,94 @@ public class Enrichment {
 		return pvals;
 	}
 	
+	public HashMap<String, Object> getRankData(String _db, String[] _signatures, String[] _entities){
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		if(datasets.containsKey(_db)) {
+			if(datasets.get(_db).containsKey("rank")) {
+				
+				short[][] rank = (short[][]) datasets.get(_db).get("rank");
+				
+				String[] signatrueID = (String[]) datasets.get(_db).get("signature_id");
+				String[] entityID = (String[]) datasets.get(_db).get("entity_id");
+				ArrayList<String> signaturesList = new ArrayList<String>();
+				ArrayList<String> entityList = new ArrayList<String>();
+				
+				System.out.println("eids: "+entityID.length);
+				
+				HashMap<String, Integer> signatureMap = new HashMap<String, Integer>();
+				for(int i=0; i<signatrueID.length; i++) {
+					signatureMap.put(signatrueID[i], i);
+				}
+				
+				for(int i=0; i<Math.min(1000, _signatures.length); i++) {
+					if(signatureMap.containsKey(_signatures[i])) {
+						signaturesList.add(_signatures[i]);
+					}
+				}
+				String[] signatures = signaturesList.toArray(new String[0]);
+				
+				HashMap<String, Integer> entityMap = new HashMap<String, Integer>();
+				for(int i=0; i<entityID.length; i++) {
+					entityMap.put(entityID[i], i);
+				}
+				
+				System.out.println(_db+" e: "+entityMap.size());
+				
+				for(int i=0; i<_entities.length; i++) {
+					if(entityMap.containsKey(_entities[i])) {
+						entityList.add(_entities[i]);
+					}
+				}
+				
+				if(entityList.size() == 0) {
+					entityList.addAll(entityMap.keySet());
+				}
+				String[] entities = entityList.toArray(new String[0]);
+				System.out.println(_db+"e: "+entityMap.size());
+				
+				HashMap<String, short[]> sigranks = new HashMap<String, short[]>();
+				
+				for(int i=0; i<signatures.length; i++) {
+					short[] ranks = new short[entities.length];
+					for(int j=0; j<ranks.length; j++) {
+						ranks[j] = rank[signatureMap.get(signatures[i])][entityMap.get(entities[j])];
+					}
+					sigranks.put(signatures[i], ranks);
+				}
+				
+				result.put("entities", entities);
+				result.put("maxRank", (Integer) rank[0].length);
+				result.put("signatureRanks", sigranks);
+			}
+		}
+
+		return result;
+	}
+	
+	public HashMap<String, String[]> getSetData(String _db, String[] _signatures){
+		
+		HashMap<String, String[]> result = new HashMap<String, String[]>();
+		
+		if(datasets.containsKey(_db)) {
+			if(datasets.get(_db).containsKey("geneset")) {
+				
+				HashMap<String, short[]> genesets = (HashMap<String, short[]>) datasets.get(_db).get("geneset");
+				HashMap<Short, String> revDictionary = (HashMap<Short, String>) datasets.get(_db).get("revDictionary");
+				
+				for(int i=0; i<Math.min(1000, _signatures.length); i++) {
+					short[] genes = genesets.get(_signatures[i]);
+					String[] entityIDs = new String[genes.length];
+					for(int j=0; j<genes.length; j++) {
+						entityIDs[j] = revDictionary.get(genes[j]);
+					}
+					result.put(_signatures[i], entityIDs);
+				}
+			}		
+		}
+		return result;
+	}
 	
 	public double mannWhitney(short[] _geneset, short[] _rank){
 		// smaller rank is better, otherwise return 1-CNDF 
@@ -415,7 +651,13 @@ public class Enrichment {
 		double U = rankSum - n1*(n1+1)/2;
 		double z = (U - meanRankExpected)/sigma;
 		
-		return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
+		// Add sign to encode if rank is smaller or larger than expected
+		if(z < 0) {
+			return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
+		}
+		else {
+			return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
+		}
 	}
 	
 	public double mannWhitney2(short[] _geneset, short[] _rank){

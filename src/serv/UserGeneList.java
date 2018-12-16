@@ -20,7 +20,7 @@ public class UserGeneList extends GeneList{
 		hash = md5hash(Arrays.toString(genes.toArray(new String[0])));
 	}
 	
-	public void write(int _userid, EnrichmentCore _core, Connection _connection) {
+	public void write(int _userid, EnrichmentCoreOld _core, Connection _connection) {
 
 		int key = 0;
 

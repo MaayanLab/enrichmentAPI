@@ -10,7 +10,7 @@ import java.util.HashSet;
 
 public class GMTGeneList extends GeneList{
 	
-	public EnrichmentCore core;
+	public EnrichmentCoreOld core;
 	
 	public GMTGeneList() {
 		
@@ -26,7 +26,7 @@ public class GMTGeneList extends GeneList{
 		sql = _sql;
 	}
 	
-	public void loadGMTGeneList(Connection _sql, int _id, EnrichmentCore _core) {
+	public void loadGMTGeneList(Connection _sql, int _id, EnrichmentCoreOld _core) {
 		
 		core = _core;
 		connection = _sql;

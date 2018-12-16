@@ -16,14 +16,14 @@ public class GMT{
 	public String text = "";
 	public HashMap<Integer, GMTGeneList> genelists;
 	public SQLmanager sql;
-	public EnrichmentCore core;
+	public EnrichmentCoreOld core;
 	Connection  connection;
 	
 	public GMT() {
 		
 	}
 	
-	public GMT(EnrichmentCore _core) {
+	public GMT(EnrichmentCoreOld _core) {
 		core = _core;
 	}
 	

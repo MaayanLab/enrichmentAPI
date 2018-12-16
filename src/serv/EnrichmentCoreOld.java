@@ -27,20 +27,18 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import jsp.EnrichmentResults;
 import jsp.Overlap;
+import jsp.Result;
 
 /**
  * Servlet implementation class Test
  */
-@WebServlet("/api/*")
-public class EnrichmentCore extends HttpServlet {
+@WebServlet("/api2/*")
+public class EnrichmentCoreOld extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     public FastFisher f;
 	
@@ -65,7 +63,7 @@ public class EnrichmentCore extends HttpServlet {
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public EnrichmentCore() {
+    public EnrichmentCoreOld() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -79,14 +77,14 @@ public class EnrichmentCore extends HttpServlet {
 		
 		// TODO Auto-generated method stub
 		f = new FastFisher(40000);
-		
 		sql = new SQLmanager();
+		
 		try {
 			//connection = DriverManager.getConnection("jdbc:mysql://"+sql.database+"?rewriteBatchedStatements=true", sql.user, sql.password);
 			
 			System.out.println("Start buffering libraries");
-			loadGenetranslation();
-			enrich = new Enrichment();
+			//loadGenetranslation();
+			//enrich = new Enrichment();
 			System.out.println("... and ready!");
 			
 			//connection.close();
@@ -211,6 +209,54 @@ public class EnrichmentCore extends HttpServlet {
 			json = json.replace(", }", "}");
 			
 			out.write(json);
+		}
+		else if(pathInfo.matches("^/enrich/.*")) {
+			
+			long  time = System.currentTimeMillis();
+			
+			String truncPathInfo = pathInfo.replace("/enrich", "");
+			
+			Pattern p = Pattern.compile("/db/(.*)/entities/(.*)/uids/(.*)");
+		    Matcher m = p.matcher(truncPathInfo);
+		    
+		    String[] entity_split = new String[0];
+		    String db = "";
+		    HashSet<String> uid_strings = new HashSet<String>();
+		    
+		    boolean queryValid = false;
+		    
+		    // if our pattern matches the URL extract groups
+		    if (m.find()){
+		    	db = m.group(1);
+		    	entity_split = m.group(2).split(",");
+		    	uid_strings = new HashSet<String>(Arrays.asList(m.group(3).split(",")));
+		    	queryValid = true;
+		    }
+		    else{	// enrichment over all geneset libraries
+		    	p = Pattern.compile("/db/(.*)/entities/(.*)");
+			    m = p.matcher(truncPathInfo);
+			    
+			    if(m.find()){
+			    	db = m.group(1);
+			    	entity_split = m.group(2).split(",");
+			    	queryValid = true;
+			    }
+			    else {
+			    	System.out.println("API endpoint unknown.");
+			    }
+		    }
+		    
+		    if(queryValid) {
+   
+				if(enrich.datasets.get(db).containsKey("geneset")) {
+					// The database is a gene set collection
+					HashMap<String, Result> enrichResult = null;
+					//enrich.calculateGenesetEnrichment(db, entity_split, uid_strings);
+					returnOverlapJSON(response, enrichResult, db, time);
+				}
+				
+		    }
+		    
 		}
 		else if(pathInfo.matches("^/enrich/l1000/rank/.*")){
 			//http://localhost:8080/EnrichmentAPI/api/enrich/l1000rank/MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2/uid/
@@ -432,6 +478,105 @@ public class EnrichmentCore extends HttpServlet {
 		}
 	}
 
+	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, long _time) {
+//		try {
+//			PrintWriter out = _response.getWriter();
+//			_response.setHeader("Content-Type", "application/json");
+//			_response.addHeader("Access-Control-Allow-Origin", "*");
+//			
+//			HashMap<String, Result> enrichResult = _result;
+//			
+//			StringBuffer sb = new StringBuffer();
+//			sb.append("{");
+//			
+//			sb.append("\"signatures\" : [");
+//			for(String ui : signatureArray){
+//				sb.append("\"").append(ui).append("\", ");	
+//			}
+//			sb.append("], ");
+//			
+//			sb.append("\"matchingEntities\" : [");
+//			for(String match : matchGene){
+//				sb.append("\"").append(match).append("\", ");	
+//			}
+//			sb.append("], ");
+//			
+//			sb.append("\"unknownEntities\" : [");
+//			for(String unknown : dontknow){
+//				sb.append("\"").append(unknown).append("\", ");	
+//			}
+//			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": {");
+//			
+//			for(Overlap over : enrichResult){
+//				
+//				String genesetName = over.name;
+//				double pval = over.pval;
+//				short[] overlap = over.overlap;
+//				double oddsratio = over.oddsRatio;
+//				int setsize = over.setsize;	
+//				
+//				sb.append("\"").append(genesetName).append("\" : {");
+//				sb.append("\"p-value\" : ").append(pval).append(", ");
+//				sb.append("\"oddsratio\" : ").append(oddsratio).append(", ");
+//				sb.append("\"setsize\" : ").append(setsize).append(", ");
+//				sb.append("\"overlap\" : [");
+//				
+//				for(short overgene : overlap){
+//					sb.append("\"").append(enrich.revDictionary[overgene-Short.MIN_VALUE]).append("\", ");	
+//				}
+//				sb.append("]}, ");
+//			}
+//			
+//			sb.append("}}");
+//			String json = sb.toString();
+//			json = json.replace(", }", "}");
+//			json = json.replace(", ]", "]");
+//			out.write(json);
+//			
+//		}
+//		catch(Exception e) {
+//			e.printStackTrace();
+//		}
+	}
+	
+	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, long _time) {
+		try {
+			PrintWriter out = _response.getWriter();
+			_response.setHeader("Content-Type", "application/json");
+			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
+			HashMap<String, Result> enrichResult = _result;
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("{");
+			
+			sb.append("\"signatures\" : [");
+			for(String ui : enrichResult.keySet()){
+				sb.append("\"").append(ui).append("\", ");	
+			}
+			sb.append("], ");
+			
+			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": {");
+			
+			for(String signature : enrichResult.keySet()){
+				
+				String genesetName = signature;
+				double pval = enrichResult.get(signature).pval;
+				
+				sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append("}, ");
+			}
+			sb.append("}}");
+			
+			String json = sb.toString();
+			json = json.replace(", }", "}");
+			json = json.replace(", ]", "]");
+			out.write(json);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -727,7 +872,7 @@ public class EnrichmentCore extends HttpServlet {
 			    	signatures.add(querySignatures.getString(i));
 			    }
 			    signatureArray = signatures.toArray(new String[0]);
-
+			    
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();

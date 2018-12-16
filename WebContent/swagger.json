@@ -1,1 +1,306 @@
-{"swagger": "2.0", "info": {"title": "Signature Commons Data API", "description": "An API for efficient data-level queries on the Signature Commons.", "version": "1.0.0", "license": {"name": "Apache 2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0.html"}}, "schemes": ["https"], "host": "amp.pharm.mssm.edu", "paths": {"/enrichmentapi/api/enrich": {"post": {"description": "Perform enrichment analysis", "operationId": "enrich", "consumes": ["application/json"], "parameters": [{"name": "body", "in": "body", "description": "Body of request", "required": true, "schema": {"type": "object", "properties": {"entities": {"type": "array", "description": "Entity UUIDs to use for the analysis", "items": {"type": "string"}}, "signatures": {"type": "array", "description": "Signature UUIDs to use for the analysis", "items": {"type": "string"}}}, "required": ["entities"]}}], "produces": ["application/json"], "responses": {"200": {"description": "The analysis results", "schema": {"type": "object", "properties": {"matchingEntities": {"type": "array", "description": "Entities used for enrichment analysis", "items": {"type": "string"}}, "unknownEntities": {"type": "array", "description": "Entities not recognized or and therefore not used for enrichment analysis", "items": {"type": "string"}}, "signatures": {"type": "array", "description": "Signatures used for enrichment analysis", "items": {"type": "string"}}, "queryTimeSec": {"type": "number", "description": "How long it took to perform the query"}, "results": {"type": "object", "description": "Results of the enrichment analyisis. TODO Improve format"}}}}}}}}}
+{
+    "host": "amp.pharm.mssm.edu",
+    "info": {
+        "description": "An API for efficient data-level queries on the Signature Commons.",
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "title": "Signature Commons Data API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/enrichmentapi/api/enrich/overlap": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Perform enrichment analysis",
+                "operationId": "enrichoverlap",
+                "parameters": [
+                    {
+                        "description": "Body of request",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "database": {
+                                    "description": "Database to use for the analysis",
+                                    "type": "string",
+                                    "enum": ["creeds", "enrichr"]
+                                },
+                                "entities": {
+                                    "description": "Entity UUIDs to use for the analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "signatures": {
+                                    "description": "Signature UUIDs to use for the analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "database", "entities"
+                            ],
+                            "type": "object"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The analysis results",
+                        "schema": {
+                            "properties": {
+                                "matchingEntities": {
+                                    "description": "Entities used for enrichment analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "queryTimeSec": {
+                                    "description": "How long it took to perform the query",
+                                    "type": "number"
+                                },
+                                "results": {
+                                    "description": "Results of the enrichment analyisis. TODO Improve format",
+                                    "type": "object"
+                                },
+                                "signatures": {
+                                    "description": "Signatures used for enrichment analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrichmentapi/api/enrich/rank": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Perform enrichment analysis",
+                "operationId": "enrichrank",
+                "parameters": [
+                    {
+                        "description": "Body of request",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "database": {
+                                    "description": "Database to use for the analysis",
+                                    "type": "string",
+                                    "enum": ["lincs", "lincsfwd"]
+                                },
+                                "entities": {
+                                    "description": "Entity UUIDs to use for the analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "signatures": {
+                                    "description": "Signature UUIDs to use for the analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "database", "entities"
+                            ],
+                            "type": "object"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The analysis results",
+                        "schema": {
+                            "properties": {
+                                "queryTimeSec": {
+                                    "description": "How long it took to perform the query",
+                                    "type": "number"
+                                },
+                                "results": {
+                                    "description": "Results of the enrichment analyisis. Key value pair with key being the UUID and value is the p-value",
+                                    "type": "object"
+                                },
+                                "signatures": {
+                                    "description": "Signatures used for enrichment analysis",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrichmentapi/api/fetch/rank": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Retrieve rank values for specified signatures and entities. Maximally 1000 signatures are returned.",
+                "operationId": "fetchrank",
+                "parameters": [
+                    {
+                        "description": "Body of request",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "database": {
+                                    "description": "Database to use for the analysis",
+                                    "type": "string",
+                                    "enum": ["lincs", "lincsfwd"]
+                                },
+                                "entities": {
+                                    "description": "Entity UUIDs to return. If not specified all.",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "signatures": {
+                                    "description": "Signature UUIDs to return. Maximally 1000",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "database", "signatures"
+                            ],
+                            "type": "object"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The analysis results",
+                        "schema": {
+                            "properties": {
+                                "entities": {
+                                    "description": "Array of entities. The same order applies for the rank values.",
+                                    "type": "array"
+                                },
+                                "maxRank": {
+                                    "description": "maximal rank",
+                                    "type": "number"
+                                },
+                                "signatures": {
+                                    "description": "Signature uids with rank array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "array"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrichmentapi/api/fetch/set": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Retrieve entity sets for specified signatures. Maximally 1000 signatures are returned.",
+                "operationId": "fetchrank",
+                "parameters": [
+                    {
+                        "description": "Body of request",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "database": {
+                                    "description": "Database to use for the analysis",
+                                    "type": "string",
+                                    "enum": ["enrichr", "creeds"]
+                                },
+                                "signatures": {
+                                    "description": "Signature UUIDs to return. Maximally 1000",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "database", "signatures"
+                            ],
+                            "type": "object"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The analysis results",
+                        "schema": {
+                            "properties": {
+                                "entities": {
+                                    "description": "Array of entities. The same order applies for the rank values.",
+                                    "type": "array"
+                                },
+                                "maxRank": {
+                                    "description": "maximal rank",
+                                    "type": "number"
+                                },
+                                "signatures": {
+                                    "description": "Signature uids with rank array",
+                                    "items": {
+                                        "type": "object"
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "array"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "schemes": [
+        "https"
+    ],
+    "swagger": "2.0"
+}
