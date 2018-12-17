@@ -269,12 +269,17 @@ l1000Submit = function() {
            
            var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='l1000Table' class='table table-striped table-bordered compact'>\n";
            tabletext += "<thead>\n";
-           tabletext += "<tr><th>UID</th><th>p-Value</th></tr>\n";
+           tabletext += "<tr><th>UID</th><th>p-Value</th><th>D</th></tr>\n";
            tabletext += "</thead>\n";
            tabletext += "<tbody>\n";
            
+           
            for(var key in results){
-              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td></tr>";
+              var imgString = "<span class=\"glyphicon glyphicon-arrow-up\" style=\"color: #05ffb4; font-size: 20px;\"></span>";
+              if(results[key]["direction"] == -1){
+                imgString = "<span class=\"glyphicon glyphicon-arrow-down\" style=\"color: #ff5c05; font-size: 20px;\"></span>";
+              }
+              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td style=\"text-align: center; padding-top: 15px;\">"+imgString+"</td></tr>";
               counter++;
            }
            
@@ -315,12 +320,17 @@ l1000fwdSubmit = function() {
            
            var tabletext = "<table width=\"300px;\" style\"min-width: 100px;\" id='l1000fwdTable' class='table table-striped table-bordered compact'>\n";
            tabletext += "<thead>\n";
-           tabletext += "<tr><th>UID</th><th>p-Value</th></tr>\n";
+           tabletext += "<tr><th>UID</th><th>p-Value</th><th>D</th></tr>\n";
            tabletext += "</thead>\n";
            tabletext += "<tbody>\n";
            
+           
            for(var key in results){
-              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td></tr>";
+              var imgString = "<span class=\"glyphicon glyphicon-arrow-up\" style=\"color: #05ffb4; font-size: 20px;\"></span>";
+              if(results[key]["direction"] == -1){
+                imgString = "<span class=\"glyphicon glyphicon-arrow-down\" style=\"color: #ff5c05; font-size: 20px;\"></span>";
+              }
+              tabletext += "<tr><td>"+key+"</td><td>"+Number(results[key]["p-value"]).toExponential(3)+"</td><td style=\"text-align: center; padding-top: 15px;\">"+imgString+"</td></tr>";
               counter++;
            }
            
