@@ -60,13 +60,12 @@ public class Enrichment {
 		for(int i=0; i<lincsSamples.length; i++) {
 			uids.add(lincsSamples[i]);
 		}
-		System.out.println(lincsSamples.length);
+		
 		uids.retainAll(_uids);
 		
 		for(short i=0; i<lincsGenes.length; i++) {
 			lincsDict.put(lincsGenes[i], i);
 		}
-		System.out.println(lincsDict.size());
 		
 		for(int i=0; i<inputgenes.length; i++) {
 			if(lincsDict.containsKey(inputgenes[i])) {
@@ -87,14 +86,15 @@ public class Enrichment {
 		HashMap<String, Double> pvals = new HashMap<String, Double>();
 		for(int i=0; i<lincsSignatureRank.length; i++) {
 			if(uids.contains(lincsSamples[i]) || uids.size() == 0) {
-				double p = mannWhitney(inputShort, lincsSignatureRank[i]);
+				double z = mannWhitney(inputShort, lincsSignatureRank[i]);
+				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
 				if(p < 0.00001 || uids.size() > 0) {
 					pvals.put(lincsSamples[i], p);
 				}
 			}
 		}
-		System.out.println(pvals.size());
+		
 		System.out.println("Elapsed time: "+(System.currentTimeMillis() - time));
 		
 		return pvals;
@@ -115,14 +115,11 @@ public class Enrichment {
 			uids.add(lincsfwdSamples[i]);
 		}
 		
-		System.out.println(lincsfwdSamples.length);
-		
 		uids.retainAll(_uids);
 		
 		for(short i=0; i<lincsfwdGenes.length; i++) {
 			lincsDict.put(lincsfwdGenes[i], i);
 		}
-		System.out.println(lincsDict.size());
 		
 		for(int i=0; i<inputgenes.length; i++) {
 			if(lincsDict.containsKey(inputgenes[i])) {
@@ -143,14 +140,15 @@ public class Enrichment {
 		HashMap<String, Double> pvals = new HashMap<String, Double>();
 		for(int i=0; i<lincsfwdSignatureRank.length; i++) {
 			if(uids.contains(lincsfwdSamples[i]) || uids.size() == 0) {
-				double p = mannWhitney(inputShort, lincsfwdSignatureRank[i]);
+				double z = mannWhitney(inputShort, lincsfwdSignatureRank[i]);
+				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
 				if(p < 0.00001 || uids.size() > 0) {
 					pvals.put(lincsfwdSamples[i], p);
 				}
 			}
 		}
-		System.out.println(pvals.size());
+		
 		System.out.println("Elapsed time: "+(System.currentTimeMillis() - time));
 		
 		return pvals;
@@ -346,7 +344,6 @@ public class Enrichment {
 		uids.retainAll(_signatures);
 		boolean showAll = uids.size() > 0;
 		
-		
 		HashMap<String, Short> dictionary = new HashMap<String, Short>();
 		for(short i=0; i<entity_id.length; i++) {
 			dictionary.put(entity_id[i], i);
@@ -373,15 +370,13 @@ public class Enrichment {
 			correctionCount = ranks.length;
 		}
 		
-		int counter = 0;
-		
 		for(int i=0; i<ranks.length; i++) {
 			if(uids.contains(signature_id[i]) || uids.size() == 0) {
-				double p = Math.min(1, mannWhitney(inputShort, ranks[i])*(correctionCount/100));
-				counter++;
+				double z = mannWhitney(inputShort, ranks[i]);	
+				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2)*(correctionCount/100);
 				
 				int direction = 1;
-				if(p < 0) {
+				if(z < 0) {
 					direction = -1;
 				}
 				
@@ -391,8 +386,7 @@ public class Enrichment {
 				}
 			}
 		}
-		System.out.println("Counter: "+counter);
-		System.out.println(results.size());
+		
 		System.out.println("Elapsed time: "+(System.currentTimeMillis() - time));
 		
 		return results;
@@ -416,7 +410,7 @@ public class Enrichment {
 		boolean showAll = false;
 		if(_uids.length > 0) {
 			if(!_uids[0].equals("")) {
-				System.out.println(Arrays.toString(_uids));
+				
 				HashSet<String> temp = new HashSet<String>();
 				showAll = true;
 				for(int i=0; i<_uids.length; i++) {
@@ -428,7 +422,6 @@ public class Enrichment {
 		}
 		
 		short[] overset = new short[Short.MAX_VALUE*2];
-		System.out.println("genelists: "+genelists.size());
 		
 		for(String key : listfilter) {
 			
@@ -460,7 +453,7 @@ public class Enrichment {
 			}
 			
 		}
-		System.out.println("Overlaps: "+counter);
+		
 		return pvals;
 	}
 
@@ -555,8 +548,6 @@ public class Enrichment {
 				ArrayList<String> signaturesList = new ArrayList<String>();
 				ArrayList<String> entityList = new ArrayList<String>();
 				
-				System.out.println("eids: "+entityID.length);
-				
 				HashMap<String, Integer> signatureMap = new HashMap<String, Integer>();
 				for(int i=0; i<signatrueID.length; i++) {
 					signatureMap.put(signatrueID[i], i);
@@ -574,8 +565,6 @@ public class Enrichment {
 					entityMap.put(entityID[i], i);
 				}
 				
-				System.out.println(_db+" e: "+entityMap.size());
-				
 				for(int i=0; i<_entities.length; i++) {
 					if(entityMap.containsKey(_entities[i])) {
 						entityList.add(_entities[i]);
@@ -586,7 +575,6 @@ public class Enrichment {
 					entityList.addAll(entityMap.keySet());
 				}
 				String[] entities = entityList.toArray(new String[0]);
-				System.out.println(_db+"e: "+entityMap.size());
 				
 				HashMap<String, short[]> sigranks = new HashMap<String, short[]>();
 				
@@ -652,12 +640,8 @@ public class Enrichment {
 		double z = (U - meanRankExpected)/sigma;
 		
 		// Add sign to encode if rank is smaller or larger than expected
-		if(z < 0) {
-			return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
-		}
-		else {
-			return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
-		}
+		
+		return z;
 	}
 	
 	public double mannWhitney2(short[] _geneset, short[] _rank){
@@ -670,22 +654,15 @@ public class Enrichment {
 		
 		double meanRankExpected = (n1*n2)/2;
 		
-		//System.out.println(n1+" "+n2+" "+meanRankExpected);
-		
 		// this is true for iia genes (in reality the complexity of the gene input list can be adjusted based on their correlation)
 		double sigma = Math.sqrt(n1)*Math.sqrt(n2/12)*Math.sqrt(n1+n2+1);
 		
-		//System.out.println("n2:"+n2+" - rank: "+_rank.length+" - gs: "+_geneset.length+" - sigma: "+sigma);
-		
 		for(int i=0; i<_geneset.length; i++) {
-			//rankSum += _rank[_geneset[i] + Short.MAX_VALUE];
 			rankSum += _rank[_geneset[i]-Short.MIN_VALUE]-Short.MIN_VALUE;
 		}
 		
 		double U = rankSum - n1*(n1+1)/2;
 		double z = (U - meanRankExpected)/sigma;
-		
-		//System.out.println(" z: "+z);
 		
 		return Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 	}

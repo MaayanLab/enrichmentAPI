@@ -310,8 +310,8 @@ public class EnrichmentTemp extends HttpServlet {
 				if(signature != null) {
 					String genesetName = signature;
 					double pval = enrichResult.get(signature).pval;
-					if(pval < pvalCut) {
-						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append("}, ");
+					if(pval <= pvalCut) {
+						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
 					}
 				}
 			}
@@ -355,8 +355,6 @@ public class EnrichmentTemp extends HttpServlet {
 				enrichResultFisher.put(keys[i], -2*(Math.log(pvalsUp[i])+Math.log(pvalsDown[i])));
 				enrichResultAvg.put(keys[i], -2*Math.log(pvalsUp[i]+pvalsDown[i]));
 				
-				System.out.println(enrichResultUp.get(keys[i]).pval+"\t"+ enrichResultDown.get(keys[i]).pval+"\t"+ enrichResultFisher.get(keys[i])+"\t"+ enrichResultAvg.get(keys[i]));
-				
 			}
 			
 			Arrays.sort(pvalsUp);
@@ -383,7 +381,7 @@ public class EnrichmentTemp extends HttpServlet {
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;;
-					if(pvalUp < pvalCutUp || pvalDown < pvalCutDown) {
+					if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
 						sb.append("{\"signature\":\"").append(genesetName)
 							.append("\", \"p-up\":").append(pvalUp)
 							.append(", \"p-down\":").append(pvalDown)
@@ -406,7 +404,6 @@ public class EnrichmentTemp extends HttpServlet {
 			e.printStackTrace();
 		}
 		
-		System.out.println("nothing");
 	}
 	
 	/**
@@ -475,6 +472,7 @@ public class EnrichmentTemp extends HttpServlet {
 				System.out.println(entities.size()+" - "+signatures.size());
 				
 				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures);
+				System.out.println("ER: "+enrichResult.size());
 				returnRankJSON(response, enrichResult, db, signatures, entities, time);
 			}
 		}
@@ -702,19 +700,23 @@ public class EnrichmentTemp extends HttpServlet {
 			    
 				db = (String) obj.get("database");
 				
-				final JSONArray queryEntities = obj.getJSONArray("entities");
-			    int n = queryEntities.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	entity_split.add(queryEntities.getString(i));
-			    }
-			    
+				if(obj.optJSONArray("entities") != null) {
+					final JSONArray queryEntities = obj.getJSONArray("entities");
+				    int n = queryEntities.length();
+				    
+				    for (int i = 0; i < n; ++i) {
+				    	entity_split.add(queryEntities.getString(i));
+				    }
+				}
+				
 			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    n = querySignatures.length();
+			    int n = querySignatures.length();
 			    
 			    for (int i = 0; i < n; ++i) {
 			    	signatures.add(querySignatures.getString(i));
 			    }
+			    
+			    System.out.println(signatures);
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
@@ -786,6 +788,8 @@ public class EnrichmentTemp extends HttpServlet {
 			sb.append("] }");
 			
 			String json = sb.toString();
+			
+			
 			json = json.replace(", }", "}");
 			json = json.replace(", ]", "]");
 			out.write(json);
