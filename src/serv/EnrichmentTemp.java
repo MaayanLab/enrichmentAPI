@@ -448,11 +448,13 @@ public class EnrichmentTemp extends HttpServlet {
 			    	entity_split.add(queryEntities.getString(i));
 			    }
 			    
-			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    n = querySignatures.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	signatures.add(querySignatures.getString(i));
+			    if(obj.optJSONArray("signatures") != null) {
+				    final JSONArray querySignatures = obj.getJSONArray("signatures");
+				    n = querySignatures.length();
+				    
+				    for (int i = 0; i < n; ++i) {
+				    	signatures.add(querySignatures.getString(i));
+				    }
 			    }
 			}
 		    catch(Exception e) {
@@ -540,6 +542,7 @@ public class EnrichmentTemp extends HttpServlet {
 		    }
 			
 			System.out.println(db);
+			
 			if(enrich.datasets.get(db).containsKey("rank")) {
 				// The database is a gene set collection	
 
@@ -608,11 +611,13 @@ public class EnrichmentTemp extends HttpServlet {
 			    	entity_split.add(queryEntities.getString(i));
 			    }
 			    
-			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    n = querySignatures.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	signatures.add(querySignatures.getString(i));
+			    if(obj.optJSONArray("signatures") != null) {
+				    final JSONArray querySignatures = obj.getJSONArray("signatures");
+				    n = querySignatures.length();
+				    
+				    for (int i = 0; i < n; ++i) {
+				    	signatures.add(querySignatures.getString(i));
+				    }
 			    }
 			}
 		    catch(Exception e) {
@@ -663,6 +668,7 @@ public class EnrichmentTemp extends HttpServlet {
 			    
 				db = (String) obj.get("database");
 			    
+
 			    final JSONArray querySignatures = obj.getJSONArray("signatures");
 			    int n = querySignatures.length();
 			    
