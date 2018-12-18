@@ -382,7 +382,8 @@ public class EnrichmentTemp extends HttpServlet {
 					double pvalFisher = enrichResultFisher.get(signature);
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
-					int direction_down = enrichResultDown.get(signature).direction;;
+					int direction_down = enrichResultDown.get(signature).direction;
+					
 					if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
 						sb.append("{\"signature\":\"").append(genesetName)
 							.append("\", \"p-up\":").append(pvalUp)
@@ -407,7 +408,6 @@ public class EnrichmentTemp extends HttpServlet {
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 	/**
@@ -520,11 +520,13 @@ public class EnrichmentTemp extends HttpServlet {
 			    	entity_split_down.add(queryEntities.getString(i));
 			    }
 			    
-			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    n = querySignatures.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	signatures.add(querySignatures.getString(i));
+			    if(obj.optJSONArray("signatures") != null) {
+				    final JSONArray querySignatures = obj.getJSONArray("signatures");
+				    n = querySignatures.length();
+				    
+				    for (int i = 0; i < n; ++i) {
+				    	signatures.add(querySignatures.getString(i));
+				    }
 			    }
 			}
 		    catch(Exception e) {
