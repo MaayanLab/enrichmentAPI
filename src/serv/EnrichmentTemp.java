@@ -311,7 +311,7 @@ public class EnrichmentTemp extends HttpServlet {
 					String genesetName = signature;
 					double pval = enrichResult.get(signature).pval;
 					if(pval <= pvalCut) {
-						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
+						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append(", \"zscore\":").append(enrichResult.get(signature).zscore).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
 					}
 				}
 			}
@@ -377,6 +377,8 @@ public class EnrichmentTemp extends HttpServlet {
 					String genesetName = signature;
 					double pvalUp = enrichResultUp.get(signature).pval;
 					double pvalDown = enrichResultDown.get(signature).pval;
+					double zUp = enrichResultUp.get(signature).zscore;
+					double zDown = enrichResultDown.get(signature).zscore;
 					double pvalFisher = enrichResultFisher.get(signature);
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
@@ -385,6 +387,8 @@ public class EnrichmentTemp extends HttpServlet {
 						sb.append("{\"signature\":\"").append(genesetName)
 							.append("\", \"p-up\":").append(pvalUp)
 							.append(", \"p-down\":").append(pvalDown)
+							.append("\", \"z-up\":").append(zUp)
+							.append(", \"z-down\":").append(zDown)
 							.append(", \"logp-fisher\":").append(pvalFisher)
 							.append(", \"logp-avg\":").append(pvalSum)
 							.append(", \"direction-up\":").append(direction_up)

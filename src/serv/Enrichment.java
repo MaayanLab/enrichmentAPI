@@ -161,8 +161,8 @@ public class Enrichment {
 		String creeds = "creeds_uid.so";
 		String enrichr = "enrichr_uid.so";	
 		
-		//String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
-		String[] datasetsStrings = {creeds, lincs_fwd};
+		String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
+		//String[] datasetsStrings = {creeds, lincs_fwd};
 		
 		for(String str : datasetsStrings) {
 			datasets.put(str.split("_")[0], initFile(str));
@@ -195,7 +195,7 @@ public class Enrichment {
 			e.printStackTrace();
 		}
 		
-		//downloadFile(awsbucket+_file, datafolder+_file);
+		downloadFile(awsbucket+_file, datafolder+_file);
 		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
 		
 		return dataTemp;
@@ -310,7 +310,7 @@ public class Enrichment {
 			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
 			
 			if(((pvalue < 0.05) && (overlap > 4)) || showAll) {
-				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0);
+				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
 			}
 		}
@@ -381,7 +381,7 @@ public class Enrichment {
 				}
 				
 				if(p < 0.05 || showAll) {
-					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction);
+					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction, z);
 					results.put(signature_id[i], r);
 				}
 			}
