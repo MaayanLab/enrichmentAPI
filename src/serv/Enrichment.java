@@ -89,9 +89,9 @@ public class Enrichment {
 				double z = mannWhitney(inputShort, lincsSignatureRank[i]);
 				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
-				if(p < 0.00001 || uids.size() > 0) {
+				//if(p < 0.00001 || uids.size() > 0) {
 					pvals.put(lincsSamples[i], p);
-				}
+				//}
 			}
 		}
 		
@@ -143,9 +143,9 @@ public class Enrichment {
 				double z = mannWhitney(inputShort, lincsfwdSignatureRank[i]);
 				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
-				if(p < 0.00001 || uids.size() > 0) {
+				//if(p < 0.00001 || uids.size() > 0) {
 					pvals.put(lincsfwdSamples[i], p);
-				}
+				//}
 			}
 		}
 		
@@ -195,7 +195,7 @@ public class Enrichment {
 			e.printStackTrace();
 		}
 		
-		downloadFile(awsbucket+_file, datafolder+_file);
+		//downloadFile(awsbucket+_file, datafolder+_file);
 		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
 		
 		return dataTemp;
@@ -380,10 +380,10 @@ public class Enrichment {
 					direction = -1;
 				}
 				
-				if(p < 0.05 || showAll) {
+				//if(p < 0.05 || showAll) {
 					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction, z);
 					results.put(signature_id[i], r);
-				}
+				//}
 			}
 		}
 		

@@ -345,21 +345,19 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			for(int i=0; i<keys.length; i++) {
 				
-				System.out.println(keys[i]);
-				System.out.println(enrichResultUp.keySet());
-				System.out.println(enrichResultDown.keySet());
-				
 				pvalsUp[i] = enrichResultUp.get(keys[i]).pval;
 				pvalsDown[i] = enrichResultDown.get(keys[i]).pval;
 				
-				enrichResultFisher.put(keys[i], -2*(Math.log(pvalsUp[i])+Math.log(pvalsDown[i])));
-				enrichResultAvg.put(keys[i], -2*Math.log(pvalsUp[i]+pvalsDown[i]));
+				enrichResultFisher.put(keys[i], (enrichResultUp.get(keys[i]).zscore*enrichResultUp.get(keys[i]).zscore));
+				enrichResultAvg.put(keys[i], (enrichResultUp.get(keys[i]).zscore+enrichResultUp.get(keys[i]).zscore));
 				
 			}
 			
+			System.out.println("Result count: "+_resultUp.size());
+			
 			Arrays.sort(pvalsUp);
-			double pvalCutUp = pvalsUp[Math.min(1000, pvalsUp.length-1)];
-			double pvalCutDown = pvalsDown[Math.min(1000, pvalsUp.length-1)];
+			double pvalCutUp = pvalsUp[Math.min(pvalsUp.length-1, pvalsUp.length-1)];
+			double pvalCutDown = pvalsDown[Math.min(pvalsUp.length-1, pvalsUp.length-1)];
 			
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
@@ -384,18 +382,18 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 					
-					if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
+					//if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
 						sb.append("{\"signature\":\"").append(genesetName)
 							.append("\", \"p-up\":").append(pvalUp)
 							.append(", \"p-down\":").append(pvalDown)
-							.append("\", \"z-up\":").append(zUp)
+							.append(", \"z-up\":").append(zUp)
 							.append(", \"z-down\":").append(zDown)
 							.append(", \"logp-fisher\":").append(pvalFisher)
 							.append(", \"logp-avg\":").append(pvalSum)
 							.append(", \"direction-up\":").append(direction_up)
 							.append(", \"direction-down\":").append(direction_down)
 							.append("}, ");
-					}
+					//}
 				}
 			}
 			sb.append("]}");
