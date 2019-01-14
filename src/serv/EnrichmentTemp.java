@@ -293,7 +293,11 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 			
 			Arrays.sort(pvals);
-			double pvalCut = pvals[Math.min(1000, pvals.length-1)];
+			double pvalCut = 1;
+			if(pvals.length > 0) {
+				pvalCut = pvals[Math.min(1000, Math.max(pvals.length-1,0))];
+			}
+			
 			
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
@@ -310,7 +314,7 @@ public class EnrichmentTemp extends HttpServlet {
 				if(signature != null) {
 					String genesetName = signature;
 					double pval = enrichResult.get(signature).pval;
-					if(pval <= pvalCut) {
+					if(pval < pvalCut) {
 						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append(", \"zscore\":").append(enrichResult.get(signature).zscore).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
 					}
 				}
@@ -348,17 +352,22 @@ public class EnrichmentTemp extends HttpServlet {
 				pvalsUp[i] = enrichResultUp.get(keys[i]).pval;
 				pvalsDown[i] = enrichResultDown.get(keys[i]).pval;
 				
-				enrichResultFisher.put(keys[i], (enrichResultUp.get(keys[i]).zscore*enrichResultUp.get(keys[i]).zscore));
-				enrichResultAvg.put(keys[i], (enrichResultUp.get(keys[i]).zscore+enrichResultUp.get(keys[i]).zscore));
+				enrichResultFisher.put(keys[i], (enrichResultUp.get(keys[i]).zscore*enrichResultDown.get(keys[i]).zscore));
+				enrichResultAvg.put(keys[i], (enrichResultUp.get(keys[i]).zscore+enrichResultDown.get(keys[i]).zscore));
 				
 			}
 			
 			System.out.println("Result count: "+_resultUp.size());
 			
 			Arrays.sort(pvalsUp);
-			double pvalCutUp = pvalsUp[Math.min(pvalsUp.length-1, pvalsUp.length-1)];
-			double pvalCutDown = pvalsDown[Math.min(pvalsUp.length-1, pvalsUp.length-1)];
 			
+			double pvalCutUp = 1;
+			double pvalCutDown = 1;
+			
+			if(pvalsUp.length > 0 && pvalsDown.length > 0) {
+				pvalCutUp = pvalsUp[Math.min(1000, pvalsUp.length-1)];
+				pvalCutDown = pvalsDown[Math.min(1000, pvalsDown.length-1)];
+			}
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
 			
@@ -382,7 +391,7 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 					
-					//if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
+					if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
 						sb.append("{\"signature\":\"").append(genesetName)
 							.append("\", \"p-up\":").append(pvalUp)
 							.append(", \"p-down\":").append(pvalDown)
@@ -393,7 +402,7 @@ public class EnrichmentTemp extends HttpServlet {
 							.append(", \"direction-up\":").append(direction_up)
 							.append(", \"direction-down\":").append(direction_down)
 							.append("}, ");
-					//}
+					}
 				}
 			}
 			sb.append("]}");
@@ -402,6 +411,8 @@ public class EnrichmentTemp extends HttpServlet {
 			json = json.replace(", }", "}");
 			json = json.replace(", ]", "]");
 			out.write(json);
+			
+			System.out.println("data sent");
 		}
 		catch(Exception e) {
 			e.printStackTrace();

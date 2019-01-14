@@ -23,33 +23,25 @@ public class Enrichment {
 	int threadCount = 2;
 	int stepSize = 100000;
 	
-	private FastFisher f = new FastFisher(50000);
+	private static FastFisher f = new FastFisher(50000);
 	
-	public HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
+	public static HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
 	
-	public HashMap<String, short[]> genelists = new HashMap<String, short[]>();
-	public HashMap<String, Short> dictionary = new HashMap<String, Short>();
-	public String[] revDictionary = new String[Short.MAX_VALUE*2];
+	static public HashMap<String, short[]> genelists = new HashMap<String, short[]>();
+	static public HashMap<String, Short> dictionary = new HashMap<String, Short>();
+	static public String[] revDictionary = new String[Short.MAX_VALUE*2];
 	
-	public String[] lincsGenes = null;
-	public String[] lincsSamples = null;
-	//float[][] lincsSignature = null;
-	short[][] lincsSignatureRank = null;
+	static public String[] lincsGenes = null;
+	static public String[] lincsSamples = null;
+	static short[][] lincsSignatureRank = null;
 	
-	public String[] lincsfwdGenes = null;
-	public String[] lincsfwdSamples = null;
-	short[][] lincsfwdSignatureRank = null;
+	static public String[] lincsfwdGenes = null;
+	static public String[] lincsfwdSamples = null;
+	static short[][] lincsfwdSignatureRank = null;
 	
-	public static void main(String[] args) {
-		Enrichment en = new Enrichment();
-		//en.testLincs();
-		
-	}
-	
-	public HashMap<String, Double> calculateSetSignatureEnrichment(String[] _genes, HashSet<String> _uids) {
+	public static HashMap<String, Double> calculateSetSignatureEnrichment(String[] _genes, HashSet<String> _uids) {
 		
 		long time = System.currentTimeMillis();
-		//String[] inputgenes = "MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2".split(",");
 		String[] inputgenes = _genes;
 		
 		HashMap<String, Short> lincsDict = new HashMap<String, Short>();
@@ -100,7 +92,7 @@ public class Enrichment {
 		return pvals;
 	}
 	
-	public HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _genes, HashSet<String> _uids) {
+	public static HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _genes, HashSet<String> _uids) {
 		
 		long time = System.currentTimeMillis();
 		//String[] inputgenes = "MDM2,MAPT,CCND1,JAK2,BIRC5,FAS,NOTCH1,MAPK14,MAPK3,ATM,NFE2L2,ITGB1,SIRT1,LRRK2,IGF1R,GSK3B,RELA,CDKN1B,NR3C1,BAX,CASP3,JUN,SP1,RAC1,CAV1,RB1,PARP1,EZH2,RHOA,PGR,SRC,MAPK8,PTK2".split(",");
@@ -195,7 +187,7 @@ public class Enrichment {
 			e.printStackTrace();
 		}
 		
-		//downloadFile(awsbucket+_file, datafolder+_file);
+		downloadFile(awsbucket+_file, datafolder+_file);
 		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
 		
 		return dataTemp;
@@ -227,7 +219,7 @@ public class Enrichment {
 		return revDictionary[_s];
 	}
 	
-	public HashMap<String, Result> calculateEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
+	public static HashMap<String, Result> calculateEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
 		
 		 if(datasets.containsKey(_db)) {
 			 
@@ -245,7 +237,7 @@ public class Enrichment {
 		return null;
 	}
 	
-	public HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures) {
+	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures) {
 		
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
@@ -320,7 +312,7 @@ public class Enrichment {
 		return results;
 	}
 	
-	public HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
+	public static HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
 		
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
@@ -380,10 +372,10 @@ public class Enrichment {
 					direction = -1;
 				}
 				
-				//if(p < 0.05 || showAll) {
+				if(p < 0.05 || showAll) {
 					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction, z);
 					results.put(signature_id[i], r);
-				//}
+				}
 			}
 		}
 		
@@ -553,7 +545,7 @@ public class Enrichment {
 					signatureMap.put(signatrueID[i], i);
 				}
 				
-				for(int i=0; i<Math.min(1000, _signatures.length); i++) {
+				for(int i=0; i<Math.min(4000, _signatures.length); i++) {
 					if(signatureMap.containsKey(_signatures[i])) {
 						signaturesList.add(_signatures[i]);
 					}
@@ -605,7 +597,7 @@ public class Enrichment {
 				HashMap<String, short[]> genesets = (HashMap<String, short[]>) datasets.get(_db).get("geneset");
 				HashMap<Short, String> revDictionary = (HashMap<Short, String>) datasets.get(_db).get("revDictionary");
 				
-				for(int i=0; i<Math.min(1000, _signatures.length); i++) {
+				for(int i=0; i<Math.min(4000, _signatures.length); i++) {
 					short[] genes = genesets.get(_signatures[i]);
 					String[] entityIDs = new String[genes.length];
 					for(int j=0; j<genes.length; j++) {
@@ -618,7 +610,7 @@ public class Enrichment {
 		return result;
 	}
 	
-	public double mannWhitney(short[] _geneset, short[] _rank){
+	public static double mannWhitney(short[] _geneset, short[] _rank){
 		// smaller rank is better, otherwise return 1-CNDF 
 		
 		int rankSum = 0;
