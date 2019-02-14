@@ -31,8 +31,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import database.SQLmanager;
 import jsp.Overlap;
 import jsp.Result;
+import math.FastFisher;
+import webinterface.GMT;
+import webinterface.GMTGeneList;
+import webinterface.GeneBackground;
+import webinterface.UserGeneList;
 
 /**
  * Servlet implementation class Test

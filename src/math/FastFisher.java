@@ -1,4 +1,4 @@
-package serv;
+package math;
 import java.util.HashSet;
 import java.util.Random;
 

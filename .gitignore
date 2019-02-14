@@ -1,2 +1,7 @@
 /build/
 /data/
+/WebContent/WEB-INF/
+*.jar
+*.war
+*.tsv
+*.so

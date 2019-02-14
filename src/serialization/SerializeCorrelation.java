@@ -1,4 +1,4 @@
-package serv;
+package serialization;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,8 +8,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 
 public class SerializeCorrelation {
 
@@ -18,7 +20,7 @@ public class SerializeCorrelation {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		SerializeCorrelation sc = new SerializeCorrelation();
+	//	SerializeCorrelation sc = new SerializeCorrelation();
 //		sc.readLincs();
 		
 //		sc.fixLincs();
@@ -26,7 +28,50 @@ public class SerializeCorrelation {
 		
 //		sc.serializeGMT();
 		
-		sc.readLincsRank();
+	//	sc.readLincsRank();
+		
+		float[] f = new float[20000];
+		Random r = new Random();
+		for(int k=0; k<f.length; k++) {
+			f[k] = r.nextFloat();
+		}
+		
+		long time = System.currentTimeMillis();
+		for(int i=0; i<1000; i++) {
+			short[] ranks = ranksHash(f);
+		}
+		System.out.println("Hash: "+(System.currentTimeMillis() - time));
+		
+		time = System.currentTimeMillis();
+		for(int i=0; i<10; i++) {
+			short[] ranks = ranks(f);
+		}
+		System.out.println("Square: "+(System.currentTimeMillis() - time));
+		
+		time = System.currentTimeMillis();
+		Short[] idx = new Short[f.length];
+		for(short i = 0; i < f.length; i++) {
+			idx[i] = i;
+		}
+		
+		for(int i=0; i<1000; i++) {
+			Short[] tempidx = new Short[idx.length];
+			System.arraycopy(idx, 0, tempidx, 0, idx.length);
+			Short[] ranks = rankTiny(tempidx, f);
+		}
+		System.out.println("Tiny: "+(System.currentTimeMillis() - time));
+		
+		time = System.currentTimeMillis();
+		
+		short[] idxs = new short[f.length];
+		for(short i = 0; i < f.length; i++) {
+			idxs[i] = i;
+		}
+		short[] tempidx = new short[idx.length];
+		for(int i=0; i<1000; i++) {
+			float[] ranks = sortTiny(idxs,tempidx, f);
+		}
+		System.out.println("Tiny sort: "+(System.currentTimeMillis() - time));
 		
 //		sc.readCorrelation();
 //		long time = System.currentTimeMillis();
@@ -110,6 +155,44 @@ public class SerializeCorrelation {
 			}
 		}
 		return ranks;
+	}
+	
+	private static short[] ranksHash(float[] _a) {
+		
+		float[] sc = new float[_a.length];
+		System.arraycopy(_a, 0, sc, 0, _a.length);
+		Arrays.sort(sc);
+		HashMap<Float, Integer> hm = new HashMap<Float, Integer>();
+		for (int i = 0; i < _a.length; i++) {
+			hm.put(sc[i], i);
+		}
+		
+		short[] ranks = new short[_a.length];
+		
+		for (int i = 0; i < _a.length; i++) {
+			ranks[i] = (short)(int) hm.get(_a[i]);
+		}
+		return ranks;
+	}
+	
+	
+	private static Short[] rankTiny(Short[] idx, float[] x) {
+		Arrays.sort(idx, (o1,o2) -> Float.compare(x[o1], x[o2]));
+		return idx;
+	}
+	
+	private static float[] sortTiny(short[] idx, short[] tempidx, float[] x) {
+		
+		//System.arraycopy(idx, 0, tempidx, 0, idx.length);
+		for(short i = 0; i < tempidx.length; i++) {
+			tempidx[i] = i;
+		}
+		
+		float[] sc = new float[x.length];
+		System.arraycopy(x, 0, sc, 0, x.length);
+		Arrays.sort(sc);
+		
+		return sc;
 	}
 	
 	public void readLincs() {

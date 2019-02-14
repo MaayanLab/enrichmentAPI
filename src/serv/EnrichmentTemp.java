@@ -32,7 +32,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import database.SQLmanager;
 import jsp.Result;
+import math.FastFisher;
+import webinterface.GMT;
+import webinterface.GeneBackground;
 
 /**
  * Servlet implementation class Test

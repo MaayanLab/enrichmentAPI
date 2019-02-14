@@ -1,4 +1,4 @@
-package serv;
+package webinterface;
 
 import java.io.IOException;
 

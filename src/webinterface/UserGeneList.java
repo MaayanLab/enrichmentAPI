@@ -1,10 +1,12 @@
-package serv;
+package webinterface;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
+
+import serv.EnrichmentCoreOld;
 
 public class UserGeneList extends GeneList{
 

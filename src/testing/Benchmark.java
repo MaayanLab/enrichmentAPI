@@ -1,4 +1,4 @@
-package serv;
+package testing;
 
 public class Benchmark {
 

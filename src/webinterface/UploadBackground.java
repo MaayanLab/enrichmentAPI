@@ -1,4 +1,4 @@
-package serv;
+package webinterface;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
+
+import database.SQLmanager;
 
 @WebServlet("/uploadbackground")
 @MultipartConfig(fileSizeThreshold=1024*1024*2, // 2MB
