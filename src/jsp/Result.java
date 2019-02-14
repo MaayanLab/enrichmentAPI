@@ -1,6 +1,7 @@
 package jsp;
 
-public class Result implements Comparable<Overlap>{
+public class Result implements Comparable<Result>{
+	
 	public short[] overlap;
 	public double pval = 0;
 	public int id = 0;
@@ -21,7 +22,7 @@ public class Result implements Comparable<Overlap>{
 		zscore = _zscore;
 	}
 	
-	public int compareTo(Overlap over) {
+	public int compareTo(Result over) {
 		if(pval < over.pval) {
 			return -1;
 		}

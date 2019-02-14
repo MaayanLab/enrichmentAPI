@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import datamanagement.DataStore;
 import jsp.Overlap;
 import jsp.Result;
 
@@ -25,7 +26,9 @@ public class Enrichment {
 	
 	private static FastFisher f = new FastFisher(50000);
 	
-	public static HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
+	//public static HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
+	
+	public static DataStore datastore;
 	
 	static public HashMap<String, short[]> genelists = new HashMap<String, short[]>();
 	static public HashMap<String, Short> dictionary = new HashMap<String, Short>();
@@ -148,22 +151,36 @@ public class Enrichment {
 	
 	public Enrichment() {
 		
-		String lincs_broad = "lincs_clue_uid.so";
-		String lincs_fwd = "lincsfwd_uid.so";
-		String creeds = "creeds_uid.so";
-		String enrichr = "enrichr_uid.so";	
+		datastore = new DataStore();
 		
-		String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
-		//String[] datasetsStrings = {creeds, lincs_fwd};
-		
-		for(String str : datasetsStrings) {
-			datasets.put(str.split("_")[0], initFile(str));
-		}
-		
+//		String lincs_broad = "lincs_clue_uid.so";
+//		String lincs_fwd = "lincsfwd_uid.so";
+//		String creeds = "creeds_uid.so";
+//		String enrichr = "enrichr_uid.so";	
+//		
+//
+//		String testEnv = System.getenv("api_test");
+//		
+//		String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
+//		boolean testing = false;
+//		if(testEnv != null) {
+//			System.out.println("Testing");
+//			testing = true;
+//		}
+//		
+//		if(testing) {
+//			String[] datasetsStringsTemp = {creeds, lincs_fwd};
+//			datasetsStrings = datasetsStringsTemp;
+//		}
+//		
+//		for(String str : datasetsStrings) {
+//			datasets.put(str.split("_")[0], initFile(str, testing));
+//		}
+//		
 		System.out.println("Initialization complete.");
 	}
 	
-	private HashMap<String, Object> initFile(String _file) {
+	private HashMap<String, Object> initFile(String _file, boolean _testing) {
 		
 		System.out.println("Init "+_file);
 		
@@ -187,7 +204,9 @@ public class Enrichment {
 			e.printStackTrace();
 		}
 		
-		downloadFile(awsbucket+_file, datafolder+_file);
+		if(!_testing) {
+			//downloadFile(awsbucket+_file, datafolder+_file);
+		}
 		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
 		
 		return dataTemp;
@@ -221,15 +240,15 @@ public class Enrichment {
 	
 	public static HashMap<String, Result> calculateEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
 		
-		 if(datasets.containsKey(_db)) {
+		 if(datastore.datasets.containsKey(_db)) {
 			 
-			 if(datasets.get(_db).containsKey("geneset")) {
+			 if(datastore.datasets.get(_db).getData().containsKey("geneset")) {
 				 // The database is a gene set collection
-				 return calculateOverlapEnrichment(_db, _entity, _signatures);
+				 return calculateOverlapEnrichment(_db, _entity, _signatures, 0.05);
 			 }
 			 else {
 				 // The database contains rank transformed signatures
-				 return calculateRankEnrichment(_db, _entity, _signatures);
+				 return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
 			 }
 			
 		 }
@@ -237,11 +256,11 @@ public class Enrichment {
 		return null;
 	}
 	
-	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures) {
+	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures, double _significance) {
 		
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
-		HashMap<String, Object> db = datasets.get(_db);
+		HashMap<String, Object> db = datastore.datasets.get(_db).getData();
 		HashMap<String, short[]> genelist = (HashMap<String, short[]>)db.get("geneset");
 		HashMap<String, Short> dictionary = (HashMap<String, Short>) db.get("dictionary");
 		
@@ -301,7 +320,8 @@ public class Enrichment {
 			double pvalue = f.getRightTailedP(numOverlap, (gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));
 			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
 			
-			if(((pvalue < 0.05) && (overlap > 4)) || showAll) {
+			if(((pvalue <= _significance)) || showAll) {
+				System.out.println(pvalue);
 				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
 			}
@@ -312,11 +332,11 @@ public class Enrichment {
 		return results;
 	}
 	
-	public static HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
+	public static HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures, double _significance) {
 		
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
-		HashMap<String, Object> db = datasets.get(_db);
+		HashMap<String, Object> db = datastore.datasets.get(_db).getData();
 		String[] entity_id = (String[]) db.get("entity_id");
 		String[] signature_id = (String[]) db.get("signature_id");
 		short[][] ranks = (short[][]) db.get("rank");
@@ -365,14 +385,14 @@ public class Enrichment {
 		for(int i=0; i<ranks.length; i++) {
 			if(uids.contains(signature_id[i]) || uids.size() == 0) {
 				double z = mannWhitney(inputShort, ranks[i]);	
-				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2)*(correctionCount/100);
+				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
 				int direction = 1;
 				if(z < 0) {
 					direction = -1;
 				}
 				
-				if(p < 0.05 || showAll) {
+				if(p < _significance || showAll) {
 					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction, z);
 					results.put(signature_id[i], r);
 				}
@@ -530,13 +550,13 @@ public class Enrichment {
 
 		HashMap<String, Object> result = new HashMap<String, Object>();
 		
-		if(datasets.containsKey(_db)) {
-			if(datasets.get(_db).containsKey("rank")) {
+		if(datastore.datasets.containsKey(_db)) {
+			if(datastore.datasets.get(_db).getData().containsKey("rank")) {
 				
-				short[][] rank = (short[][]) datasets.get(_db).get("rank");
+				short[][] rank = (short[][]) datastore.datasets.get(_db).getData().get("rank");
 				
-				String[] signatrueID = (String[]) datasets.get(_db).get("signature_id");
-				String[] entityID = (String[]) datasets.get(_db).get("entity_id");
+				String[] signatrueID = (String[]) datastore.datasets.get(_db).getData().get("signature_id");
+				String[] entityID = (String[]) datastore.datasets.get(_db).getData().get("entity_id");
 				ArrayList<String> signaturesList = new ArrayList<String>();
 				ArrayList<String> entityList = new ArrayList<String>();
 				
@@ -591,11 +611,11 @@ public class Enrichment {
 		
 		HashMap<String, String[]> result = new HashMap<String, String[]>();
 		
-		if(datasets.containsKey(_db)) {
-			if(datasets.get(_db).containsKey("geneset")) {
+		if(datastore.datasets.get(_db).getData().containsKey(_db)) {
+			if(datastore.datasets.get(_db).getData().containsKey("geneset")) {
 				
-				HashMap<String, short[]> genesets = (HashMap<String, short[]>) datasets.get(_db).get("geneset");
-				HashMap<Short, String> revDictionary = (HashMap<Short, String>) datasets.get(_db).get("revDictionary");
+				HashMap<String, short[]> genesets = (HashMap<String, short[]>) datastore.datasets.get(_db).getData().get("geneset");
+				HashMap<Short, String> revDictionary = (HashMap<Short, String>) datastore.datasets.get(_db).getData().get("revDictionary");
 				
 				for(int i=0; i<Math.min(4000, _signatures.length); i++) {
 					short[] genes = genesets.get(_signatures[i]);

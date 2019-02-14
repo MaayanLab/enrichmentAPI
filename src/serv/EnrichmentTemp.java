@@ -9,8 +9,14 @@ import java.security.MessageDigest;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,7 +111,7 @@ public class EnrichmentTemp extends HttpServlet {
 			response.setHeader("Content-Type", "application/json");
 			String json = "{ \"databases\": [";
 			
-			for(String db : enrich.datasets.keySet()){
+			for(String db : enrich.datastore.datasets.keySet()){
 				json += "\""+db+"\", ";
 			}
 			
@@ -148,21 +154,20 @@ public class EnrichmentTemp extends HttpServlet {
 		    }
 		    
 		    if(queryValid) {
-   
-				if(enrich.datasets.get(db).containsKey("geneset")) {
+				if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
 					// The database is a gene set collection
 					
 					// filter signature and entities that match the database 
 					HashSet<String> entities = new HashSet<String>(Arrays.asList(entity_split));
-					HashMap<String, Short> dict = (HashMap<String, Short>) enrich.datasets.get(db).get("dictionary");
+					HashMap<String, Short> dict = (HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("dictionary");
 					HashSet<String> dictEntities = new HashSet<String>(dict.keySet());
 					entities.retainAll(dictEntities);
 					
-					HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datasets.get(db).get("geneset")).keySet());
+					HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("geneset")).keySet());
 					signatures.retainAll(sigs);
 					
-					HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures);
-					returnOverlapJSON(response, enrichResult, db, signatures, entities, time);
+					HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, 0.5);
+					returnOverlapJSON(response, enrichResult, db, signatures, entities, time, 0, 1000);
 				}
 		    }
 		}
@@ -200,33 +205,46 @@ public class EnrichmentTemp extends HttpServlet {
 		    }
 		    
 		    if(queryValid) {
-		    	if(enrich.datasets.containsKey(db)) {
-					if(enrich.datasets.get(db).containsKey("rank")) {
+		    	if(enrich.datastore.datasets.get(db).getData().containsKey(db)) {
+					if(enrich.datastore.datasets.get(db).getData().containsKey("rank")) {
 						// The database is a gene set collection
 						
 						// filter signature and entities that match the database 
 						
 						HashSet<String > entities = new HashSet<String>(Arrays.asList(entity_split));
-						entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
-						signatures.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("signature_id"))));
+						entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
+						signatures.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("signature_id"))));
 						
-						HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures);
-						returnRankJSON(response, enrichResult, db, signatures, entities, time);
+						HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, 0.05);
+						returnRankJSON(response, enrichResult, db, signatures, entities, time, 0, 1000);
 					}
 			    }
 		    }
 		}	
 	}
 	
-	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time) {
+	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			_response.addHeader("Content-Type", "application/json");
 			_response.addHeader("Access-Control-Allow-Origin", "*");
+			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
+			
+			
 			PrintWriter out = _response.getWriter();
 			
-			
 			HashMap<String, Result> enrichResult = _result;
-			HashMap<Short, String> revdict = (HashMap<Short, String>) enrich.datasets.get(_db).get("revDictionary");
+			HashMap<Short, String> revdict = (HashMap<Short, String>) enrich.datastore.datasets.get(_db).getData().get("revDictionary");
+			
+			Result[] resultArray = new Result[enrichResult.size()];
+			int counter = 0;
+			for(String key : enrichResult.keySet()){
+				resultArray[counter] = enrichResult.get(key);
+				counter++;
+			}
+			
+			Arrays.sort(resultArray);
+			
+			System.out.println(_offset +" - "+_limit);
 			
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
@@ -242,33 +260,42 @@ public class EnrichmentTemp extends HttpServlet {
 				sb.append("\"").append(match).append("\", ");	
 			}
 			
-			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": {");
+			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
-			for(String key : enrichResult.keySet()){
-				Result res = enrichResult.get(key);
+			
+			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
+			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
+			
+			for(int i=_offset; i<_limit; i++){
+				Result res = resultArray[i];
 				String genesetName = res.name;
 				double pval = res.pval;
 				short[] overlap = res.overlap;
 				double oddsratio = res.oddsRatio;
 				int setsize = res.setsize;	
 				
-				sb.append("\"").append(genesetName).append("\" : {");
+				sb.append("{");
+				sb.append("\"uuid\" : \"").append(genesetName).append("\", ");
 				sb.append("\"p-value\" : ").append(pval).append(", ");
 				sb.append("\"oddsratio\" : ").append(oddsratio).append(", ");
 				sb.append("\"setsize\" : ").append(setsize).append(", ");
 				sb.append("\"overlap\" : [");
 				
 				for(short overgene : overlap){
-					
 					sb.append("\"").append(revdict.get((Short)overgene)).append("\", ");	
 				}
 				sb.append("]}, ");
 			}
 			
-			sb.append("}}");
+			sb.append("]}");
 			String json = sb.toString();
 			json = json.replace(", }", "}");
 			json = json.replace(", ]", "]");
+			
+			System.out.println(json);
+			
 			out.write(json);
 			
 		}
@@ -277,27 +304,25 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
-	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time) {
+	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			_response.addHeader("Content-Type", "application/json");
 			_response.addHeader("Access-Control-Allow-Origin", "*");
-			PrintWriter out = _response.getWriter();
+			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
+			
+			PrintWriter out = _response.getWriter();
 			
 			HashMap<String, Result> enrichResult = _result;
 			
-			String[] keys = enrichResult.keySet().toArray(new String[0]);
-			double[] pvals = new double[keys.length];
-			for(int i=0; i<keys.length; i++) {
-				pvals[i] = enrichResult.get(keys[i]).pval;
+			Result[] resultArray = new Result[enrichResult.size()];
+			int counter = 0;
+			for(String key : enrichResult.keySet()){
+				resultArray[counter] = enrichResult.get(key);
+				counter++;
 			}
 			
-			Arrays.sort(pvals);
-			double pvalCut = 1;
-			if(pvals.length > 0) {
-				pvalCut = pvals[Math.min(1000, Math.max(pvals.length-1,0))];
-			}
-			
+			Arrays.sort(resultArray);
 			
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
@@ -308,18 +333,28 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 			sb.append("], ");
 			
-			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": {");
+			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
-			for(String signature : enrichResult.keySet()){
+			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_limit = Math.max(1, _limit);
+			
+
+			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
+			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
+			
+			for(int i=_offset; i<_limit; i++){
+				Result res = resultArray[i];
+				String signature = res.name;
 				if(signature != null) {
 					String genesetName = signature;
 					double pval = enrichResult.get(signature).pval;
-					if(pval < pvalCut) {
-						sb.append("\"").append(genesetName).append("\" : {\"p-value\":").append(pval).append(", \"zscore\":").append(enrichResult.get(signature).zscore).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
-					}
+					
+					sb.append("{\"uuid\":\"").append(genesetName).append("\", \"p-value\":").append(pval).append(", \"zscore\":").append(enrichResult.get(signature).zscore).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
 				}
 			}
-			sb.append("}}");
+			sb.append("]}");
 			
 			String json = sb.toString();
 			json = json.replace(", }", "}");
@@ -331,10 +366,12 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
-	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time) {
+	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			_response.addHeader("Content-Type", "application/json");
 			_response.addHeader("Access-Control-Allow-Origin", "*");
+			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
+			
 			PrintWriter out = _response.getWriter();
 			
 			HashMap<String, Result> enrichResultUp = _resultUp;
@@ -348,26 +385,25 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] pvalsDown = new double[keys.length];
 			
 			for(int i=0; i<keys.length; i++) {
-				
 				pvalsUp[i] = enrichResultUp.get(keys[i]).pval;
 				pvalsDown[i] = enrichResultDown.get(keys[i]).pval;
 				
-				enrichResultFisher.put(keys[i], (enrichResultUp.get(keys[i]).zscore*enrichResultDown.get(keys[i]).zscore));
-				enrichResultAvg.put(keys[i], (enrichResultUp.get(keys[i]).zscore+enrichResultDown.get(keys[i]).zscore));
-				
+				enrichResultFisher.put(keys[i], Math.abs((enrichResultUp.get(keys[i]).zscore*enrichResultDown.get(keys[i]).zscore)));
+				enrichResultAvg.put(keys[i], Math.abs((enrichResultUp.get(keys[i]).zscore)+Math.abs(enrichResultDown.get(keys[i]).zscore)));
 			}
 			
-			System.out.println("Result count: "+_resultUp.size());
+			System.out.println("Signatures: "+_signatures.size());
+			System.out.println("Result count: " + _resultUp.size());
 			
-			Arrays.sort(pvalsUp);
+			Map<String, Double> sortedFisher = sortByValues((Map<String,Double>)enrichResultFisher, 1);
+			String[] sortFish = new String[sortedFisher.size()];
 			
-			double pvalCutUp = 1;
-			double pvalCutDown = 1;
+			int counter = 0;
+			for (Map.Entry<String, Double> me : sortedFisher.entrySet()) { 
+				sortFish[counter] = me.getKey();
+			    counter++;
+			} 
 			
-			if(pvalsUp.length > 0 && pvalsDown.length > 0) {
-				pvalCutUp = pvalsUp[Math.min(1000, pvalsUp.length-1)];
-				pvalCutDown = pvalsDown[Math.min(1000, pvalsDown.length-1)];
-			}
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
 			
@@ -379,7 +415,14 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
-			for(String signature : keys){
+			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
+			_offset = Math.min(Math.max(0, _offset), sortFish.length-1);
+			_limit = Math.min(_offset+Math.max(1, _limit), sortFish.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortFish.length);
+			
+			for(int i=_offset; i<_limit; i++){
+				String signature = sortFish[i];
+				
 				if(signature != null) {
 					String genesetName = signature;
 					double pvalUp = enrichResultUp.get(signature).pval;
@@ -391,18 +434,17 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 					
-					if(pvalUp <= pvalCutUp || pvalDown <= pvalCutDown) {
-						sb.append("{\"signature\":\"").append(genesetName)
-							.append("\", \"p-up\":").append(pvalUp)
-							.append(", \"p-down\":").append(pvalDown)
-							.append(", \"z-up\":").append(zUp)
-							.append(", \"z-down\":").append(zDown)
-							.append(", \"logp-fisher\":").append(pvalFisher)
-							.append(", \"logp-avg\":").append(pvalSum)
-							.append(", \"direction-up\":").append(direction_up)
-							.append(", \"direction-down\":").append(direction_down)
-							.append("}, ");
-					}
+					sb.append("{\"uuid\":\"").append(genesetName)
+						.append("\", \"p-up\":").append(pvalUp)
+						.append(", \"p-down\":").append(pvalDown)
+						.append(", \"z-up\":").append(zUp)
+						.append(", \"z-down\":").append(zDown)
+						.append(", \"logp-fisher\":").append(pvalFisher)
+						.append(", \"logp-avg\":").append(pvalSum)
+						.append(", \"direction-up\":").append(direction_up)
+						.append(", \"direction-down\":").append(direction_down)
+						.append("}, ");
+					
 				}
 			}
 			sb.append("]}");
@@ -445,6 +487,12 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			String db = "";
 			
+			int offset = 0;
+			int limit = 1000;
+			double significance = 0.05;
+			
+			System.out.println(queryjson);
+			
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
 			    
@@ -463,7 +511,23 @@ public class EnrichmentTemp extends HttpServlet {
 				    
 				    for (int i = 0; i < n; ++i) {
 				    	signatures.add(querySignatures.getString(i));
+				    	System.out.println(querySignatures.getString(i));
 				    }
+			    }
+			    
+			    if(obj.opt("offset") != null) {
+			    	offset = (int) obj.get("offset");
+			    }
+			    
+			    
+			    if(obj.opt("limit") != null) {
+			    	limit = (int) obj.get("limit");
+			    }
+			    
+			    System.out.println("OL: "+offset+" - "+limit);
+			    
+			    if(obj.opt("significance") != null) {
+			    	significance = (double) obj.get("significance");
 			    }
 			}
 		    catch(Exception e) {
@@ -477,18 +541,18 @@ public class EnrichmentTemp extends HttpServlet {
 		    }
 			
 			System.out.println(db);
-			if(enrich.datasets.get(db).containsKey("rank")) {
+			if(enrich.datastore.datasets.get(db).getData().containsKey("rank")) {
 				// The database is a gene set collection	
 
 				HashSet<String > entities = new HashSet<String>(entity_split);
-				entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
-				signatures.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("signature_id"))));
+				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
+				signatures.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("signature_id"))));
 				
 				System.out.println(entities.size()+" - "+signatures.size());
 				
-				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures);
+				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
 				System.out.println("ER: "+enrichResult.size());
-				returnRankJSON(response, enrichResult, db, signatures, entities, time);
+				returnRankJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
 			}
 		}
 		else if(pathInfo.matches("^/enrich/ranktwosided")){
@@ -511,6 +575,10 @@ public class EnrichmentTemp extends HttpServlet {
 			ArrayList<String> entity_split_down = new ArrayList<String>();
 			
 			String db = "";
+			
+			int offset = 0;
+			int limit = 0;
+			double significance = 0.05;
 			
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
@@ -539,6 +607,21 @@ public class EnrichmentTemp extends HttpServlet {
 				    	signatures.add(querySignatures.getString(i));
 				    }
 			    }
+			    
+			    if(obj.opt("offset") != null) {
+			    	offset = (int) obj.get("offset");
+			    }
+			    
+			    
+			    if(obj.opt("limit") != null) {
+			    	limit = (int) obj.get("limit");
+			    }
+			    
+			    System.out.println("OL: "+offset+" - "+limit);
+			    
+			    if(obj.opt("significance") != null) {
+			    	significance = (double) obj.get("significance");
+			    }
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
@@ -552,26 +635,26 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			System.out.println(db);
 			
-			if(enrich.datasets.get(db).containsKey("rank")) {
+			if(enrich.datastore.datasets.get(db).getData().containsKey("rank")) {
 				// The database is a gene set collection	
 
 				HashSet<String > entities = new HashSet<String>(entity_split_up);
-				entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
-				signatures.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("signature_id"))));
+				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
+				signatures.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("signature_id"))));
 				
-				HashMap<String, Result> enrichResultUp = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures);
+				HashMap<String, Result> enrichResultUp = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
 				
 				entities = new HashSet<String>(entity_split_down);
-				entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
-				HashMap<String, Result> enrichResultDown = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures);
+				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
+				HashMap<String, Result> enrichResultDown = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
 				
 				HashSet<String> unionSignificant = new HashSet<String>(enrichResultDown.keySet());
 				unionSignificant.removeAll(enrichResultUp.keySet());
 				entities = new HashSet<String>(entity_split_up);
-				entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
+				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
 				
 				if(unionSignificant.size() > 0) {
-					HashMap<String, Result> enrichResultUp2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant);
+					HashMap<String, Result> enrichResultUp2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultUp.putAll(enrichResultUp2);
 				}
 			
@@ -580,12 +663,12 @@ public class EnrichmentTemp extends HttpServlet {
 				
 				if(unionSignificant.size() > 0) {
 					entities = new HashSet<String>(entity_split_down);
-					entities.retainAll(Arrays.asList(((String[]) enrich.datasets.get(db).get("entity_id"))));
-					HashMap<String, Result> enrichResultDown2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant);
+					entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
+					HashMap<String, Result> enrichResultDown2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultDown.putAll(enrichResultDown2);
 				}
 				
-				returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time);
+				returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);
 			}
 		}
 		else if(pathInfo.matches("^/enrich/overlap")){
@@ -607,6 +690,9 @@ public class EnrichmentTemp extends HttpServlet {
 			ArrayList<String> entity_split = new ArrayList<String>();
 			
 			String db = "";
+			int offset = 0;
+			int limit = 1000;
+			double significance = 0.05;
 			
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
@@ -628,6 +714,21 @@ public class EnrichmentTemp extends HttpServlet {
 				    	signatures.add(querySignatures.getString(i));
 				    }
 			    }
+			    
+			    if(obj.opt("offset") != null) {
+			    	offset = (int) obj.get("offset");
+			    }
+			    
+			    
+			    if(obj.opt("limit") != null) {
+			    	limit = (int) obj.get("limit");
+			    }
+			    
+			    System.out.println("OL: "+offset+" - "+limit);
+			    
+			    if(obj.opt("significance") != null) {
+			    	significance = (double) obj.get("significance");
+			    }
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
@@ -639,20 +740,20 @@ public class EnrichmentTemp extends HttpServlet {
 				out.write(json);
 		    }
 			
-			if(enrich.datasets.get(db).containsKey("geneset")) {
+			if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
 				// The database is a gene set collection	
 				
 				HashSet<String> entities = new HashSet<String>(entity_split);
-				HashMap<String, Short> dict = (HashMap<String, Short>) enrich.datasets.get(db).get("dictionary");
+				HashMap<String, Short> dict = (HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("dictionary");
 				HashSet<String> dictEntities = new HashSet<String>(dict.keySet());
 				entities.retainAll(dictEntities);
 				
-				HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datasets.get(db).get("geneset")).keySet());
+				HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("geneset")).keySet());
 				signatures.retainAll(sigs);
 				
-				HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures);
+				HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, significance);
 				
-				returnOverlapJSON(response, enrichResult, db, signatures, entities, time);
+				returnOverlapJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
 			}
 		}
 		else if(pathInfo.matches("^/fetch/set")){
@@ -737,7 +838,6 @@ public class EnrichmentTemp extends HttpServlet {
 			    	signatures.add(querySignatures.getString(i));
 			    }
 			    
-			    System.out.println(signatures);
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
@@ -775,7 +875,6 @@ public class EnrichmentTemp extends HttpServlet {
 			json = json.replace(", }", "}");
 			json = json.replace(", ]", "]");
 			out.write(json);
-			
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -839,4 +938,52 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 		return hashtext;
 	}
+	
+	public static String[] sortByValue(HashMap<String, Double> hm) { 
+        // Create a list from elements of HashMap 
+        List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(hm.entrySet()); 
+        
+        // Sort the list 
+        Collections.sort(list, new Comparator<Map.Entry<String, Double> >() { 
+            public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) { 
+                return (o1.getValue()).compareTo(o2.getValue()); 
+            } 
+        });
+        
+        String[] listKeys = new String[list.size()];
+        
+        // put data from sorted list to hashmap
+        int counter = 0;
+        for (Map.Entry<String, Double> me : list) { 
+            listKeys[counter] = me.getKey();
+            counter++;
+        } 
+        return listKeys;
+    }
+	
+	<K, V extends Comparable<V>> Map<K, V> sortByValues
+    (final Map<K, V> map, int ascending)
+	{
+	    Comparator<K> valueComparator =  new Comparator<K>() {         
+	       private int ascending;
+	       public int compare(K k1, K k2) {
+	           int compare = map.get(k2).compareTo(map.get(k1));
+	           if (compare == 0) return 1;
+	           else return ascending*compare;
+	       }
+	       public Comparator<K> setParam(int ascending)
+	       {
+	           this.ascending = ascending;
+	           return this;
+	       }
+	   }.setParam(ascending);
+	
+	   Map<K, V> sortedByValues = new TreeMap<K, V>(valueComparator);
+	   sortedByValues.putAll(map);
+	   return sortedByValues;
+	}
+	
 }
+
+
+
