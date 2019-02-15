@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Class-Path: mariadb-java-client-2.2.1; java-json.jar
+Class-Path: mariadb-java-client-2.2.1; java-json.jar; aws-java-sdk-1.11.499.jar; commons-logging-1.2.jar; jackson-core-2.6.7.jar; jackson-dataformat-cbor-2.6.7.jar; jackson-annotations-2.6.0.jar; jackson-databind-2.6.7.2.jar

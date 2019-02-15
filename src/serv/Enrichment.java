@@ -20,6 +20,10 @@ import jsp.Overlap;
 import jsp.Result;
 import math.FastFisher;
 
+/**
+ * @author Alexander Lachmann - maayanlab
+ *
+ */
 public class Enrichment {
 	
 	int threadCount = 2;
@@ -43,6 +47,70 @@ public class Enrichment {
 	static public String[] lincsfwdSamples = null;
 	static short[][] lincsfwdSignatureRank = null;
 	
+	/**
+	 * Initialize all datasets
+	 */
+	public Enrichment() {
+		datastore = new DataStore();
+		System.out.println("Initialization complete.");
+	}
+
+	private class EnrichmentThread implements Runnable {
+		
+		boolean[] boolgenelist = null;
+		int genelistLength = 0;
+		int start = 0;
+		
+	    public EnrichmentThread(int _i, boolean[] _genelist, int _listLength){
+	    	boolgenelist = _genelist;
+	    	genelistLength = _listLength;
+	    	start = _i;
+	    }
+	    
+	    public void run() {
+	    	
+			short stepup = Short.MIN_VALUE;
+			HashMap<String, Double> pvals = new HashMap<String, Double>();
+			
+			short overlap = 0;
+			int counter = 0;
+			
+			String[] keys = genelists.keySet().toArray(new String[0]);
+			
+			for(int i=start*stepSize; i<Math.min(keys.length, (start+1)*stepSize); i++) {
+				
+				short[] gl = genelists.get(keys[i]);
+				overlap = 0;
+				
+				for(int j=0; j< gl.length; j++) {
+					if(boolgenelist[gl[j]-stepup]) {
+						overlap++;
+					}
+				}
+				
+				int numGenelist = genelistLength;
+				int totalBgGenes = 20000;
+				int gmtListSize =  gl.length;
+				int numOverlap = overlap;
+				
+				double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
+				
+				if(pvalue < 0.05) {
+					pvals.put(keys[i], pvalue);
+				}
+				
+				if(overlap > 0) {
+					counter++;
+				}
+			}
+	    }
+	}
+
+	/**
+	 * @param _genes entities to calculate overlap significance
+	 * @param _uids
+	 * @return Map of entity set and p-value by fisher exact test
+	 */
 	public static HashMap<String, Double> calculateSetSignatureEnrichment(String[] _genes, HashSet<String> _uids) {
 		
 		long time = System.currentTimeMillis();
@@ -150,110 +218,19 @@ public class Enrichment {
 		return pvals;
 	}
 	
-	public Enrichment() {
-		
-		datastore = new DataStore();
-		
-//		String lincs_broad = "lincs_clue_uid.so";
-//		String lincs_fwd = "lincsfwd_uid.so";
-//		String creeds = "creeds_uid.so";
-//		String enrichr = "enrichr_uid.so";	
-//		
-//
-//		String testEnv = System.getenv("api_test");
-//		
-//		String[] datasetsStrings = {lincs_broad, lincs_fwd, creeds, enrichr};
-//		boolean testing = false;
-//		if(testEnv != null) {
-//			System.out.println("Testing");
-//			testing = true;
-//		}
-//		
-//		if(testing) {
-//			String[] datasetsStringsTemp = {creeds, lincs_fwd};
-//			datasetsStrings = datasetsStringsTemp;
-//		}
-//		
-//		for(String str : datasetsStrings) {
-//			datasets.put(str.split("_")[0], initFile(str, testing));
-//		}
-//		
-		System.out.println("Initialization complete.");
-	}
-	
-	private HashMap<String, Object> initFile(String _file, boolean _testing) {
-		
-		System.out.println("Init "+_file);
-		
-		String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
-		String datafolder = basedir+"data/";
-		String awsbucket = "https://s3.amazonaws.com/mssm-data/";
-		
-		if(System.getenv("deployment") != null){
-			if(System.getenv("deployment").equals("marathon_deployed")){
-				datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
-			}
-		}
-		
-		try {
-			Path path = Paths.get(datafolder);
-	        if (!Files.exists(path)) {
-	            Files.createDirectory(path);
-	        }
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		if(!_testing) {
-			//downloadFile(awsbucket+_file, datafolder+_file);
-		}
-		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+_file);
-		
-		return dataTemp;
-	}
-	
-	private void downloadFile(String _url, String _destination){
-		try {
-			URL url = new URL(_url);
-			BufferedInputStream bis = new BufferedInputStream(url.openStream());
-			FileOutputStream fis = new FileOutputStream(_destination);
-			byte[] buffer = new byte[1024];
-			int count = 0;
-			while ((count = bis.read(buffer, 0, 1024)) != -1) {
-				fis.write(buffer, 0, count);
-			}
-			fis.close();
-			bis.close();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public short translate(String _s) {
-		return dictionary.get(_s);
-	}
-	
-	public String translate(int _s) {
-		return revDictionary[_s];
-	}
-	
 	public static HashMap<String, Result> calculateEnrichment(String _db, String[] _entity, HashSet<String> _signatures) {
-		
-		 if(datastore.datasets.containsKey(_db)) {
-			 
-			 if(datastore.datasets.get(_db).getData().containsKey("geneset")) {
-				 // The database is a gene set collection
-				 return calculateOverlapEnrichment(_db, _entity, _signatures, 0.05);
-			 }
-			 else {
-				 // The database contains rank transformed signatures
-				 return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
-			 }
-			
-		 }
-		
+
+		if (datastore.datasets.containsKey(_db)) {
+
+			if (datastore.datasets.get(_db).getData().containsKey("geneset")) {
+				// The database is a gene set collection
+				return calculateOverlapEnrichment(_db, _entity, _signatures, 0.05);
+			} else {
+				// The database contains rank transformed signatures
+				return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
+			}
+		}
+
 		return null;
 	}
 	
@@ -468,57 +445,6 @@ public class Enrichment {
 		}
 		
 		return pvals;
-	}
-
-	private class EnrichmentThread implements Runnable {
-		
-		boolean[] boolgenelist = null;
-		int genelistLength = 0;
-		int start = 0;
-		
-	    public EnrichmentThread(int _i, boolean[] _genelist, int _listLength){
-	    	boolgenelist = _genelist;
-	    	genelistLength = _listLength;
-	    	start = _i;
-	    }
-	    
-	    public void run() {
-	    	
-			short stepup = Short.MIN_VALUE;
-			HashMap<String, Double> pvals = new HashMap<String, Double>();
-			
-			short overlap = 0;
-			int counter = 0;
-			
-			String[] keys = genelists.keySet().toArray(new String[0]);
-			
-			for(int i=start*stepSize; i<Math.min(keys.length, (start+1)*stepSize); i++) {
-				
-				short[] gl = genelists.get(keys[i]);
-				overlap = 0;
-				
-				for(int j=0; j< gl.length; j++) {
-					if(boolgenelist[gl[j]-stepup]) {
-						overlap++;
-					}
-				}
-				
-				int numGenelist = genelistLength;
-				int totalBgGenes = 20000;
-				int gmtListSize =  gl.length;
-				int numOverlap = overlap;
-				
-				double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-				
-				if(pvalue < 0.05) {
-					pvals.put(keys[i], pvalue);
-				}
-				
-				if(overlap > 0) {
-					counter++;
-				}
-			}
-	    }
 	}
 
 	public HashMap<String, Double> calculateEnrichmentThreaded(short[] _genelist){

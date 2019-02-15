@@ -266,7 +266,6 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
-			
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
 			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
 			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);

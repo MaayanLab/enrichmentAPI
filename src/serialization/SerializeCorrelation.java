@@ -8,10 +8,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.TreeMap;
 
 public class SerializeCorrelation {
 
@@ -30,48 +30,23 @@ public class SerializeCorrelation {
 		
 	//	sc.readLincsRank();
 		
+		//float[] f = {5, 1, (float)1.1, 3, 2, 0};
+		//System.out.println(Arrays.toString(ranksHash(f)));
+		
 		float[] f = new float[20000];
 		Random r = new Random();
-		for(int k=0; k<f.length; k++) {
-			f[k] = r.nextFloat();
+		for (int i = 0; i < f.length; i++) {
+			f[i] = r.nextFloat();
 		}
 		
 		long time = System.currentTimeMillis();
-		for(int i=0; i<1000; i++) {
-			short[] ranks = ranksHash(f);
+		for (int i = 0; i < 1000; i++) {
+			ranksHash(f);
 		}
-		System.out.println("Hash: "+(System.currentTimeMillis() - time));
+		System.out.println(System.currentTimeMillis() - time);
 		
-		time = System.currentTimeMillis();
-		for(int i=0; i<10; i++) {
-			short[] ranks = ranks(f);
-		}
-		System.out.println("Square: "+(System.currentTimeMillis() - time));
 		
-		time = System.currentTimeMillis();
-		Short[] idx = new Short[f.length];
-		for(short i = 0; i < f.length; i++) {
-			idx[i] = i;
-		}
 		
-		for(int i=0; i<1000; i++) {
-			Short[] tempidx = new Short[idx.length];
-			System.arraycopy(idx, 0, tempidx, 0, idx.length);
-			Short[] ranks = rankTiny(tempidx, f);
-		}
-		System.out.println("Tiny: "+(System.currentTimeMillis() - time));
-		
-		time = System.currentTimeMillis();
-		
-		short[] idxs = new short[f.length];
-		for(short i = 0; i < f.length; i++) {
-			idxs[i] = i;
-		}
-		short[] tempidx = new short[idx.length];
-		for(int i=0; i<1000; i++) {
-			float[] ranks = sortTiny(idxs,tempidx, f);
-		}
-		System.out.println("Tiny sort: "+(System.currentTimeMillis() - time));
 		
 //		sc.readCorrelation();
 //		long time = System.currentTimeMillis();
@@ -157,24 +132,44 @@ public class SerializeCorrelation {
 		return ranks;
 	}
 	
+	private static short[] ranksTupel(float[] _a) {
+		
+		float[][] array = new float[_a.length][2];
+		for(int i=0; i<array.length; i++) {
+			array[i][0] = _a[i];
+			array[i][1] = i;
+		}
+		java.util.Arrays.sort(array, new java.util.Comparator<float[]>() {
+		    public int compare(float[] a, float[] b) {
+		        return Float.compare(a[0], b[0]);
+		    }
+		});
+		
+		short[] res = new short[_a.length];
+		for(short i=0; i<array.length; i++) {
+			res[(short)array[i][1]] = i;
+		}
+		
+		return res;
+	}
+	
 	private static short[] ranksHash(float[] _a) {
 		
 		float[] sc = new float[_a.length];
 		System.arraycopy(_a, 0, sc, 0, _a.length);
 		Arrays.sort(sc);
-		HashMap<Float, Integer> hm = new HashMap<Float, Integer>();
-		for (int i = 0; i < _a.length; i++) {
+		HashMap<Float, Short> hm = new HashMap<Float, Short>(_a.length);
+		for (short i = 0; i < _a.length; i++) {
 			hm.put(sc[i], i);
 		}
 		
 		short[] ranks = new short[_a.length];
 		
 		for (int i = 0; i < _a.length; i++) {
-			ranks[i] = (short)(int) hm.get(_a[i]);
+			ranks[i] = (short)(hm.get(_a[i])+1);
 		}
 		return ranks;
 	}
-	
 	
 	private static Short[] rankTiny(Short[] idx, float[] x) {
 		Arrays.sort(idx, (o1,o2) -> Float.compare(x[o1], x[o2]));

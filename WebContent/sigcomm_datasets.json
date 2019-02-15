@@ -1,0 +1,36 @@
+{
+  "datasets": [
+    {
+      "datasetName": "lincs_fwd",
+      "dataURL": "https://s3.amazonaws.com/mssm-data/lincsfwd_uid.so",
+      "creator": "Ma'ayan Laboratory",
+      "version": "1.0.0",
+      "datasetType": "rank_matrix",
+      "versiondate": "13/2/2019"
+    },
+    {
+      "datasetName": "lincs_clue",
+      "dataURL": "https://s3.amazonaws.com/mssm-data/lincs_clue_uid.so",
+      "creator": "Ma'ayan Laboratory",
+      "version": "1.0.0",
+      "datasetType": "rank_matrix",
+      "versiondate": "13/2/2019"
+    },
+    {
+      "datasetName": "creeds_geneset",
+      "dataURL": "https://s3.amazonaws.com/mssm-data/creeds_uid.so",
+      "creator": "Ma'ayan Laboratory",
+      "version": "1.0.0",
+      "datasetType": "geneset_library",
+      "versiondate": "13/2/2019"
+    },
+    {
+      "datasetName": "enrichr_geneset",
+      "dataURL": "https://s3.amazonaws.com/mssm-data/enrichr_uid.so",
+      "creator": "Ma'ayan Laboratory",
+      "version": "1.0.0",
+      "datasetType": "geneset_library",
+      "versiondate": "13/2/2019"
+    }
+  ]
+}
