@@ -29,6 +29,7 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 
 public class AmazonAWS {
 	
+	
 	public static void main(String[] args) throws IOException {
        AmazonAWS aws = new AmazonAWS();
        

@@ -61,6 +61,7 @@ public class EnrichmentTemp extends HttpServlet {
 	public HashMap<String, Integer> symbolToId = new HashMap<String, Integer>();
 	public HashMap<Integer, String> idToSymbol = new HashMap<Integer, String>();
 	
+	
 	public Connection connection;
 	public SQLmanager sql;
 	

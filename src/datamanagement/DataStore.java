@@ -137,7 +137,7 @@ public class DataStore {
 		
 		String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
 		String datafolder = basedir+"data/";
-		String awsbucket = "https://s3.amazonaws.com/mssm-data/";
+		//String awsbucket = "https://s3.amazonaws.com/mssm-data/";
 		
 		if(System.getenv("deployment") != null){
 			if(System.getenv("deployment").equals("marathon_deployed")){
@@ -147,6 +147,7 @@ public class DataStore {
 				}
 			}
 		}
+		
 		
 		try {
 			Path path = Paths.get(datafolder);
