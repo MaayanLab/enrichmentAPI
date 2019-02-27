@@ -9,7 +9,6 @@ import java.util.UUID;
  */
 
 public class Dataset {
-
 	
 	private String datasetType = "";		// weighted_matrix, rank_matrix, geneset_library, geneset_library_paired
 	private String datasetName = "";

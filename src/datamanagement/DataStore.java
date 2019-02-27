@@ -148,7 +148,6 @@ public class DataStore {
 			}
 		}
 		
-		
 		try {
 			Path path = Paths.get(datafolder);
 	        if (!Files.exists(path)) {

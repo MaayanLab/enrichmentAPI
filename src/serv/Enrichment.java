@@ -54,7 +54,7 @@ public class Enrichment {
 		datastore = new DataStore();
 		System.out.println("Initialization complete.");
 	}
-
+	
 	private class EnrichmentThread implements Runnable {
 		
 		boolean[] boolgenelist = null;

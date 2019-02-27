@@ -65,6 +65,7 @@ public class EnrichmentTemp extends HttpServlet {
 	public Connection connection;
 	public SQLmanager sql;
 	
+	
     /**
      * @see HttpServlet#HttpServlet()
      */
