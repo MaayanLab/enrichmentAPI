@@ -524,7 +524,6 @@ public class EnrichmentTemp extends HttpServlet {
 			    	offset = (int) obj.get("offset");
 			    }
 			    
-			    
 			    if(obj.opt("limit") != null) {
 			    	limit = (int) obj.get("limit");
 			    }
@@ -548,7 +547,6 @@ public class EnrichmentTemp extends HttpServlet {
 			System.out.println(db);
 			if(enrich.datastore.datasets.get(db).getData().containsKey("rank")) {
 				// The database is a gene set collection	
-
 				HashSet<String > entities = new HashSet<String>(entity_split);
 				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
 				signatures.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("signature_id"))));

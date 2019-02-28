@@ -64,10 +64,6 @@ public class AmazonAWS {
 	                        .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
 	                        .build();
 				
-//				s3Client = AmazonS3ClientBuilder.standard()
-//		            .withRegion("us-east-1")
-//		            .withCredentials(new ProfileCredentialsProvider())
-//		            .build();
 			}
 			else {
 				// only works when running an EC2 instance with correct role attached
