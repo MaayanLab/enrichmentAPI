@@ -1,13 +1,7 @@
 package serv;
 
-import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -104,6 +98,10 @@ public class Enrichment {
 				}
 			}
 	    }
+	}
+	
+	public void reloadRepositories() {
+		datastore = new DataStore();
 	}
 
 	/**

@@ -45,6 +45,10 @@ public class DataStore {
 		DataStore ds = new DataStore();
 	}
 	
+	public DataStore(boolean _empty) {
+		
+	}
+	
 	/**
 	 * Construct DataStore, load data set description from url supplied by environmental variable dataset_json.
 	 * If the API is launched on a test environment and api_test is set no files will be downloaded.
@@ -53,9 +57,8 @@ public class DataStore {
 	public DataStore() {
 
 		String testEnv = System.getenv("api_test");
-		String data_json_url = System.getenv("dataset_json");
-		
-		System.out.println("Env: "+testEnv+" - "+data_json_url);
+		String aws_bucket = System.getenv("aws_bucket");
+		String data_json_url =  "";
 		
 		boolean testing = false;
 		if(testEnv != null) {
@@ -63,8 +66,11 @@ public class DataStore {
 			testing = true;
 		}
 		
-		if(data_json_url != null) {
+		if(aws_bucket == null) {
 			data_json_url = "https://s3.amazonaws.com/mssm-sigcomm/sigcomm_datasets.json";
+		}
+		else {
+			data_json_url = "https://s3.amazonaws.com/"+aws_bucket+"/sigcomm_datasets.json";
 		}
 		
 		try {
@@ -72,6 +78,11 @@ public class DataStore {
 			String datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
 			if(System.getenv("endpoint")!=null) {
 				datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
+			}
+			
+			if(testing) {
+				String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
+				datafolder = basedir+"data/";
 			}
 			
 			try {
@@ -84,9 +95,9 @@ public class DataStore {
 				e.printStackTrace();
 			}
 			
-			downloadFile(data_json_url, datafolder+"/datasets.json", "private");
+			downloadFile(data_json_url, datafolder+"datasets.json", "private");
 			
-			JSONObject json = readJsonFromFile(datafolder+"/datasets.json");
+			JSONObject json = readJsonFromFile(datafolder+"datasets.json");
 			if(json.optJSONArray("datasets") != null) {
 			    final JSONArray dataset_array = json.getJSONArray("datasets");
 			    int n = dataset_array.length();
@@ -138,7 +149,6 @@ public class DataStore {
 		
 		String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
 		String datafolder = basedir+"data/";
-		//String awsbucket = "https://s3.amazonaws.com/mssm-data/";
 		
 		if(System.getenv("deployment") != null){
 			if(System.getenv("deployment").equals("marathon_deployed")){
@@ -159,7 +169,7 @@ public class DataStore {
 			e.printStackTrace();
 		}
 		
-		if(!_testing) {
+		if(_testing) {
 			downloadFile(_file, datafolder+basename, _access);
 		}
 		
@@ -173,7 +183,7 @@ public class DataStore {
 	 * @param _url
 	 * @param _destination
 	 */
-	private void downloadFile(String _url, String _destination, String _accessibility){
+	public void downloadFile(String _url, String _destination, String _accessibility){
 		
 		if(!_accessibility.equals("private")) {
 			try {

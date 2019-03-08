@@ -61,7 +61,7 @@ public class SerializeData {
 		}
 		catch(Exception e){
 			e.printStackTrace();
-		}	
+		}
 		
 		HashMap<String, Object> matrix_so = new HashMap<String, Object>();
 		matrix_so.put("entity_id", entities.toArray(new String[0]));

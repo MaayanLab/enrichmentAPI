@@ -32,16 +32,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import database.SQLmanager;
 import jsp.Result;
 import math.FastFisher;
-import webinterface.GMT;
-import webinterface.GeneBackground;
 
 /**
  * Servlet implementation class Test
  */
-@WebServlet("/api/*")
+@WebServlet("/api/v1/*")
 public class EnrichmentTemp extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     public FastFisher f;
@@ -55,15 +52,11 @@ public class EnrichmentTemp extends HttpServlet {
 	public HashSet<String> humanGenesymbol = new HashSet<String>();
 	public HashSet<String> mouseGenesymbol = new HashSet<String>();
 	
-	public HashSet<GMT> gmts;
-	public HashMap<String, GeneBackground> background;
-	
 	public HashMap<String, Integer> symbolToId = new HashMap<String, Integer>();
 	public HashMap<Integer, String> idToSymbol = new HashMap<Integer, String>();
 	
 	
 	public Connection connection;
-	public SQLmanager sql;
 	
 	
     /**
@@ -83,7 +76,7 @@ public class EnrichmentTemp extends HttpServlet {
 		
 		// TODO Auto-generated method stub
 		f = new FastFisher(40000);
-		sql = new SQLmanager();
+		
 		
 		try {
 			
@@ -472,6 +465,10 @@ public class EnrichmentTemp extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String pathInfo = request.getPathInfo();
 		System.out.println(pathInfo);
+		
+		response.addHeader("Content-Type", "application/json");
+		response.addHeader("Access-Control-Allow-Origin", "*");
+		
 		if(pathInfo.matches("^/enrich/rank")){
 			
 			long  time = System.currentTimeMillis();
@@ -536,8 +533,7 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	response.addHeader("Content-Type", "application/json");
-				response.addHeader("Access-Control-Allow-Origin", "*");
+		    	
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -628,8 +624,7 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	response.addHeader("Content-Type", "application/json");
-				response.addHeader("Access-Control-Allow-Origin", "*");
+		    	
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -735,8 +730,7 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	response.addHeader("Content-Type", "application/json");
-				response.addHeader("Access-Control-Allow-Origin", "*");
+		    	
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -791,8 +785,7 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	response.addHeader("Content-Type", "application/json");
-				response.addHeader("Access-Control-Allow-Origin", "*");
+		    
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -844,9 +837,7 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	response.addHeader("Content-Type", "application/json");
-				response.addHeader("Access-Control-Allow-Origin", "*");
-				
+		    	
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -856,7 +847,19 @@ public class EnrichmentTemp extends HttpServlet {
 			HashMap<String, Object> res =  enrich.getRankData(db, signatures.toArray(new String[0]), entity_split.toArray(new String[0]));
 			returnRankData(response, res);
 		}
+		else if(pathInfo.matches("^/loadrepositories")){
+			enrich.reloadRepositories();
+			try {
+				PrintWriter out = response.getWriter();
+				String json = "{\"status\": \"Repositories loaded into memory. Data API ready to go.\"}";
+				out.write(json);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		}
 	}
+	
 	
 	private void returnSetData(HttpServletResponse _response, HashMap<String, String[]> _sets) {
 		
