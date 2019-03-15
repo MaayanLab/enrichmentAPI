@@ -97,6 +97,7 @@ public class EnrichmentTemp extends HttpServlet {
 		
 		String pathInfo = request.getPathInfo();
 		System.out.println(pathInfo);
+		response.setHeader("Content-Type", "application/json");
 		
 		if(pathInfo == null || pathInfo.equals("/index.html") || pathInfo.equals("/")){
 			RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
@@ -107,15 +108,19 @@ public class EnrichmentTemp extends HttpServlet {
 		else if(pathInfo.matches("^/listdata")){
 			//localhost:8080/EnrichmentAPI/enrichment/listcategories
 			PrintWriter out = response.getWriter();
-			response.setHeader("Content-Type", "application/json");
-			String json = "{ \"databases\": [";
+			
+			
+			StringBuffer sb = new StringBuffer();
+			
+			sb.append("{ \"repositories\": [");
 			
 			for(String db : enrich.datastore.datasets.keySet()){
-				json += "\""+db+"\", ";
+				sb.append("{\"uuid\": \"").append(db).append("\", \"datatype\":\"").append(enrich.datastore.datasets.get(db).getDatasetType()).append("\"},");
 			}
+			sb.append("]}");
 			
-			json += "] }";
-			json = json.replace(", ]", "]");
+			String json = sb.toString();
+			json = json.replace(",]", "]");
 			out.write(json);
 		}
 		else if(pathInfo.matches("^/enrich/overlap/.*")) {
@@ -224,8 +229,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -304,8 +308,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -366,8 +369,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			PrintWriter out = _response.getWriter();
@@ -493,8 +495,6 @@ public class EnrichmentTemp extends HttpServlet {
 			int limit = 1000;
 			double significance = 0.05;
 			
-			System.out.println(queryjson);
-			
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
 			    
@@ -513,7 +513,6 @@ public class EnrichmentTemp extends HttpServlet {
 				    
 				    for (int i = 0; i < n; ++i) {
 				    	signatures.add(querySignatures.getString(i));
-				    	System.out.println(querySignatures.getString(i));
 				    }
 			    }
 			    
@@ -858,8 +857,23 @@ public class EnrichmentTemp extends HttpServlet {
 				e.printStackTrace();
 			}
 		}
+		else if(pathInfo.matches("^/listdata")){
+			//localhost:8080/EnrichmentAPI/enrichment/listcategories
+			PrintWriter out = response.getWriter();
+			StringBuffer sb = new StringBuffer();
+			
+			sb.append("{ \"repositories\": [");
+			
+			for(String db : enrich.datastore.datasets.keySet()){
+				sb.append("{\"uuid\": \"").append(db).append("\", \"datatype\":\"").append(enrich.datastore.datasets.get(db).getDatasetType()).append("\"},");
+			}
+			sb.append("]}");
+			
+			String json = sb.toString();
+			json = json.replace(",]", "]");
+			out.write(json);
+		}
 	}
-	
 	
 	private void returnSetData(HttpServletResponse _response, HashMap<String, String[]> _sets) {
 		
@@ -899,8 +913,6 @@ public class EnrichmentTemp extends HttpServlet {
 			HashMap<String, short[]> ranks = (HashMap<String, short[]>) _ranks.get("signatureRanks");
 			String[] signatures = ranks.keySet().toArray(new String[0]);
 			String[] entities = (String[]) _ranks.get("entities");
-			
-			System.out.println(Arrays.toString(signatures));
 			
 			StringBuffer sb = new StringBuffer();
 			

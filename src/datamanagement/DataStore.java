@@ -159,6 +159,8 @@ public class DataStore {
 			}
 		}
 		
+		System.out.println(datafolder+basename);
+		
 		try {
 			Path path = Paths.get(datafolder);
 	        if (!Files.exists(path)) {
@@ -169,7 +171,7 @@ public class DataStore {
 			e.printStackTrace();
 		}
 		
-		if(_testing) {
+		if(!_testing) {
 			downloadFile(_file, datafolder+basename, _access);
 		}
 		
@@ -184,15 +186,16 @@ public class DataStore {
 	 * @param _destination
 	 */
 	public void downloadFile(String _url, String _destination, String _accessibility){
-		
+		System.out.println("Downloading file now");
 		if(!_accessibility.equals("private")) {
+			System.out.println("public file");
 			try {
 				URL url = new URL(_url);
 				BufferedInputStream bis = new BufferedInputStream(url.openStream());
 				FileOutputStream fis = new FileOutputStream(_destination);
-				byte[] buffer = new byte[1024];
+				byte[] buffer = new byte[131072];
 				int count = 0;
-				while ((count = bis.read(buffer, 0, 1024)) != -1) {
+				while ((count = bis.read(buffer, 0, 131072)) != -1) {
 					fis.write(buffer, 0, count);
 				}
 				fis.close();
@@ -203,6 +206,7 @@ public class DataStore {
 			}
 		}
 		else{
+			System.out.println("private file");
 			String[] sp = _url.split("/");
 			String bucket = sp[sp.length-2];
 			String basename = sp[sp.length-1];

@@ -297,7 +297,6 @@ public class Enrichment {
 			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
 			
 			if(((pvalue <= _significance)) || showAll) {
-				System.out.println(pvalue);
 				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
 			}

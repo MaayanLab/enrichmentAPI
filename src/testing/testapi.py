@@ -15,7 +15,7 @@ def apiRequest(data, baseurl, endpoint):
     response = urllib.request.urlopen(req)
     print(response.read().decode('utf8'))
 
-baseurl = "http://localhost:8080/EnrichmentAPI/origin/api/v1"
+baseurl = "https://amp.pharm.mssm.edu/enrichmentapi/origin/api/v1"
 token = "XOXO"  #password token from system environment
 repository_uuid = "dhXdse-uuid-1234"    # uuid for repository, the binary file generated will have the same name as the id
 

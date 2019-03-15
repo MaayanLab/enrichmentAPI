@@ -34,7 +34,7 @@ public class Dataset {
 		UUID uuid = UUID.randomUUID();
 		uid = uuid.toString();
 		initDate = System.currentTimeMillis();
-		
+		datasetType = _dataType;
 	}
 	
 	public String getName() {
