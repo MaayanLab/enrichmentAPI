@@ -1,4 +1,4 @@
-package datamanagement;
+package main.java.datamanagement;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import cloudinteraction.AmazonAWS;
+import main.java.cloudinteraction.AmazonAWS;
 
 @WebServlet("/origin/api/v1/*")
 public class FileUploadManager  extends HttpServlet {
@@ -72,8 +72,10 @@ public class FileUploadManager  extends HttpServlet {
 				// repository will be stored in temporary datastructures. After generation of the repository
 				// data can be appended to the datastructure.
 				
+				String uuid = (String) obj.get("repository_uuid");
+				
 				if(pathInfo.matches("^/create")){
-					String uuid = (String) obj.get("repository_uuid");
+
 					HashSet<String> entities = new HashSet<String>();
 					if(obj.optJSONArray("entities") != null) {
 						final JSONArray queryEntities = obj.getJSONArray("entities");
@@ -90,22 +92,18 @@ public class FileUploadManager  extends HttpServlet {
 					if(success) sendStatus(response, "repository was successfully created");
 				}
 				else if(pathInfo.matches("^/append")){
-					String uuid = (String) obj.get("repository_uuid");
 					boolean success = appendRepository(uuid, obj, response);
 					if(success) sendStatus(response, "data was successfully appended");
 				}
 				else if(pathInfo.matches("^/removesamples")){
-					String uuid = (String) obj.get("repository_uuid");
 					boolean success = removeSamples(uuid, obj, response);
 					if(success) sendStatus(response, "samples were successfully removed from repository");
 				}
 				else if(pathInfo.matches("^/removerepository")){
-					String uuid = (String) obj.get("repository_uuid");
 					boolean success = removeRepository(uuid, response);
 					if(success) sendStatus(response, "repository was successfully removed");
 				}
 				else if(pathInfo.matches("^/persist")){
-					String uuid = (String) obj.get("repository_uuid");
 					boolean success = persistRepository(uuid, response);
 					if(success) sendStatus(response, "repository was successfully persisted");
 				}
@@ -322,7 +320,7 @@ public class FileUploadManager  extends HttpServlet {
 		    	ArrayList<Float> arrl = new ArrayList<Float>();
 		    	
 			    for (int j=0; j<values.length(); j++) {
-			    	arrl.add((float) values.getDouble(j));
+			    	arrl.add((float) values.getDouble(i));
 			    }
 		    	
 			    float[] set = new float[arrl.size()];

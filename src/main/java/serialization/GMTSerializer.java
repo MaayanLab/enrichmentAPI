@@ -1,4 +1,4 @@
-package serialization;
+package main.java.serialization;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import math.FastFisher;
+import main.java.math.FastFisher;
 
 public class GMTSerializer {
 

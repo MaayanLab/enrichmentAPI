@@ -1,4 +1,4 @@
-package math;
+package main.java.math;
 import java.util.HashSet;
 import java.util.Random;
 

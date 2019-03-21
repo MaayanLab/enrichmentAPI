@@ -1,4 +1,4 @@
-package serv;
+package main.java.serv;
 
 
 import java.io.BufferedReader;
@@ -32,8 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import jsp.Result;
-import math.FastFisher;
+import main.java.jsp.Result;
+import main.java.math.FastFisher;
 
 /**
  * Servlet implementation class Test
@@ -109,7 +109,7 @@ public class EnrichmentTemp extends HttpServlet {
 			//localhost:8080/EnrichmentAPI/enrichment/listcategories
 			PrintWriter out = response.getWriter();
 			
-			
+
 			StringBuffer sb = new StringBuffer();
 			
 			sb.append("{ \"repositories\": [");
@@ -229,7 +229,8 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			
+			_response.addHeader("Content-Type", "application/json");
+			_response.addHeader("Access-Control-Allow-Origin", "*");
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -308,7 +309,8 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			
+			_response.addHeader("Content-Type", "application/json");
+			_response.addHeader("Access-Control-Allow-Origin", "*");
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -369,7 +371,8 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			
+			_response.addHeader("Content-Type", "application/json");
+			_response.addHeader("Access-Control-Allow-Origin", "*");
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			PrintWriter out = _response.getWriter();

@@ -1,4 +1,4 @@
-package datamanagement;
+package main.java.datamanagement;
 
 public class GenesetLibrary {
 

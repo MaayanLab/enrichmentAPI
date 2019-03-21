@@ -1,4 +1,4 @@
-package datamanagement;
+package main.java.datamanagement;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import cloudinteraction.AmazonAWS;
+import main.java.cloudinteraction.AmazonAWS;
 
 
 /**
@@ -159,8 +159,6 @@ public class DataStore {
 			}
 		}
 		
-		System.out.println(datafolder+basename);
-		
 		try {
 			Path path = Paths.get(datafolder);
 	        if (!Files.exists(path)) {
@@ -186,9 +184,8 @@ public class DataStore {
 	 * @param _destination
 	 */
 	public void downloadFile(String _url, String _destination, String _accessibility){
-		System.out.println("Downloading file now");
+		
 		if(!_accessibility.equals("private")) {
-			System.out.println("public file");
 			try {
 				URL url = new URL(_url);
 				BufferedInputStream bis = new BufferedInputStream(url.openStream());
@@ -206,7 +203,6 @@ public class DataStore {
 			}
 		}
 		else{
-			System.out.println("private file");
 			String[] sp = _url.split("/");
 			String bucket = sp[sp.length-2];
 			String basename = sp[sp.length-1];

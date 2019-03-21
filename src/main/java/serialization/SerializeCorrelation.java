@@ -1,4 +1,4 @@
-package serialization;
+package main.java.serialization;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;

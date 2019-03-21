@@ -1,4 +1,4 @@
-package serv;
+package main.java.serv;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -9,10 +9,10 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import datamanagement.DataStore;
-import jsp.Overlap;
-import jsp.Result;
-import math.FastFisher;
+import main.java.datamanagement.DataStore;
+import main.java.jsp.Overlap;
+import main.java.jsp.Result;
+import main.java.math.FastFisher;
 
 /**
  * @author Alexander Lachmann - maayanlab
