@@ -229,8 +229,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnOverlapJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -309,8 +308,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			
@@ -371,8 +369,7 @@ public class EnrichmentTemp extends HttpServlet {
 	
 	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
 			PrintWriter out = _response.getWriter();
@@ -881,8 +878,7 @@ public class EnrichmentTemp extends HttpServlet {
 	private void returnSetData(HttpServletResponse _response, HashMap<String, String[]> _sets) {
 		
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
+			
 			PrintWriter out = _response.getWriter();
 			
 			StringBuffer sb = new StringBuffer();
@@ -907,8 +903,6 @@ public class EnrichmentTemp extends HttpServlet {
 	private void returnRankData(HttpServletResponse _response, HashMap<String, Object> _ranks) {
 		
 		try {
-			_response.addHeader("Content-Type", "application/json");
-			_response.addHeader("Access-Control-Allow-Origin", "*");
 			
 			PrintWriter out = _response.getWriter();
 			
