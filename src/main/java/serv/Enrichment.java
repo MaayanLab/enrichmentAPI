@@ -535,7 +535,7 @@ public class Enrichment {
 		
 		HashMap<String, String[]> result = new HashMap<String, String[]>();
 		
-		if(datastore.datasets.get(_db).getData().containsKey(_db)) {
+		if(datastore.datasets.containsKey(_db)) {
 			if(datastore.datasets.get(_db).getData().containsKey("geneset")) {
 				
 				HashMap<String, short[]> genesets = (HashMap<String, short[]>) datastore.datasets.get(_db).getData().get("geneset");
