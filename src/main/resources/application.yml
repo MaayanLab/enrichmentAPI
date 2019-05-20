@@ -1,0 +1,8 @@
+server:
+  port:
+    8081
+ignite:
+  port:
+    34500
+  storage:
+    C:\Temp\ignite

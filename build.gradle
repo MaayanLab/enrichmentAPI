@@ -1,53 +1,38 @@
-import java.nio.file.Paths
-
 plugins {
     id 'java'
     id 'war'
-    id 'com.bmuschko.tomcat' version '2.5'
+    id 'org.springframework.boot' version '2.1.5.RELEASE'
 }
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-version = '1.2.1'
+sourceCompatibility = 1.8
+
+def igniteVersion = "2.7.0"
 
 repositories {
-    mavenCentral()
     jcenter()
+    mavenCentral()
+    maven { url "http://repo.spring.io/libs-release" }
+    maven { url "https://jitpack.io" }
+    maven { url "http://dl.bintray.com/typesafe/maven-releases" }
 }
 
 dependencies {
-    implementation 'org.json:json:20180813'
-    implementation 'com.amazonaws:aws-java-sdk:1.11.510'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.4.0'
+    compile('org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE')
 
-    providedCompile 'javax.servlet:javax.servlet-api:4.0.1',
-            'javax.servlet:jsp-api:2.0'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
 
-    def tomcatVersion = '9.0.16'
-    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
-            "org.apache.tomcat.embed:tomcat-embed-logging-juli:9.0.0.M6",
-            "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+    implementation 'log4j:log4j:1.2.17'
 
-    testImplementation 'junit:junit:4.12'
+    compile "org.apache.ignite:ignite-core:${igniteVersion}"
+    compile "org.apache.ignite:ignite-spring:${igniteVersion}"
+
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+
+
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
-tomcat {
-    httpPort = 8080
-    httpProtocol = 'org.apache.coyote.http11.Http11Nio2Protocol'
-    ajpProtocol  = 'org.apache.coyote.ajp.AjpNio2Protocol'
-}
-
-def dockerDir = 'docker'
-def warName = 'enrichmentapi.war'
-
-war {
-    archiveName = warName
-    destinationDir = Paths.get(dockerDir).toFile()
-}
-
-clean {
-    doLast {
-        Paths.get("${dockerDir}/${warName}")
-                .toFile().delete()
-    }
+bootWar {
+    mainClassName = 'enrichmentapi.Application'
 }
