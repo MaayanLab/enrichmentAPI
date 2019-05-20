@@ -1,7 +1,13 @@
 package enrichmentapi.calc;
 
 import enrichmentapi.dto.InputDto;
+import enrichmentapi.dto.OverlapDto;
+import enrichmentapi.dto.OverlapResultDto;
 import enrichmentapi.dto.PairInputDto;
+import enrichmentapi.dto.RankDto;
+import enrichmentapi.dto.RankResultDto;
+import enrichmentapi.dto.RankTwoSidedDto;
+import enrichmentapi.dto.RankTwoSidedResultDto;
 import enrichmentapi.dto.SingleInputDto;
 import enrichmentapi.util.MathUtil;
 import org.apache.ignite.Ignite;
@@ -12,14 +18,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static enrichmentapi.calc.IgniteSoImporter.*;
+import static enrichmentapi.calc.IgniteSoImporter.ALL_GENESET_SIGNATURE_KEYS;
+import static enrichmentapi.calc.IgniteSoImporter.ENTITY_CACHE_NAME;
+import static enrichmentapi.calc.IgniteSoImporter.SIGNATURE_CACHE_NAME;
 import static enrichmentapi.util.MathUtil.sumArrays;
-import static enrichmentapi.util.NameUtils.*;
+import static enrichmentapi.util.NameUtils.getCacheName;
+import static enrichmentapi.util.NameUtils.getDictionaryName;
+import static enrichmentapi.util.NameUtils.getInvertCacheName;
+import static enrichmentapi.util.NameUtils.getRevDictionaryName;
 import static java.util.Comparator.comparingDouble;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -31,8 +50,10 @@ public class Enrichment {
 
     private static final FastFisher f = new FastFisher(50000);
     private static final Comparator<Result> resultComparator = new ResultComparator();
-    private final Ignite ignite;
+
     private ConcurrentMap<String, Integer> countOfEntities = new ConcurrentHashMap<>();
+
+    private final Ignite ignite;
 
     public Enrichment(Ignite ignite) {
         this.ignite = ignite;
@@ -49,7 +70,7 @@ public class Enrichment {
         return result;
     }
 
-    public Map<String, Object> overlap(SingleInputDto parameters) {
+    public OverlapDto overlap(SingleInputDto parameters) {
         long timeMillis = System.currentTimeMillis();
 
         try (IgniteCache<String, Integer> revDict = ignite
@@ -60,7 +81,8 @@ public class Enrichment {
         }
     }
 
-    public Map<String, Object> rank(SingleInputDto parameters) {
+    public RankDto rank(SingleInputDto parameters) {
+        long timeMillis = System.currentTimeMillis();
 
         int entitiesCount = getCountOfEntities(parameters.getDatabase());
 
@@ -75,12 +97,12 @@ public class Enrichment {
             Map<Integer, Result> results = getRankResults(calcResult, signatureIndexes,
                     parameters.getSignificance(), entitiesCount);
 
-            return returnRankJSON(results, parameters);
+            return returnRankJSON(results, parameters, timeMillis);
 
         }
     }
 
-    public Map<String, Object> rankTwoSided(PairInputDto parameters) {
+    public RankTwoSidedDto rankTwoSided(PairInputDto parameters) {
         long timeMillis = System.currentTimeMillis();
 
         List<Integer> signatureIndexes = getSignatureIndexes(parameters);
@@ -117,31 +139,32 @@ public class Enrichment {
         Set<Entry<ClusterNode, Collection<String>>> entries = mappings.entrySet();
         int[][] allRanks = new int[entries.size()][];
         int i = 0;
-        String name = UUID.randomUUID().toString();
-        IgniteAtomicLong entitiesCount = ignite.atomicLong(name, 0, true);
-        for (Entry<ClusterNode, Collection<String>> mapping : entries) {
-            ClusterNode node = mapping.getKey();
+        try (IgniteAtomicLong entitiesCount = ignite
+                .atomicLong(UUID.randomUUID().toString(), 0, true)) {
+            for (Entry<ClusterNode, Collection<String>> mapping : entries) {
+                ClusterNode node = mapping.getKey();
 
-            final Collection<String> mappedKeys = mapping.getValue();
+                final Collection<String> mappedKeys = mapping.getValue();
 
-            if (node != null) {
-                allRanks[i] = ignite.compute(ignite.cluster().forNode(node)).call(() -> {
-                    List<short[]> allRanksOnNode = new ArrayList<>();
-                    for (String key : mappedKeys) {
-                        short[] entity = rankCache.localPeek(key);
-                        if (entity != null) {
-                            entitiesCount.incrementAndGet();
-                            allRanksOnNode.add(entity);
-                        } else {
-                            logger.warn(">>> no entity for: " + key + " on node " + node.id());
+                if (node != null) {
+                    allRanks[i] = ignite.compute(ignite.cluster().forNode(node)).call(() -> {
+                        List<short[]> allRanksOnNode = new ArrayList<>();
+                        for (String key : mappedKeys) {
+                            short[] entity = rankCache.localPeek(key);
+                            if (entity != null) {
+                                entitiesCount.incrementAndGet();
+                                allRanksOnNode.add(entity);
+                            } else {
+                                logger.warn(">>> no entity for: " + key + " on node " + node.id());
+                            }
                         }
-                    }
-                    return sumArrays(allRanksOnNode.toArray(new short[entries.size()][]));
-                });
-                i++;
+                        return sumArrays(allRanksOnNode.toArray(new short[entries.size()][]));
+                    });
+                    i++;
+                }
             }
+            return new CalcResult(sumArrays(allRanks), (int) entitiesCount.get());
         }
-        return new CalcResult(sumArrays(allRanks), (int) entitiesCount.get());
     }
 
 
@@ -204,36 +227,27 @@ public class Enrichment {
         return results.subList(parameters.getOffset(), to);
     }
 
-    private Map<String, Object> returnOverlapJSON(List<Result> results, Collection<Integer> entityIds,
-                                                  SingleInputDto parameters, long time) {
-        final List<Result> resultArray = paginatedResult(results.stream()
+    private OverlapDto returnOverlapJSON(List<Result> results, Collection<Integer> entityIds,
+                                         SingleInputDto parameters, long time) {
+        final List<Result> paginatedResult = paginatedResult(results.stream()
                 .sorted(resultComparator).collect(toList()), parameters);
 
         try (IgniteCache<Integer, String> revDict = ignite
                 .getOrCreateCache(getRevDictionaryName(parameters.getDatabase()))) {
             Map<Integer, String> entityNames = revDict.getAll(new HashSet<>(entityIds));
 
-            Map<String, Object> resMap = new HashMap<>();
+            List<OverlapResultDto> overlapResults = paginatedResult
+                    .stream()
+                    .map(res -> new OverlapResultDto(
+                            (String) res.getId(),
+                            res.getPval(),
+                            res.getOddsRatio(),
+                            res.getSetsize(),
+                            res.getOverlap().stream().map(entityNames::get).collect(toList())
+                    )).collect(toList());
 
-            resMap.put("signatures", parameters.getSignatures());
-            resMap.put("matchingEntities", entityNames.values());
-            resMap.put("queryTimeSec", ((System.currentTimeMillis() * 1.0 - time) / 1000));
-            resMap.put("size", resultArray.size());
-
-            List<Map<String, Object>> listRes = new ArrayList<>();
-            resMap.put("results", listRes);
-
-            resultArray.forEach(res -> {
-                Map<String, Object> resMap2 = new HashMap<>();
-                listRes.add(resMap2);
-                resMap2.put("uuid", res.getId());
-                resMap2.put("p-value", res.getPval());
-                resMap2.put("oddsratio", res.getOddsRatio());
-                resMap2.put("setsize", res.getSetsize());
-                resMap2.put("overlap", res.getOverlap().stream().map(entityNames::get).collect(toList()));
-            });
-
-            return resMap;
+            return new OverlapDto(parameters.getSignatures(), entityNames.values(),
+                    getTimeSince(time), paginatedResult.size(), overlapResults);
         }
     }
 
@@ -309,13 +323,15 @@ public class Enrichment {
         return results;
     }
 
-    private Map<String, Object> returnRankJSON(Map<Integer, Result> results, InputDto parameters) {
+    private RankDto returnRankJSON(Map<Integer, Result> results, InputDto parameters, long time) {
 
-        final List<Result> paginatedResult = paginatedResult(results.values().stream()
+        final List<Result> paginatedResults = paginatedResult(results.values().stream()
                 .sorted(resultComparator).collect(toList()), parameters);
 
-        Set<Integer> signatureIds = paginatedResult.stream().map(r -> (Integer) r.getId()).collect(toSet());
+        Set<Integer> signatureIds = paginatedResults.stream().map(r -> (Integer) r.getId())
+                .collect(toSet());
 
+        Collection<String> inputSignatures;
         Map<Integer, String> signatureNames;
 
         try (IgniteCache<Integer, String> signatureCache = ignite
@@ -323,25 +339,24 @@ public class Enrichment {
             signatureNames = signatureCache.getAll(signatureIds);
         }
 
-        HashMap<String, Object> jsonMap = new HashMap<>();
-        List<Object> reses = new ArrayList<>();
-        jsonMap.put("results", reses);
-
-        for (int i = 0; i < paginatedResult.size(); i++) {
-            HashMap<String, Object> current = new HashMap<>();
-            final Result result = paginatedResult.get(i);
-            current.put("p-value", result.getPval());
-            current.put("zscore", result.getZscore());
-            current.put("direction", result.getDirection());
-            current.put("uuid", signatureNames.get(result.getId()));
-            reses.add(current);
+        try (IgniteCache<String, Integer> signatureCache = ignite
+                .getOrCreateCache(getInvertCacheName(getCacheName(parameters.getDatabase(), SIGNATURE_CACHE_NAME)))) {
+            inputSignatures = signatureCache.getAll(parameters.getSignatures()).keySet();
         }
 
-        return jsonMap;
+        Collection<RankResultDto> rankResults = paginatedResults.stream().map(result ->
+                new RankResultDto(
+                        signatureNames.get(result.getId()),
+                        result.getPval(),
+                        result.getZscore(),
+                        result.getDirection())).collect(toList()
+        );
+
+        return new RankDto(inputSignatures, getTimeSince(time), rankResults);
     }
 
-    private HashMap<String, Object> returnRankTwoWayJSON(Map<Integer, Result> resultUp,
-                                                         Map<Integer, Result> resultDown, PairInputDto parameters, long time) {
+    private RankTwoSidedDto returnRankTwoWayJSON(Map<Integer, Result> resultUp,
+                                                 Map<Integer, Result> resultDown, PairInputDto parameters, long time) {
 
         Map<Integer, Double> enrichResultFisher = new HashMap<>();
         Map<Integer, Double> enrichResultAvg = new HashMap<>();
@@ -369,7 +384,8 @@ public class Enrichment {
         Set<String> actualSignatureNames;
 
         try (IgniteCache<String, Integer> signatureCache = ignite
-                .getOrCreateCache(getInvertCacheName(getCacheName(parameters.getDatabase(), SIGNATURE_CACHE_NAME)))) {
+                .getOrCreateCache(
+                        getInvertCacheName(getCacheName(parameters.getDatabase(), SIGNATURE_CACHE_NAME)))) {
             actualSignatureNames = signatureCache.getAll(parameters.getSignatures()).keySet();
         }
 
@@ -380,22 +396,26 @@ public class Enrichment {
         List<Object> reses = new ArrayList<>();
         jsonMap.put("results", reses);
 
-        for (int i = parameters.getOffset(); i < parameters.getOffset() + parameters.getLimit(); i++) {
-            final Integer signature = sortedFisher.get(i);
-            HashMap<String, Object> current = new HashMap<>();
-            current.put("uuid", signatureIdNameMap.get(signature));
-            current.put("p-up", resultUp.get(signature).getPval());
-            current.put("p-down", resultDown.get(signature).getPval());
-            current.put("z-up", resultUp.get(signature).getZscore());
-            current.put("z-down", resultDown.get(signature).getZscore());
-            current.put("logp-fisher", enrichResultFisher.get(signature));
-            current.put("logp-avg", enrichResultAvg.get(signature));
-            current.put("direction-up", resultUp.get(signature).getDirection());
-            current.put("direction-down", resultDown.get(signature).getDirection());
-            reses.add(current);
-        }
+        final List<RankTwoSidedResultDto> results = sortedFisher
+                .subList(parameters.getOffset(), parameters.getOffset() + parameters.getLimit())
+                .stream()
+                .map(signature -> new RankTwoSidedResultDto(
+                        signatureIdNameMap.get(signature),
+                        resultUp.get(signature).getDirection(),
+                        resultDown.get(signature).getDirection(),
+                        resultUp.get(signature).getPval(),
+                        resultDown.get(signature).getPval(),
+                        resultUp.get(signature).getZscore(),
+                        resultDown.get(signature).getZscore(),
+                        enrichResultFisher.get(signature),
+                        enrichResultAvg.get(signature)
+                )).collect(toList());
 
-        return jsonMap;
+        return new RankTwoSidedDto(actualSignatureNames, getTimeSince(time), results);
+    }
+
+    private double getTimeSince(long time) {
+        return (System.currentTimeMillis() * 1.0 - time) / 1000;
     }
 
     private class CalcResult {
