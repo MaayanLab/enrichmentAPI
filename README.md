@@ -44,3 +44,16 @@ To run gradle task, enter
 <a href="https://docs.gradle.org/current/userguide/java_plugin.html">The Java Plugin documentation</a><br>
 <a href="https://docs.gradle.org/current/userguide/war_plugin.html">The War Plugin documentation</a><br>
 <a href="https://github.com/bmuschko/gradle-tomcat-plugin">The Tomcat Plugin documentation</a>
+
+
+### Upload of data from so files to ignite
+
+POST http://localhost:8081/api/v1/download-so
+
+```text
+{
+	"type": "overlap or rank",
+	"fileName": "path/to/so/file",
+	"name": "name of the dataset (e.g. creeds_uid)"
+}
+```
