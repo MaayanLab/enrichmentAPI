@@ -1,7 +1,7 @@
 FROM tomcat:9
 
 
-COPY enrichmentapi.war /usr/local/tomcat/webapps/enrichmentapi.war
+COPY build/libs/enrichmentAPI*.war webapps/enrichmentAPI.war
 
 ENV JAVA_OPTS="-Xmx16G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops"
 

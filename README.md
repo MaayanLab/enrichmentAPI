@@ -44,3 +44,12 @@ To run gradle task, enter
 <a href="https://docs.gradle.org/current/userguide/java_plugin.html">The Java Plugin documentation</a><br>
 <a href="https://docs.gradle.org/current/userguide/war_plugin.html">The War Plugin documentation</a><br>
 <a href="https://github.com/bmuschko/gradle-tomcat-plugin">The Tomcat Plugin documentation</a>
+
+### Docker-compose
+Getting started with docker-compose
+
+```bash
+gradle war
+docker-compose build
+docker-compose up
+```

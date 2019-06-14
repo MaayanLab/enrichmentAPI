@@ -1,0 +1,13 @@
+version: '3'
+services:
+  data-api:
+    build:
+      context: .
+      dockerfile: docker/DockerfileAPI
+    image: maayanlab/enrichmentapi
+    environment:
+      token: token
+    ports:
+      - 8080:8080
+volumes:
+  ignite:
