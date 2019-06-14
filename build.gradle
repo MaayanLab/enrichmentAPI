@@ -14,7 +14,7 @@ repositories {
     mavenCentral()
 }
 
-dependencies {f
+dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-security:2.1.5.RELEASE'
 
