@@ -1,0 +1,20 @@
+version: '3'
+services:
+  data-api:
+    build:
+      context: .
+      dockerfile: docker/DockerfileAPI
+    image: maayanlab/enrichmentapi
+    environment:
+      # TODO: configure this environment variable to actually work
+      IGNITE_ADDRESSES: ignite:8446, ignite:8446
+    ports:
+      - 8080:8080
+    volumes:
+      - ignite:/opt/data
+  ignite:
+    image: apacheignite/ignite:2.7.0
+    volumes:
+      - ignite:/opt/data
+volumes:
+  ignite:

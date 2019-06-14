@@ -138,3 +138,13 @@ accordingly.
 ##### Swagger
 
 Description of API available on `/swagger-ui.html`
+
+
+### Docker-compose
+Getting started with docker-compose
+
+```bash
+gradle bootJar
+docker-compose build
+docker-compose up
+```
