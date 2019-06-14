@@ -1,9 +1,11 @@
-package enrichmentapi.dto;
+package enrichmentapi.dto.in;
 
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 public abstract class InputDto {
-    private Set<String> signatures;
+    private Set<String> signatures = emptySet();
     private int limit = 500;
     private int offset = 0;
     private String database;

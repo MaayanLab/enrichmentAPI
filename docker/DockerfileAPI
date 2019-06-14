@@ -1,9 +1,8 @@
-FROM tomcat:9
+FROM openjdk:8-jre-slim
 
+ENV JAVA_OPTS="-Xmx16G"
+WORKDIR /opt/enrichmentapi
+COPY enrichmentapi.jar /opt/enrichmentapi
 
-COPY enrichmentapi.war /usr/local/tomcat/webapps/enrichmentapi.war
-
-ENV JAVA_OPTS="-Xmx16G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops"
-
-EXPOSE 8080
+CMD java $JAVA_OPTS -jar enrichmentapi.jar
 

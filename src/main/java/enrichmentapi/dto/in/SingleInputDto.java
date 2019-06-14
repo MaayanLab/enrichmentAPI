@@ -1,4 +1,4 @@
-package enrichmentapi.dto;
+package enrichmentapi.dto.in;
 
 import java.util.Set;
 

@@ -1,10 +1,10 @@
 package enrichmentapi.calc;
 
-import java.util.Set;
+import java.util.Collection;
 
 public class Result {
 
-    private Set<Short> overlap;
+    private Collection<Short> overlap;
     private double pval;
     private Object id;
     private int setsize;
@@ -12,7 +12,7 @@ public class Result {
     private int direction;
     private double zscore;
 
-    public Result(Object id, Set<Short> overlap, double pval, int setsize, double odds, int direction, double zscore) {
+    public Result(Object id, Collection<Short> overlap, double pval, int setsize, double odds, int direction, double zscore) {
         this.id = id;
         this.overlap = overlap;
         this.pval = pval;
@@ -29,7 +29,7 @@ public class Result {
         this.zscore = zscore;
     }
 
-    public Set<Short> getOverlap() {
+    public Collection<Short> getOverlap() {
         return overlap;
     }
 
@@ -55,5 +55,18 @@ public class Result {
 
     public double getZscore() {
         return zscore;
+    }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "overlap=" + overlap +
+                ", pval=" + pval +
+                ", id=" + id +
+                ", setsize=" + setsize +
+                ", oddsRatio=" + oddsRatio +
+                ", direction=" + direction +
+                ", zscore=" + zscore +
+                '}';
     }
 }

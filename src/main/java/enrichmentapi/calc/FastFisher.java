@@ -10,7 +10,7 @@ package enrichmentapi.calc;
  * for independence; however, the Chi-square gives only an estimate of the true probability value, an estimate
  * which might not be very accurate if the marginal is very uneven or if there is a small value (less than five)
  * in one of the cells.
- * <p>
+ *
  * It uses an array of factorials initialized at the beginning to provide speed.
  * There could be better ways to do this.
  *
@@ -20,9 +20,9 @@ package enrichmentapi.calc;
 
 public class FastFisher {
     private static final boolean DEBUG = false;
-    int maxSize;
     private double[] f;
     private double[] ef;
+    int maxSize;
 
 
     /**
@@ -39,6 +39,23 @@ public class FastFisher {
         for (int i = 1; i <= this.maxSize; i++) {
             f[i] = f[i - 1] + Math.log(i);
         }
+    }
+
+    /**
+     * calculates the P-value for this specific state
+     *
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
+     * @param b
+     * @param c
+     * @param d
+     * @return the P-value
+     */
+    public final double getP2(int a, int b, int c, int d, double same) {
+        return Math.exp(same - (f[a] + f[b] + f[c] + f[d]));
+    }
+
+    public final double getP3(int a, int b, int c, int d, double same) {
+        return exp20(same - (f[a] + f[b] + f[c] + f[d]));
     }
 
     public static double exp5(double x) {
@@ -94,24 +111,7 @@ public class FastFisher {
     /**
      * calculates the P-value for this specific state
      *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
-     * @param b
-     * @param c
-     * @param d
-     * @return the P-value
-     */
-    public final double getP2(int a, int b, int c, int d, double same) {
-        return Math.exp(same - (f[a] + f[b] + f[c] + f[d]));
-    }
-
-    public final double getP3(int a, int b, int c, int d, double same) {
-        return exp20(same - (f[a] + f[b] + f[c] + f[d]));
-    }
-
-    /**
-     * calculates the P-value for this specific state
-     *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
      * @param b
      * @param c
      * @param d
@@ -131,7 +131,7 @@ public class FastFisher {
      * Calculates the one-tail P-value for the Fisher Exact test.  Determines whether to calculate the right- or left-
      * tail, thereby always returning the smallest p-value.
      *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
      * @param b
      * @param c
      * @param d
@@ -146,42 +146,26 @@ public class FastFisher {
         double p = 0;
 
         p += getP(a, b, c, d);
-        if (DEBUG) {
-            System.out.println("p = " + p);
-        }
+        if (DEBUG) {System.out.println("p = " + p);}
         if ((a * d) >= (b * c)) {
-            if (DEBUG) {
-                System.out.println("doing R-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);
-            }
+            if (DEBUG) {System.out.println("doing R-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);}
             min = (c < b) ? c : b;
             for (i = 0; i < min; i++) {
-                if (DEBUG) {
-                    System.out.print("doing round " + i);
-                }
+                if (DEBUG) {System.out.print("doing round " + i);}
                 p += getP(++a, --b, --c, ++d);
-                if (DEBUG) {
-                    System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);
-                }
+                if (DEBUG) {System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);}
             }
             System.out.println();
         }
         if ((a * d) < (b * c)) {
-            if (DEBUG) {
-                System.out.println("doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);
-            }
+            if (DEBUG) {System.out.println("doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);}
             min = (a < d) ? a : d;
             for (i = 0; i < min; i++) {
-                if (DEBUG) {
-                    System.out.print("doing round " + i);
-                }
+                if (DEBUG) {System.out.print("doing round " + i);}
                 double pTemp = getP(--a, ++b, ++c, --d);
-                if (DEBUG) {
-                    System.out.print("\tpTemp = " + pTemp);
-                }
+                if (DEBUG) {System.out.print("\tpTemp = " + pTemp);}
                 p += pTemp;
-                if (DEBUG) {
-                    System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);
-                }
+                if (DEBUG) {System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);}
             }
         }
         return p;
@@ -190,7 +174,7 @@ public class FastFisher {
     /**
      * Calculates the right-tail P-value for the Fisher Exact test.
      *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
      * @param b
      * @param c
      * @param d
@@ -222,7 +206,7 @@ public class FastFisher {
     /**
      * Calculates the left-tail P-value for the Fisher Exact test.
      *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
      * @param b
      * @param c
      * @param d
@@ -237,25 +221,15 @@ public class FastFisher {
         double p = 0;
 
         p += getP(a, b, c, d);
-        if (DEBUG) {
-            System.out.println("p = " + p);
-        }
-        if (DEBUG) {
-            System.out.println("doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);
-        }
+        if (DEBUG) {System.out.println("p = " + p);}
+        if (DEBUG) {System.out.println("doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);}
         min = (a < d) ? a : d;
         for (i = 0; i < min; i++) {
-            if (DEBUG) {
-                System.out.print("doing round " + i);
-            }
+            if (DEBUG) {System.out.print("doing round " + i);}
             double pTemp = getP(--a, ++b, ++c, --d);
-            if (DEBUG) {
-                System.out.print("\tpTemp = " + pTemp);
-            }
+            if (DEBUG) {System.out.print("\tpTemp = " + pTemp);}
             p += pTemp;
-            if (DEBUG) {
-                System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);
-            }
+            if (DEBUG) {System.out.println("\ta=" + a + " b=" + b + " c=" + c + " d=" + d);}
         }
 
 
@@ -264,16 +238,16 @@ public class FastFisher {
 
 
     /**
-     * Calculates the two-tailed P-value for the Fisher Exact test.
-     * <p>
-     * In order for a table under consideration to have its p-value included
-     * in the final result, it must have a p-value less than the original table's P-value, i.e.
-     * Fisher's exact test computes the probability, given the observed marginal
-     * frequencies, of obtaining exactly the frequencies observed and any configuration more extreme.
-     * By "more extreme," we mean any configuration (given observed marginals) with a smaller probability of
-     * occurrence in the same direction (one-tailed) or in both directions (two-tailed).
+     *   Calculates the two-tailed P-value for the Fisher Exact test.
      *
-     * @param a a, b, c, d are the four cells in a 2x2 matrix
+     *   In order for a table under consideration to have its p-value included
+     *   in the final result, it must have a p-value less than the original table's P-value, i.e.
+     *   Fisher's exact test computes the probability, given the observed marginal
+     *   frequencies, of obtaining exactly the frequencies observed and any configuration more extreme.
+     *   By "more extreme," we mean any configuration (given observed marginals) with a smaller probability of
+     *   occurrence in the same direction (one-tailed) or in both directions (two-tailed).
+     *
+     * @param a     a, b, c, d are the four cells in a 2x2 matrix
      * @param b
      * @param c
      * @param d
@@ -295,32 +269,20 @@ public class FastFisher {
 //         By "more extreme," we mean any configuration (given observed marginals) with a smaller probability of
 //         occurrence in the same direction (one-tailed) or in both directions (two-tailed).
 
-        if (DEBUG) {
-            System.out.println("baseP = " + baseP);
-        }
+        if (DEBUG) {System.out.println("baseP = " + baseP);}
         int initialA = a, initialB = b, initialC = c, initialD = d;
         p += baseP;
-        if (DEBUG) {
-            System.out.println("p = " + p);
-        }
-        if (DEBUG) {
-            System.out.println("Starting with R-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);
-        }
+        if (DEBUG) {System.out.println("p = " + p);}
+        if (DEBUG) {System.out.println("Starting with R-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);}
         min = (c < b) ? c : b;
         for (i = 0; i < min; i++) {
-            if (DEBUG) {
-                System.out.print("doing round " + i);
-            }
+            if (DEBUG) {System.out.print("doing round " + i);}
             double tempP = getP(++a, --b, --c, ++d);
             if (tempP <= baseP) {
-                if (DEBUG) {
-                    System.out.print("\ttempP (" + tempP + ") is less than baseP (" + baseP + ")");
-                }
+                if (DEBUG) {System.out.print("\ttempP (" + tempP + ") is less than baseP (" + baseP + ")");}
                 p += tempP;
             }
-            if (DEBUG) {
-                System.out.println(" a=" + a + " b=" + b + " c=" + c + " d=" + d);
-            }
+            if (DEBUG) {System.out.println(" a=" + a + " b=" + b + " c=" + c + " d=" + d);}
         }
 
         // reset the values to their original so we can repeat this process for the other side
@@ -329,30 +291,18 @@ public class FastFisher {
         c = initialC;
         d = initialD;
 
-        if (DEBUG) {
-            System.out.println("Now doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);
-        }
+        if (DEBUG) {System.out.println("Now doing L-tail: a=" + a + " b=" + b + " c=" + c + " d=" + d);}
         min = (a < d) ? a : d;
-        if (DEBUG) {
-            System.out.println("min = " + min);
-        }
+        if (DEBUG) {System.out.println("min = " + min);}
         for (i = 0; i < min; i++) {
-            if (DEBUG) {
-                System.out.print("doing round " + i);
-            }
+            if (DEBUG) {System.out.print("doing round " + i);}
             double pTemp = getP(--a, ++b, ++c, --d);
-            if (DEBUG) {
-                System.out.println("  pTemp = " + pTemp);
-            }
+            if (DEBUG) {System.out.println("  pTemp = " + pTemp);}
             if (pTemp <= baseP) {
-                if (DEBUG) {
-                    System.out.print("\ttempP (" + pTemp + ") is less than baseP (" + baseP + ")");
-                }
+                if (DEBUG) {System.out.print("\ttempP (" + pTemp + ") is less than baseP (" + baseP + ")");}
                 p += pTemp;
             }
-            if (DEBUG) {
-                System.out.println(" a=" + a + " b=" + b + " c=" + c + " d=" + d);
-            }
+            if (DEBUG) {System.out.println(" a=" + a + " b=" + b + " c=" + c + " d=" + d);}
         }
         return p;
     }

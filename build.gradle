@@ -5,34 +5,44 @@ plugins {
 }
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version '1.0-SNAPSHOT'
 
 def igniteVersion = "2.7.0"
 
 repositories {
-    jcenter()
     mavenCentral()
-    maven { url "http://repo.spring.io/libs-release" }
-    maven { url "https://jitpack.io" }
-    maven { url "http://dl.bintray.com/typesafe/maven-releases" }
 }
 
-dependencies {
-    compile('org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE')
+dependencies {f
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-security:2.1.5.RELEASE'
+
+    implementation 'org.json:json:20180813'
 
     implementation 'io.springfox:springfox-swagger2:2.9.2'
     implementation 'io.springfox:springfox-swagger-ui:2.9.2'
 
     implementation 'log4j:log4j:1.2.17'
 
-    compile "org.apache.ignite:ignite-core:${igniteVersion}"
-    compile "org.apache.ignite:ignite-spring:${igniteVersion}"
+    implementation "org.apache.ignite:ignite-core:${igniteVersion}"
+    implementation "org.apache.ignite:ignite-spring:${igniteVersion}"
+    implementation "org.apache.ignite:ignite-rest-http:${igniteVersion}"
 
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
+    
+    implementation 'org.postgresql:postgresql:42.2.2'
 
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-all:1.10.19'
+}
 
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+configurations {
+    implementation {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
 }
 
 bootWar {
-    mainClassName = 'enrichmentapi.Application'
+    mainClassName = 'spring.Application'
 }
