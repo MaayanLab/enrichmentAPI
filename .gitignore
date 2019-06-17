@@ -10,3 +10,5 @@
 /out/
 *.iml
 !/gradle/wrapper/gradle-wrapper.jar
+.DS_Store
+bin
