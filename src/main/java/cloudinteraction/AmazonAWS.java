@@ -26,6 +26,7 @@ import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 
 public class AmazonAWS {
 	
@@ -51,6 +52,11 @@ public class AmazonAWS {
 		try {
 			// first try to load user environmental variables, if not existent try to load S3 client with role
 			String aws_key = System.getenv("AWS_ACCESS_KEY_ID");
+			String aws_endpoint_url = System.getenv("AWS_ENDPOINT_URL");
+			if (aws_endpoint_url == null) {
+				aws_endpoint_url = "https://s3.us-east-1.amazonaws.com";
+			}
+
 			if (aws_key != null) {
 				System.out.println("Using user credentials");
 				// load client using password
@@ -58,11 +64,11 @@ public class AmazonAWS {
 				BasicAWSCredentials awsCreds = new BasicAWSCredentials(aws_key, System.getenv("AWS_SECRET_ACCESS_KEY"));
 				
 				Regions region = Regions.fromName("us-east-1");
-				
+
 				s3Client = AmazonS3ClientBuilder.standard()
-					.withRegion(region)
-                    .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-                    .build();
+					.withEndpointConfiguration(new EndpointConfiguration(aws_endpoint_url, region.getName()))
+					.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+					.build();
 			}
 			else {
 				// only works when running an EC2 instance with correct role attached
