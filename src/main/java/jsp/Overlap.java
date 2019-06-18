@@ -1,4 +1,4 @@
-package main.java.jsp;
+package jsp;
 
 public class Overlap implements Comparable<Overlap>{
 	public short[] overlap;

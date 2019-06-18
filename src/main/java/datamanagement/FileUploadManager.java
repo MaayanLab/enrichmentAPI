@@ -1,4 +1,4 @@
-package main.java.datamanagement;
+package datamanagement;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import main.java.cloudinteraction.AmazonAWS;
+import cloudinteraction.AmazonAWS;
 
 @WebServlet("/origin/api/v1/*")
 public class FileUploadManager  extends HttpServlet {

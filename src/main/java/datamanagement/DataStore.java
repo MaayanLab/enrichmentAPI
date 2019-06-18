@@ -1,4 +1,4 @@
-package main.java.datamanagement;
+package datamanagement;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import main.java.cloudinteraction.AmazonAWS;
+import cloudinteraction.AmazonAWS;
 
 
 /**
@@ -55,83 +55,7 @@ public class DataStore {
 	 * Instead it will attempt to deserialize local copies of lincs and creeds.
 	 */
 	public DataStore() {
-
-		String testEnv = System.getenv("api_test");
-		String aws_bucket = System.getenv("aws_bucket");
-		String data_json_url =  "";
-		
-		boolean testing = false;
-		if(testEnv != null) {
-			System.out.println("Testing, do not download files");
-			testing = true;
-		}
-		
-		if(aws_bucket == null) {
-			data_json_url = "https://s3.amazonaws.com/mssm-sigcomm/sigcomm_datasets.json";
-		}
-		else {
-			data_json_url = "https://s3.amazonaws.com/"+aws_bucket+"/sigcomm_datasets.json";
-		}
-		
-		try {
-			
-			String datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
-			if(System.getenv("endpoint")!=null) {
-				datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
-			}
-			
-			if(testing) {
-				String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
-				datafolder = basedir+"data/";
-			}
-			
-			try {
-				Path path = Paths.get(datafolder);
-		        if (!Files.exists(path)) {
-		            Files.createDirectory(path);
-		        }
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			}
-			
-			downloadFile(data_json_url, datafolder+"datasets.json", "private");
-			
-			JSONObject json = readJsonFromFile(datafolder+"datasets.json");
-			if(json.optJSONArray("datasets") != null) {
-			    final JSONArray dataset_array = json.getJSONArray("datasets");
-			    int n = dataset_array.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	JSONObject dataset_obj = dataset_array.getJSONObject(i);
-			    	
-			    	String datasetType = dataset_obj.getString("datasetType");		// weighted_matrix, rank_matrix, geneset_library, geneset_library_paired
-			    	String datasetName = dataset_obj.getString("datasetName");
-			    	String dataURL = dataset_obj.getString("dataURL");
-			    	String creator = dataset_obj.getString("creator");
-			    	String version = dataset_obj.getString("version");
-			    	String initDate = dataset_obj.getString("versiondate");
-			    	String access = dataset_obj.getString("accessibility");
-			    	
-			    	if(!testing || (datasetName.equals("lincs_fwd") || datasetName.equals("creeds_geneset"))) {
-			    		try {
-			    			Dataset data = new Dataset(datasetName, dataURL, datasetType, creator, version, initDate);
-			    			HashMap<String, Object> datapod = initFile(dataURL, testing, access);
-			    			data.setData(datapod);
-			    			datasets.put(datasetName, data);
-			    		}
-			    		catch(Exception e) {
-			    			e.printStackTrace();
-			    		}
-			    	}
-			    }
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		System.out.println("Initialization complete.");
+		System.out.println("Init empty");
 	}
 	
 	/**
@@ -140,18 +64,14 @@ public class DataStore {
 	 * @param _testing if true do not download file but try to load local copy from fixed location.
 	 * @return one deserialized data blob
 	 */
-	private HashMap<String, Object> initFile(String _file, boolean _testing, String _access) {
+	public void initFile(String _datasetname, String _bucket, String _filename) {
 		
-		String[] sp = _file.split("/");
-		String basename = sp[sp.length-1];
+		System.out.println("Init "+_filename);
 		
-		System.out.println("Init "+_file);
-		
-		String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
-		String datafolder = basedir+"data/";
+		String datafolder = "/Users/maayanlab/OneDrive/enrichmentapi/data/";
 		
 		if(System.getenv("deployment") != null){
-			if(System.getenv("deployment").equals("marathon_deployed")){
+			if(System.getenv("deployment").equals("docker_deployed")){
 				datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
 				if(System.getenv("endpoint")!=null) {
 					datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
@@ -169,13 +89,16 @@ public class DataStore {
 			e.printStackTrace();
 		}
 		
-		if(!_testing) {
-			downloadFile(_file, datafolder+basename, _access);
+		downloadFile(_bucket, _filename, datafolder+_filename);
+		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
+		String datatype = "rank_matrix";
+		if(datapod.containsKey("geneset")) {
+			datatype = "gene_set";
 		}
-		
-		HashMap<String, Object> dataTemp = (HashMap<String, Object>) deserialize(datafolder+basename);
-		
-		return dataTemp;
+
+		Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2019");
+		data.setData(datapod);
+		datasets.put(_datasetname, data);
 	}
 	
 	/**
@@ -183,33 +106,9 @@ public class DataStore {
 	 * @param _url
 	 * @param _destination
 	 */
-	public void downloadFile(String _url, String _destination, String _accessibility){
-		
-		if(!_accessibility.equals("private")) {
-			try {
-				URL url = new URL(_url);
-				BufferedInputStream bis = new BufferedInputStream(url.openStream());
-				FileOutputStream fis = new FileOutputStream(_destination);
-				byte[] buffer = new byte[131072];
-				int count = 0;
-				while ((count = bis.read(buffer, 0, 131072)) != -1) {
-					fis.write(buffer, 0, count);
-				}
-				fis.close();
-				bis.close();
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		else{
-			String[] sp = _url.split("/");
-			String bucket = sp[sp.length-2];
-			String basename = sp[sp.length-1];
-			AmazonAWS aws = new AmazonAWS();
-			
-			aws.downloadS3(bucket, basename, _destination);
-		}
+	public void downloadFile(String _bucket, String _filename, String _destination){
+		AmazonAWS aws = new AmazonAWS();
+		aws.downloadS3(_bucket, _filename, _destination);
 	}
 
 	/**

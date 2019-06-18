@@ -1,4 +1,4 @@
-package  main.java.testing;
+package  testing;
 
 public class Benchmark {
 

@@ -1,4 +1,4 @@
-package main.java.serv;
+package serv;
 
 
 import java.io.BufferedReader;
@@ -32,8 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import main.java.jsp.Result;
-import main.java.math.FastFisher;
+import jsp.Result;
+import math.FastFisher;
 
 /**
  * Servlet implementation class Test
@@ -109,7 +109,6 @@ public class EnrichmentTemp extends HttpServlet {
 			//localhost:8080/EnrichmentAPI/enrichment/listcategories
 			PrintWriter out = response.getWriter();
 			
-
 			StringBuffer sb = new StringBuffer();
 			
 			sb.append("{ \"repositories\": [");
@@ -232,7 +231,6 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
-			
 			PrintWriter out = _response.getWriter();
 			
 			HashMap<String, Result> enrichResult = _result;
@@ -310,7 +308,6 @@ public class EnrichmentTemp extends HttpServlet {
 		try {
 			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
-			
 			
 			PrintWriter out = _response.getWriter();
 			
@@ -871,6 +868,44 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			String json = sb.toString();
 			json = json.replace(",]", "]");
+			out.write(json);
+		}
+		else if(pathInfo.matches("^/load")){
+			
+			StringBuffer jb = new StringBuffer();
+			String line = null;
+			try {
+				BufferedReader reader = request.getReader();
+				while ((line = reader.readLine()) != null)
+					jb.append(line);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			String queryjson = jb.toString();
+			
+			String bucket = "";
+			String filename = "";
+			String datasetname = "";
+			try {
+				final JSONObject obj = new JSONObject(queryjson);
+			    
+				bucket = (String) obj.get("bucket");
+			    filename = (String) obj.get("file");
+				datasetname = (String) obj.get("datasetname");
+			}
+		    catch(Exception e) {
+		    	e.printStackTrace();
+		    
+		    	PrintWriter out = response.getWriter();
+				
+				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
+				out.write(json);
+		    }
+			
+			enrich.datastore.initFile(datasetname, bucket, filename);
+			String json = "{\"success\": \"data successfully deployed\"}";
+			PrintWriter out = response.getWriter();
 			out.write(json);
 		}
 	}
