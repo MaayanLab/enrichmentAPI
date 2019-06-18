@@ -1,4 +1,4 @@
-package main.java.database;
+package database;
 public class SQLmanager {
 	
 	public String database = "";

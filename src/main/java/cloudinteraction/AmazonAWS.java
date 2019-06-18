@@ -1,4 +1,4 @@
-package main.java.cloudinteraction;
+package cloudinteraction;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

@@ -1,4 +1,4 @@
-package main.java.datamanagement;
+package datamanagement;
 
 public class WeightedMatrix {
 

@@ -1,4 +1,4 @@
-package main.java.datamanagement;
+package datamanagement;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import main.java.cloudinteraction.AmazonAWS;
+import cloudinteraction.AmazonAWS;
 
 
 /**

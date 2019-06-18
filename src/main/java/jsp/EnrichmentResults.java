@@ -1,4 +1,4 @@
-package main.java.jsp;
+package jsp;
 import java.util.HashMap;
 import java.util.HashSet;
 

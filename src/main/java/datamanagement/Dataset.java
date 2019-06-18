@@ -1,4 +1,4 @@
-package main.java.datamanagement;
+package datamanagement;
 
 import java.util.HashMap;
 import java.util.UUID;

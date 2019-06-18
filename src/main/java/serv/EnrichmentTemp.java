@@ -1,4 +1,4 @@
-package main.java.serv;
+package serv;
 
 
 import java.io.BufferedReader;
@@ -32,8 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import main.java.jsp.Result;
-import main.java.math.FastFisher;
+import jsp.Result;
+import math.FastFisher;
 
 /**
  * Servlet implementation class Test

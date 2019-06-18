@@ -1,4 +1,4 @@
-package main.java.jsp;
+package jsp;
 
 public class Result implements Comparable<Result>{
 	
