@@ -10,3 +10,4 @@
 /out/
 *.iml
 !/gradle/wrapper/gradle-wrapper.jar
+*.class
