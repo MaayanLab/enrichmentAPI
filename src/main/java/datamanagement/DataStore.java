@@ -68,16 +68,7 @@ public class DataStore {
 		
 		System.out.println("Init "+_filename);
 		
-		String datafolder = "/Users/maayanlab/OneDrive/enrichmentapi/data/";
-		
-		if(System.getenv("deployment") != null){
-			if(System.getenv("deployment").equals("docker_deployed")){
-				datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
-				if(System.getenv("endpoint")!=null) {
-					datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
-				}
-			}
-		}
+		String datafolder = System.getProperty("user.dir")+"/data/";
 		
 		try {
 			Path path = Paths.get(datafolder);

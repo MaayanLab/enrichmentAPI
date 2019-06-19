@@ -76,6 +76,9 @@ public class FileUploadManager  extends HttpServlet {
 				
 				if(pathInfo.matches("^/create")){
 
+					System.out.println("Working Directory = " +
+              			System.getProperty("user.dir"));
+
 					HashSet<String> entities = new HashSet<String>();
 					if(obj.optJSONArray("entities") != null) {
 						final JSONArray queryEntities = obj.getJSONArray("entities");
