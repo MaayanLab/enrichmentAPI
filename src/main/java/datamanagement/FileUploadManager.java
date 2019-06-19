@@ -8,6 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -505,7 +508,15 @@ public class FileUploadManager  extends HttpServlet {
 				matrix_so.put("signature_id", sig_uuids);
 				
 				String datafolder = System.getProperty("user.dir")+"/data/";
-				
+				try {
+					Path path = Paths.get(datafolder);
+					if (!Files.exists(path)) {
+						Files.createDirectory(path);
+					}
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
 				serialize(matrix_so, datafolder+_uuid+".so");
 				
 				AmazonAWS aws = new AmazonAWS();
