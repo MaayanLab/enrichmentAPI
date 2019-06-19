@@ -67,6 +67,7 @@ public class AmazonAWS {
 
 				s3Client = AmazonS3ClientBuilder.standard()
 					.withEndpointConfiguration(new EndpointConfiguration(aws_endpoint_url, region.getName()))
+					.withPathStyleAccessEnabled(true)
 					.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
 					.build();
 			}
