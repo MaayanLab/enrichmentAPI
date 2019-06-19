@@ -76,9 +76,6 @@ public class FileUploadManager  extends HttpServlet {
 				
 				if(pathInfo.matches("^/create")){
 
-					System.out.println("Working Directory = " +
-              			System.getProperty("user.dir"));
-
 					HashSet<String> entities = new HashSet<String>();
 					if(obj.optJSONArray("entities") != null) {
 						final JSONArray queryEntities = obj.getJSONArray("entities");
@@ -128,7 +125,7 @@ public class FileUploadManager  extends HttpServlet {
 	}
 
 	private boolean validateToken(String _token) {
-		String token = System.getenv("token");
+		String token = System.getenv("TOKEN");
 		if(token.equals(_token)) {
 			return true;
 		}
@@ -467,24 +464,12 @@ public class FileUploadManager  extends HttpServlet {
 			setdata.put("dictionary", dictionaries.get(_uuid));
 			setdata.put("revDictionary", revDictionaries.get(_uuid));
 			
-			String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
-			String datafolder = basedir+"data/";
-			//String awsbucket = "https://s3.amazonaws.com/mssm-data/";
-			
-			if(System.getenv("deployment") != null){
-				if(System.getenv("deployment").equals("marathon_deployed")){
-					datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
-					if(System.getenv("endpoint")!=null) {
-						datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
-					}
-				}
-			}
+			String datafolder = System.getProperty("user.dir")+"/data/";
 			
 			serialize(setdata, datafolder+_uuid+".so");
 			
-			updateConfigJSON(_uuid, "geneset_library", datafolder, _response);
 			AmazonAWS aws = new AmazonAWS();
-			String aws_bucket = System.getenv("aws_bucket");
+			String aws_bucket = System.getenv("AWS_BUCKET");
 			aws.uploadS3(aws_bucket, datafolder+_uuid+".so", _uuid+".so");
 			removeRepository(_uuid, _response);
 			
@@ -519,23 +504,12 @@ public class FileUploadManager  extends HttpServlet {
 				matrix_so.put("entity_id", entity_uuids);
 				matrix_so.put("signature_id", sig_uuids);
 				
-				String basedir = "/Users/maayanlab/OneDrive/eclipse/EnrichmentAPI/";
-				String datafolder = basedir+"data/";
-				
-				if(System.getenv("deployment") != null){
-					if(System.getenv("deployment").equals("marathon_deployed")){
-						datafolder = "/usr/local/tomcat/webapps/enrichmentapi/WEB-INF/data/";
-						if(System.getenv("endpoint")!=null) {
-							datafolder = "/usr/local/tomcat/webapps/"+System.getenv("endpoint")+"/WEB-INF/data/";
-						}
-					}
-				}
+				String datafolder = System.getProperty("user.dir")+"/data/";
 				
 				serialize(matrix_so, datafolder+_uuid+".so");
 				
-				updateConfigJSON(_uuid, "rank_matrix", datafolder, _response);
 				AmazonAWS aws = new AmazonAWS();
-				String aws_bucket = System.getenv("aws_bucket");
+				String aws_bucket = System.getenv("AWS_BUCKET");
 				aws.uploadS3(aws_bucket, datafolder+_uuid+".so", _uuid+".so");
 				removeRepository(_uuid, _response);
 				
@@ -554,64 +528,6 @@ public class FileUploadManager  extends HttpServlet {
 	}
 	
 	private void listRepositories(HttpServletResponse _response) {
-		try {
-			StringBuffer sb = new StringBuffer( "{\"rank_repositories\": [");
-			
-			for(String rep : repSignatures.keySet()) {
-				sb.append("{\"uuid\":\"").append(rep).append("\", \"entity_count\" : ").append(repEntities.get(rep).size()).append(", \"signature_count\":").append(repSignatures.get(rep).size()).append("},");
-			}
-			sb.append("], \"genelist_repositories\": [");
-			
-			for(String rep : genesetLibraries.keySet()) {
-				sb.append("{\"uuid\":\"").append(rep).append("\", \"entity_count\" : ").append(dictionaries.get(rep).size()).append(", \"signature_count\":").append(genesetLibraries.get(rep).size()).append("},");
-			}
-			sb.append("]}");
-			
-			String json = sb.toString();
-			json = json.replace(",]", "]");
-			
-			PrintWriter out = _response.getWriter();
-			out.write(json);
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void updateConfigJSON(String _uuid, String _datatype, String _datafolder, HttpServletResponse _response) {
-		
-		DataStore ds = new DataStore(true);
-		String data_json_url = System.getenv("dataset_json");
-		String aws_bucket = System.getenv("aws_bucket");
-		
-		try {
-			ds.downloadFile(data_json_url, _datafolder+"/sigcomm_datasets.json", "private");
-			JSONObject obj = ds.readJsonFromFile(_datafolder+"/sigcomm_datasets.json");
-			
-			JSONObject temp = new JSONObject();
-			temp.put("datasetType", _datatype);
-			temp.put("datasetName", _uuid);
-			temp.put("dataURL", "https://s3.amazonaws.com/"+aws_bucket+"/"+_uuid+".so");
-			temp.put("creator", "Ma'ayan Laboratory");
-			temp.put("version", "1");
-			temp.put("versiondate", new SimpleDateFormat("dd/MM/yyyy").format(new Date()));
-			temp.put("accessibility", "private");
-			
-			obj.getJSONArray("datasets").put(temp);
-			
-			BufferedWriter bw = new BufferedWriter(new FileWriter(new File( _datafolder+"/sigcomm_datasets.json")));
-			bw.write(obj.toString());
-			bw.close();
-			
-			AmazonAWS aws = new AmazonAWS();
-			System.out.println(aws_bucket);
-			aws.uploadS3(aws_bucket, _datafolder+"/sigcomm_datasets.json", "sigcomm_datasets.json");
-			
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
 		try {
 			StringBuffer sb = new StringBuffer( "{\"rank_repositories\": [");
 			
