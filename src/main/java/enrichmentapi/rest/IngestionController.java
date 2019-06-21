@@ -41,6 +41,25 @@ public class IngestionController {
         this.igniteImporter = igniteImporter;
     }
 
+    private static short[] ranksHash(float[] temp) {
+
+        float[] sc = new float[temp.length];
+        System.arraycopy(temp, 0, sc, 0, temp.length);
+        Arrays.sort(sc);
+
+        Map<Float, Short> hm = new HashMap<>(sc.length);
+        for (short i = 0; i < sc.length; i++) {
+            hm.put(sc[i], i);
+        }
+
+        short[] ranks = new short[sc.length];
+
+        for (int i = 0; i < temp.length; i++) {
+            ranks[i] = (short) (hm.get(temp[i]) + 1);
+        }
+        return ranks;
+    }
+
     @PostMapping("/create")
     public void createRepository(HttpServletRequest request, HttpServletResponse response) {
         final JSONObject json = readPayload(request);
@@ -141,25 +160,6 @@ public class IngestionController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static short[] ranksHash(float[] temp) {
-
-        float[] sc = new float[temp.length];
-        System.arraycopy(temp, 0, sc, 0, temp.length);
-        Arrays.sort(sc);
-
-        Map<Float, Short> hm = new HashMap<>(sc.length);
-        for (short i = 0; i < sc.length; i++) {
-            hm.put(sc[i], i);
-        }
-
-        short[] ranks = new short[sc.length];
-
-        for (int i = 0; i < temp.length; i++) {
-            ranks[i] = (short) (hm.get(temp[i]) + 1);
-        }
-        return ranks;
     }
 
     private void sendStatus(HttpServletResponse response, String message) {

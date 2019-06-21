@@ -4,12 +4,20 @@ import enrichmentapi.data.DataType;
 import enrichmentapi.data.DatasetType;
 import enrichmentapi.dto.out.DatasetInfoDto;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public final class NameUtils {
 
     public static final String ALL_GENESET_SIGNATURE_KEYS = "all_geneset_signature_keys";
     public static final String DATASET_INFO_LIST = "dataset_info_list";
+
     private static final String CACHE_SEPARATOR = "__";
+    private static final String VERSION_SEPARATOR = "_v";
+
     private static final String INVERT_POSTFIX = CACHE_SEPARATOR + "invert";
+
+    private static final Pattern cacheNamePattern = Pattern.compile("(.+)__(.+_v\\d+)__.+");
 
     private NameUtils() {
     }
@@ -27,15 +35,20 @@ public final class NameUtils {
     }
 
     public static DatasetInfoDto extractDatasetInfo(String cacheName) {
-        final String normalizedName = cacheName.replace(INVERT_POSTFIX, "");
-        final int separator1 = normalizedName.indexOf(CACHE_SEPARATOR);
-        final int separator2 = normalizedName.lastIndexOf(CACHE_SEPARATOR);
-        if (separator1 != -1 && separator2 != -1 && separator1 != separator2) {
-            final String datasetName = normalizedName.substring(separator1 + 2, separator2);
-            final String datasetType = normalizedName.substring(0, separator1);
-            return new DatasetInfoDto(datasetName, datasetType);
+        final Matcher matcher = cacheNamePattern.matcher(cacheName);
+        if (matcher.matches()) {
+            final DatasetType datasetType = DatasetType.valueOf(matcher.group(1).toUpperCase());
+            return new DatasetInfoDto(matcher.group(2), datasetType.toString());
         } else {
             return null;
         }
+    }
+
+    public static String[] getNameAndVersion(String cacheName) {
+        return cacheName.split(VERSION_SEPARATOR);
+    }
+
+    public static String createNameWithVersion(String datasetName, int version) {
+        return datasetName + VERSION_SEPARATOR + version;
     }
 }

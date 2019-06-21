@@ -19,6 +19,10 @@
         <td>bootWar</td>
         <td>Creates an executable war</td>
     </tr>
+    <tr>
+        <td>test</td>
+        <td>Run all tests of the application</td>
+    </tr>
 </table>
 
 ##### Run tasks
@@ -117,6 +121,12 @@ Also could be useful to add alias to enrichmentAPI host:
 extra_hosts:
   - "data-api:10.0.0.1"
 ```
+
+### Activation of Ignite cluster
+
+When the application is launched for the first time, the Ignite cluster must be activated. This must be done only once. 
+
+To activate Ignite cluster, make a call to `GET /api/v1/activate`.
 
 
 ### Upload of data from SO files to Ignite

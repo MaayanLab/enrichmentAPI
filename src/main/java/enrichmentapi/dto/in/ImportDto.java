@@ -8,6 +8,23 @@ public abstract class ImportDto {
     private String databaseUrl;
     private String databaseUsername;
     private String databasePassword;
+    private boolean deletePreviousVersion = true;
+
+    ImportDto(String name, DatasetType datasetType, Boolean deletePreviousVersion,
+              String databaseUrl, String databaseUsername, String databasePassword) {
+        this.name = name;
+        this.datasetType = datasetType;
+        this.databaseUrl = databaseUrl;
+        this.databaseUsername = databaseUsername;
+        this.databasePassword = databasePassword;
+        if (deletePreviousVersion != null) {
+            this.deletePreviousVersion = deletePreviousVersion;
+        }
+    }
+
+    public boolean isDeletePreviousVersion() {
+        return deletePreviousVersion;
+    }
 
     public String getName() {
         return name;
@@ -21,31 +38,16 @@ public abstract class ImportDto {
         return databaseUrl;
     }
 
-    public void setDatabaseUrl(String databaseUrl) {
-        this.databaseUrl = databaseUrl;
-    }
-
     public DatasetType getDatasetType() {
         return datasetType;
-    }
-
-    public void setDatasetType(DatasetType datasetType) {
-        this.datasetType = datasetType;
     }
 
     public String getDatabaseUsername() {
         return databaseUsername;
     }
 
-    public void setDatabaseUsername(String databaseUsername) {
-        this.databaseUsername = databaseUsername;
-    }
-
     public String getDatabasePassword() {
         return databasePassword;
     }
 
-    public void setDatabasePassword(String databasePassword) {
-        this.databasePassword = databasePassword;
-    }
 }

@@ -1,7 +1,10 @@
 package enrichmentapi.rest;
 
+import enrichmentapi.dto.in.DatasetDeletionDto;
 import enrichmentapi.dto.in.SoImportDto;
 import enrichmentapi.dto.in.TestImportDto;
+import enrichmentapi.dto.out.DatasetInfoDto;
+import enrichmentapi.dto.out.TestImportResultDto;
 import enrichmentapi.ignite.IgniteImporter;
 import enrichmentapi.ignite.IgniteTestImporter;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,9 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/api/v1")
@@ -27,15 +27,17 @@ public class ImportController {
     }
 
     @PostMapping("/download-so")
-    public void loadToIgnite(@RequestBody SoImportDto importDto) throws IOException, ClassNotFoundException {
-        igniteImporter.importSo(importDto);
+    public DatasetInfoDto loadToIgnite(@RequestBody SoImportDto importDto) throws IOException, ClassNotFoundException {
+        return igniteImporter.importSo(importDto);
     }
 
     @PostMapping("/download-so-test")
-    public Map<String, List<String>> loadToIgniteTest(@RequestBody TestImportDto importDto) {
-        final Map<String, List<String>> result = new HashMap<>();
-        final List<String> entities = igniteTestImporter.importSo(importDto);
-        result.put("entities", entities);
-        return result;
+    public TestImportResultDto loadToIgniteTest(@RequestBody TestImportDto importDto) {
+        return igniteTestImporter.importSo(importDto);
+    }
+
+    @PostMapping("/delete")
+    public void deleteDataset(@RequestBody DatasetDeletionDto dto) {
+        igniteImporter.deleteDataset(dto);
     }
 }

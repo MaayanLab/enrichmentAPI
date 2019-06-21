@@ -1,23 +1,22 @@
 server:
   port:
-    8080
+    8090
 ignite:
   addresses:
-    127.0.0.1:8446, 127.0.0.2:8446
+    127.0.0.1:8546
   clientPort:
-    8443
+    8543
   restPort:
-    8444
+    8544
   communicationSPIPort:
-    8445
+    8545
   discoverySPIPort:
-    8446
+    8546
   storage:
-    /opt/data
+    C:/Temp/data_test
   addToBaselineTopology:
     false
 
 logging:
-  file: ./logs.log
   level:
     enrichmentapi.calc: DEBUG

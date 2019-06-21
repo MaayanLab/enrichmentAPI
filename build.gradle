@@ -14,7 +14,7 @@ repositories {
     mavenCentral()
 }
 
-dependencies {f
+dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-security:2.1.5.RELEASE'
 
@@ -33,13 +33,18 @@ dependencies {f
     
     implementation 'org.postgresql:postgresql:42.2.2'
 
+    testImplementation 'org.hamcrest:hamcrest:2.1'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.1.5.RELEASE'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-all:1.10.19'
+    testImplementation 'org.testcontainers:testcontainers:1.11.3'
 }
 
 configurations {
     implementation {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'org.hamcrest', module: 'hamcrest-library'
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
     }
 }
 
