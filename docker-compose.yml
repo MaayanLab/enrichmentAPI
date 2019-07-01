@@ -7,6 +7,7 @@ services:
     image: maayanlab/enrichmentapi
     environment:
       SPRING_APPLICATION_JSON: '{ "ignite": { "addresses": "ignite-1,ignite-2", "clientPort": 10800, "communicationSPIPort": 47100, "discoverySPIPort": 47500, "restPort": 11211, "storage": "/opt/data", "addToBaselineTopology": false  } }'
+      token: token
     ports:
       - 8080:8080
   ignite-1:
