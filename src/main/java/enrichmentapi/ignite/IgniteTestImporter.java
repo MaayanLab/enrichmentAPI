@@ -1,6 +1,8 @@
 package enrichmentapi.ignite;
 
 import enrichmentapi.dto.in.TestImportDto;
+import enrichmentapi.dto.out.DatasetInfoDto;
+import enrichmentapi.dto.out.TestImportResultDto;
 import enrichmentapi.exceptions.EnrichmentapiException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -8,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -30,21 +31,22 @@ public class IgniteTestImporter {
         this.igniteImporter = igniteImporter;
     }
 
-    public List<String> importSo(TestImportDto dto) {
+    public TestImportResultDto importSo(TestImportDto dto) {
         switch (dto.getDatasetType()) {
             case GENESET_LIBRARY:
                 logger.info("Start generation of new geneset_library {}", dto.getName());
                 final Map<Object, Object> overlap = generateOverlap(dto.getCount());
                 logger.info("End generation of new geneset_library {}", dto.getName());
-                igniteImporter.importOverlap(overlap, dto);
-                return ((Map<String, Short>) overlap.get("dictionary"))
-                        .keySet().stream().limit(ENTITY_OUTPUT_SIZE).collect(toList());
+                final DatasetInfoDto overlapDto = igniteImporter.importOverlap(overlap, dto);
+                return new TestImportResultDto(overlapDto, ((Map<String, Short>) overlap.get("dictionary"))
+                        .keySet().stream().limit(ENTITY_OUTPUT_SIZE).collect(toList()));
             case RANK_MATRIX:
                 logger.info("Start generation of new rank_matrix {}", dto.getName());
                 final Map<Object, Object> rank = generateRank(dto.getCount());
                 logger.info("End generation of new rank_matrix {}", dto.getName());
-                igniteImporter.importRank(rank, dto);
-                return Stream.of((String[]) rank.get("entity_id")).limit(ENTITY_OUTPUT_SIZE).collect(toList());
+                final DatasetInfoDto rankDto = igniteImporter.importRank(rank, dto);
+                return new TestImportResultDto(
+                        rankDto, Stream.of((String[]) rank.get("entity_id")).limit(ENTITY_OUTPUT_SIZE).collect(toList()));
             default:
                 throw new EnrichmentapiException("Wrong dataset type.");
         }

@@ -5,8 +5,7 @@ import enrichmentapi.data.DatasetType;
 public class IngestionImportDto extends ImportDto {
 
     public IngestionImportDto(String name, DatasetType datasetType) {
-        this.setName(name);
-        this.setDatasetType(datasetType);
+        super(name, datasetType, null, null, null, null);
     }
 
 }

@@ -10,9 +10,9 @@ import java.util.LinkedHashMap;
 import static enrichmentapi.util.NameUtils.DATASET_INFO_LIST;
 import static java.util.Collections.singletonList;
 
-final class IgniteCacheConfigurationManager {
+final class IgniteCacheConfiguration {
 
-    private IgniteCacheConfigurationManager() {
+    private IgniteCacheConfiguration() {
     }
 
     static CacheConfiguration<String, short[]> getMatrixCacheConfig(String cacheName) {
