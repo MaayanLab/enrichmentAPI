@@ -1,8 +1,9 @@
 FROM openjdk:8-jre-slim
 
-ENV JAVA_OPTS="-Xmx16G"
+ENV JAVA_OPTS="-Xmx16G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops"
+ENV SPRING_APPLICATION_JSON="{}"
 WORKDIR /opt/enrichmentapi
 COPY build/libs/enrichmentAPI*.jar /opt/enrichmentapi/enrichmentapi.jar
 
+EXPOSE 8080
 CMD java $JAVA_OPTS -jar enrichmentapi.jar
-

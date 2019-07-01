@@ -6,15 +6,10 @@ services:
       dockerfile: docker/DockerfileAPI
     image: maayanlab/enrichmentapi
     environment:
-      # TODO: configure this environment variable to actually work
-      IGNITE_ADDRESSES: ignite:8446, ignite:8446
+      SPRING_APPLICATION_JSON: '{ "ignite": { "addresses": "ignite-1,ignite-2", "clientPort": 10800, "communicationSPIPort": 47100, "discoverySPIPort": 47500, "restPort": 11211, "storage": "/opt/data", "addToBaselineTopology": false  } }'
     ports:
       - 8080:8080
-    volumes:
-      - ignite:/opt/data
-  ignite:
+  ignite-1:
     image: apacheignite/ignite:2.7.0
-    volumes:
-      - ignite:/opt/data
-volumes:
-  ignite:
+  ignite-2:
+    image: apacheignite/ignite:2.7.0
