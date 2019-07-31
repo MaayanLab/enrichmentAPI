@@ -1,4 +1,7 @@
 server:
+  servlet:
+    contextPath:
+      /enrichmentAPI
   port:
     8090
 ignite:
@@ -13,7 +16,7 @@ ignite:
   discoverySPIPort:
     8546
   storage:
-    C:/Temp/data_test
+    /tmp/data_test
   addToBaselineTopology:
     false
 

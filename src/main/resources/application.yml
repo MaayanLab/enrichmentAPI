@@ -1,9 +1,12 @@
 server:
+  servlet:
+    contextPath:
+      /enrichmentAPI
   port:
     8080
 ignite:
   addresses:
-    ignite:8446, ignite:8446
+    127.0.0.1:8446, 127.0.0.2:8446
   clientPort:
     8443
   restPort:
@@ -13,9 +16,9 @@ ignite:
   discoverySPIPort:
     8446
   storage:
-    /opt/data
+    /tmp/data_test
   addToBaselineTopology:
-    false
+    true
 
 logging:
   file: ./logs.log
