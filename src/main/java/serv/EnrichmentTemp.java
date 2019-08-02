@@ -79,7 +79,7 @@ public class EnrichmentTemp extends HttpServlet {
 		
 		
 		try {
-			
+
 			System.out.println("Start buffering datasets");
 			enrich = new Enrichment();
 			System.out.println("... and ready!");
@@ -279,7 +279,12 @@ public class EnrichmentTemp extends HttpServlet {
 				sb.append("{");
 				sb.append("\"uuid\" : \"").append(genesetName).append("\", ");
 				sb.append("\"p-value\" : ").append(pval).append(", ");
-				sb.append("\"oddsratio\" : ").append(oddsratio).append(", ");
+				if(oddsratio == Double.POSITIVE_INFINITY){
+					sb.append("\"oddsratio\" : ").append("null").append(", ");
+				}
+				else{
+					sb.append("\"oddsratio\" : ").append(oddsratio).append(", ");
+				}
 				sb.append("\"setsize\" : ").append(setsize).append(", ");
 				sb.append("\"overlap\" : [");
 				
@@ -467,7 +472,9 @@ public class EnrichmentTemp extends HttpServlet {
 		
 		response.addHeader("Content-Type", "application/json");
 		response.addHeader("Access-Control-Allow-Origin", "*");
-		
+		String token = request.getHeader("Authorization").replaceAll("^Token ", "");
+		System.out.println("Token: "+token);
+
 		if(pathInfo.matches("^/enrich/rank")){
 			
 			long  time = System.currentTimeMillis();
@@ -726,7 +733,8 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
-		    	
+				System.out.println(e.getStackTrace().toString());
+				
 		    	PrintWriter out = response.getWriter();
 				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
@@ -870,7 +878,7 @@ public class EnrichmentTemp extends HttpServlet {
 			json = json.replace(",]", "]");
 			out.write(json);
 		}
-		else if(pathInfo.matches("^/load")){
+		else if(pathInfo.matches("^/load") && validateToken(token)){
 			
 			StringBuffer jb = new StringBuffer();
 			String line = null;
@@ -904,9 +912,14 @@ public class EnrichmentTemp extends HttpServlet {
 		    }
 			
 			enrich.datastore.initFile(datasetname, bucket, filename);
+			System.out.println("Done");
+
 			String json = "{\"success\": \"data successfully deployed\"}";
 			PrintWriter out = response.getWriter();
 			out.write(json);
+		}
+		else{
+			System.out.println("endpoint not found, or no valid token for data opteration");
 		}
 	}
 	
@@ -1031,6 +1044,16 @@ public class EnrichmentTemp extends HttpServlet {
 	   Map<K, V> sortedByValues = new TreeMap<K, V>(valueComparator);
 	   sortedByValues.putAll(map);
 	   return sortedByValues;
+	}
+
+	private boolean validateToken(String _token) {
+		String token = System.getenv("TOKEN");
+		if(token.equals(_token)) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 }
