@@ -1,0 +1,25 @@
+server:
+  servlet:
+    contextPath:
+      /enrichmentAPI
+  port:
+    8090
+ignite:
+  addresses:
+    127.0.0.1:8546
+  clientPort:
+    8543
+  restPort:
+    8544
+  communicationSPIPort:
+    8545
+  discoverySPIPort:
+    8546
+  storage:
+    /tmp/data_test
+  addToBaselineTopology:
+    false
+
+logging:
+  level:
+    enrichmentapi.calc: DEBUG

@@ -1,53 +1,53 @@
-import java.nio.file.Paths
-
 plugins {
     id 'java'
     id 'war'
-    id 'com.bmuschko.tomcat' version '2.5'
+    id 'org.springframework.boot' version '2.1.5.RELEASE'
 }
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-version = '1.2.1'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version '1.0-SNAPSHOT'
+
+def igniteVersion = "2.7.0"
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-security:2.1.5.RELEASE'
+
     implementation 'org.json:json:20180813'
-    implementation 'com.amazonaws:aws-java-sdk:1.11.510'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.4.0'
 
-    providedCompile 'javax.servlet:javax.servlet-api:4.0.1',
-            'javax.servlet:jsp-api:2.0'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
 
-    def tomcatVersion = '9.0.16'
-    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
-            "org.apache.tomcat.embed:tomcat-embed-logging-juli:9.0.0.M6",
-            "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+    implementation 'log4j:log4j:1.2.17'
 
+    implementation "org.apache.ignite:ignite-core:${igniteVersion}"
+    implementation "org.apache.ignite:ignite-spring:${igniteVersion}"
+    implementation "org.apache.ignite:ignite-rest-http:${igniteVersion}"
+
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
+    
+    implementation 'org.postgresql:postgresql:42.2.2'
+
+    testImplementation 'org.hamcrest:hamcrest:2.1'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.1.5.RELEASE'
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-all:1.10.19'
+    testImplementation 'org.testcontainers:testcontainers:1.11.3'
 }
 
-tomcat {
-    httpPort = 8080
-    httpProtocol = 'org.apache.coyote.http11.Http11Nio2Protocol'
-    ajpProtocol  = 'org.apache.coyote.ajp.AjpNio2Protocol'
-}
-
-def dockerDir = 'docker'
-def warName = 'enrichmentapi.war'
-
-war {
-    archiveName = warName
-    destinationDir = Paths.get(dockerDir).toFile()
-}
-
-clean {
-    doLast {
-        Paths.get("${dockerDir}/${warName}")
-                .toFile().delete()
+configurations {
+    implementation {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'org.hamcrest', module: 'hamcrest-library'
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
     }
+}
+
+bootWar {
+    mainClassName = 'spring.Application'
 }
