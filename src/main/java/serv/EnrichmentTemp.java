@@ -472,8 +472,13 @@ public class EnrichmentTemp extends HttpServlet {
 		
 		response.addHeader("Content-Type", "application/json");
 		response.addHeader("Access-Control-Allow-Origin", "*");
-		String token = request.getHeader("Authorization").replaceAll("^Token ", "");
-		System.out.println("Token: "+token);
+		String token = request.getHeader("Authorization");
+		if (token != null) {
+			token = token.replaceAll("^Token ", "");
+			System.out.println("Token: "+token);
+		} else {
+			System.out.println("Token: null");
+		}
 
 		if(pathInfo.matches("^/enrich/rank")){
 			
