@@ -278,13 +278,8 @@ public class EnrichmentTemp extends HttpServlet {
 				
 				sb.append("{");
 				sb.append("\"uuid\" : \"").append(genesetName).append("\", ");
-				sb.append("\"p-value\" : ").append(pval).append(", ");
-				if(oddsratio == Double.POSITIVE_INFINITY){
-					sb.append("\"oddsratio\" : ").append("null").append(", ");
-				}
-				else{
-					sb.append("\"oddsratio\" : ").append(oddsratio).append(", ");
-				}
+				sb.append("\"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval).append(", ");
+				sb.append("\"oddsratio\" : ").append(Double.isNaN(oddsratio) ? "null" : oddsratio).append(", ");
 				sb.append("\"setsize\" : ").append(setsize).append(", ");
 				sb.append("\"overlap\" : [");
 				
@@ -437,12 +432,12 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_down = enrichResultDown.get(signature).direction;
 					
 					sb.append("{\"uuid\":\"").append(genesetName)
-						.append("\", \"p-up\":").append(pvalUp)
-						.append(", \"p-down\":").append(pvalDown)
-						.append(", \"z-up\":").append(zUp)
-						.append(", \"z-down\":").append(zDown)
-						.append(", \"logp-fisher\":").append(pvalFisher)
-						.append(", \"logp-avg\":").append(pvalSum)
+						.append("\", \"p-up\":").append(Double.isNaN(pvalUp) ? "null" : pvalUp)
+						.append(", \"p-down\":").append(Double.isNaN(pvalDown) ? "null" : pvalDown)
+						.append(", \"z-up\":").append(Double.isNaN(zUp) ? "null" : zUp)
+						.append(", \"z-down\":").append(Double.isNaN(zDown) ? "null" : zDown)
+						.append(", \"logp-fisher\":").append(Double.isNaN(pvalFisher) ? "null" : pvalFisher)
+						.append(", \"logp-avg\":").append(Double.isNaN(pvalSum) ? "null" : pvalSum)
 						.append(", \"direction-up\":").append(direction_up)
 						.append(", \"direction-down\":").append(direction_down)
 						.append("}, ");
