@@ -103,6 +103,12 @@ public class DataStore {
 			}
 		} else {
 			datatype = "rank_matrix";
+
+			if (datapod.containsKey("matrix") && !datapod.containsKey("rank")) {
+				System.out.println("Detected legacy format, correcting");
+				datapod.put("rank", datapod.remove("matrix"));
+			}
+
 			try {
 				System.out.println("Datatype: " + datatype);
 				String[] signature_id = (String[]) datapod.get("signature_id");
