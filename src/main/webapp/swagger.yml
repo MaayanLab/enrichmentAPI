@@ -387,6 +387,9 @@ paths:
               datasetname:
                 type: string
                 description: The name to assign the file for use in the API
+              force:
+                type: boolean
+                description: Force re-download of file if cached
             required:
               - bucket
               - file

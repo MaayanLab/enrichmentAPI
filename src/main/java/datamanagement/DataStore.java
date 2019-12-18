@@ -64,7 +64,7 @@ public class DataStore {
 	 * @param _testing if true do not download file but try to load local copy from fixed location.
 	 * @return one deserialized data blob
 	 */
-	public void initFile(String _datasetname, String _bucket, String _filename) {
+	public void initFile(String _datasetname, String _bucket, String _filename, Boolean force) {
 		
 		System.out.println("Init "+_filename);
 		
@@ -80,7 +80,13 @@ public class DataStore {
 			e.printStackTrace();
 		}
 		
-		downloadFile(_bucket, _filename, datafolder+_filename);
+		File f = new File(datafolder+_filename);
+		if (!f.exists() && force != true) {
+			downloadFile(_bucket, _filename, datafolder+_filename);
+		} else {
+			System.out.println("Using existing file");
+		}
+
 		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
 		String datatype;
 

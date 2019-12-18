@@ -895,12 +895,16 @@ public class EnrichmentTemp extends HttpServlet {
 			String bucket = "";
 			String filename = "";
 			String datasetname = "";
+			Boolean force = null;
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
 			    
 				bucket = (String) obj.get("bucket");
 			    filename = (String) obj.get("file");
 				datasetname = (String) obj.get("datasetname");
+				if (obj.has("force")) {
+					force = (Boolean) obj.get("force");
+				}
 			}
 		    catch(Exception e) {
 		    	e.printStackTrace();
@@ -911,7 +915,7 @@ public class EnrichmentTemp extends HttpServlet {
 				out.write(json);
 		    }
 			
-			enrich.datastore.initFile(datasetname, bucket, filename);
+			enrich.datastore.initFile(datasetname, bucket, filename, force);
 			System.out.println("Done");
 
 			String json = "{\"success\": \"data successfully deployed\"}";
