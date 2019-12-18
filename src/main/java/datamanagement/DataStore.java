@@ -82,9 +82,32 @@ public class DataStore {
 		
 		downloadFile(_bucket, _filename, datafolder+_filename);
 		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
-		String datatype = "rank_matrix";
+		String datatype;
+
 		if(datapod.containsKey("geneset")) {
 			datatype = "geneset_library";
+			try {
+				System.out.println("Datatype: " + datatype);
+				HashMap<String, Short> dictionary = (HashMap<String, Short>) datapod.get("dictionary");
+				HashMap<String, Short> geneset = (HashMap<String, Short>) datapod.get("geneset");
+				System.out.println("N Entities: " + Integer.toString(dictionary.size()));
+				System.out.println("N Signatures: " + Integer.toString(geneset.size()));
+			} catch (Exception e) {
+				System.err.println("Error loading file " + _filename + ": " + e.getMessage());
+			}
+		} else {
+			datatype = "rank_matrix";
+			try {
+				System.out.println("Datatype: " + datatype);
+				String[] signature_id = (String[]) datapod.get("signature_id");
+				String[] entity_id = (String[]) datapod.get("entity_id");
+				short[][] rank = (short[][]) datapod.get("rank");
+				System.out.println("N Signatures: " + Integer.toString(signature_id.length));
+				System.out.println("N Entities: " + Integer.toString(entity_id.length));
+				System.out.println("Rank Matrix Shape: (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
+			} catch (Exception e) {
+				System.err.println("Error loading file " + _filename + ": " + e.getMessage());
+			}
 		}
 
 		Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2019");
