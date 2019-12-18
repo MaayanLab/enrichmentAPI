@@ -84,7 +84,7 @@ public class DataStore {
 		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
 		String datatype = "rank_matrix";
 		if(datapod.containsKey("geneset")) {
-			datatype = "gene_set";
+			datatype = "geneset_library";
 		}
 
 		Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2019");
