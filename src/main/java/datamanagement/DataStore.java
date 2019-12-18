@@ -81,7 +81,7 @@ public class DataStore {
 		}
 		
 		File f = new File(datafolder+_filename);
-		if (!f.exists() && force != true) {
+		if (!f.exists() || force == true) {
 			downloadFile(_bucket, _filename, datafolder+_filename);
 		} else {
 			System.out.println("Using existing file");
