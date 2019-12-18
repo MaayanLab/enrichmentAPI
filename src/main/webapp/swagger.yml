@@ -8,7 +8,6 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 schemes:
 - "https"
-host: amp.pharm.mssm.edu
 basePath: /enrichmentapi/api/v1
 paths:
   /listdata:
