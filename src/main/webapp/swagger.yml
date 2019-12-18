@@ -317,7 +317,7 @@ paths:
       description: Clear the currently loaded API data
       operationId: reload
       security:
-        - TokenAuth
+        - TokenAuth: []
       responses:
         200:
           description: Success
@@ -333,7 +333,7 @@ paths:
       description: Load data into the API
       operationId: load
       security:
-        - TokenAuth
+        - TokenAuth: []
       consumes:
         - application/json
       parameters:
