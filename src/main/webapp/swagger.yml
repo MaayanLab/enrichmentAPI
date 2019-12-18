@@ -335,27 +335,15 @@ paths:
                     maxrank:
                       type: number
                       description: The largest rank value
-                    signatures:
+                    ranks:
                       type: array
+                      description: The first element would correspond to the first entity, the value corresponds to the rank
                       items:
-                        type: object
-                        properties:
-                          uid:
-                            type: string
-                            description: ID of the signature
-                          ranks:
-                            type: array
-                            description: The first element would correspond to the first entity, the value corresponds to the rank
-                            items:
-                              type: number
-                        required:
-                          - uid
-                          - ranks
+                        type: number
                   required:
                     - uid
-                    - entities
                     - maxrank
-                    - signatures
+                    - ranks
             required:
               - entities
               - signatures
