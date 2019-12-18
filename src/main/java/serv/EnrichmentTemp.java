@@ -851,7 +851,7 @@ public class EnrichmentTemp extends HttpServlet {
 			HashMap<String, Object> res =  enrich.getRankData(db, signatures.toArray(new String[0]), entity_split.toArray(new String[0]));
 			returnRankData(response, res);
 		}
-		else if(pathInfo.matches("^/loadrepositories")){
+		else if(pathInfo.matches("^/reloadrepositories")){
 			enrich.reloadRepositories();
 			try {
 				PrintWriter out = response.getWriter();
