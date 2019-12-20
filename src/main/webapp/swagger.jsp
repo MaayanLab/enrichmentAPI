@@ -1,3 +1,14 @@
+<%@ page language="java"
+    contentType="text/x-yaml; charset=UTF-8"
+    pageEncoding="UTF-8"
+%><%
+  String origin = request.getHeader("Origin");
+  if (origin != null) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+    response.setHeader("Access-Control-Allow-Methods", "GET");
+    response.setHeader("Access-Control-Max-Age", "3600");
+  }
+%>
 swagger: "2.0"
 info:
   title: Signature Commons Data API

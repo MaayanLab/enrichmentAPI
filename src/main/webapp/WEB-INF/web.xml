@@ -18,4 +18,12 @@
     </init-param> 
     <load-on-startup>1</load-on-startup> 
   </servlet>
+  <servlet>
+    <servlet-name>swagger</servlet-name>
+    <jsp-file>/swagger.jsp</jsp-file>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>swagger</servlet-name>
+    <url-pattern>/swagger.yml</url-pattern>
+  </servlet-mapping>
 </web-app>
