@@ -904,6 +904,8 @@ public class EnrichmentTemp extends HttpServlet {
 				datasetname = (String) obj.get("datasetname");
 				if (obj.has("force")) {
 					force = (Boolean) obj.get("force");
+				} else {
+					force = false;
 				}
 			}
 		    catch(Exception e) {
