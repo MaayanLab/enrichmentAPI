@@ -18,8 +18,8 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 schemes:
-- "https"
-basePath: /enrichmentapi/api/v1
+- <%= request.getScheme() %>
+basePath: <%= request.getContextPath() + "/api/v1" %>
 paths:
   /listdata:
     post:
