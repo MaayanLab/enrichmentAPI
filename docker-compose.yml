@@ -5,13 +5,14 @@ services:
     build:
       context: .
       dockerfile: docker/DockerfileAPI
-    image: maayanlab/enrichmentapi:1.1.4
+    image: maayanlab/enrichmentapi:1.1.5
     environment:
       token: token
       AWS_BUCKET: bucket
       AWS_ACCESS_KEY_ID: awsaccesskey
       AWS_SECRET_ACCESS_KEY: awssecret
       AWS_ENDPOINT_URL: http://minio:9000
+      S3_AUTOLOAD: 'true'
     ports:
       - 8080:8080
 

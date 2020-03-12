@@ -24,6 +24,9 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
@@ -176,5 +179,21 @@ public class AmazonAWS {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static List<String> listFiles(String _bucket) {
+		AmazonS3 s3Client = getS3Client();
+		ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+			.withBucketName(_bucket);
+		ObjectListing objectListing;
+		List<String> files = new ArrayList<String>();
+		do {
+			objectListing = s3Client.listObjects(listObjectsRequest);
+			for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+				files.add(objectSummary.getKey());
+			}
+			listObjectsRequest.setMarker(objectListing.getNextMarker());
+		} while (objectListing.isTruncated());
+		return files;
 	}
 }

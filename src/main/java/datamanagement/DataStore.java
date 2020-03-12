@@ -56,13 +56,36 @@ public class DataStore {
 	 */
 	public DataStore() {
 		System.out.println("Init empty");
+		String autoload = System.getenv("S3_AUTOLOAD");
+		if (autoload != null && autoload.equals("true")) {
+			String bucket = System.getenv("AWS_BUCKET");
+			if (bucket != null) {
+				System.out.println("Autoloading...");
+				this.initBucket(bucket);
+			} else {
+				System.err.println("Bucket not available");
+			}
+		}
 	}
-	
+
+	/**
+	 * Initialize all files from a bucket
+	 * @param _bucket Bucket name
+	 */
+	public void initBucket(String _bucket) {
+		AmazonAWS aws = new AmazonAWS();
+		for (String filename : aws.listFiles(_bucket)) {
+			String datasetname = filename.substring(0, filename.indexOf("."));
+			this.initFile(datasetname, _bucket, filename, false);
+		}
+	}
+
 	/**
 	 * Initialize a file by downloading from a web location and loading file into memory
-	 * @param _file URL of serialized signature dataset
+	 * @param _datasetname Name we should use for the dataset in the API
+	 * @param _bucket Bucket name
+	 * @param _filename Name of file in bucket
 	 * @param _testing if true do not download file but try to load local copy from fixed location.
-	 * @return one deserialized data blob
 	 */
 	public void initFile(String _datasetname, String _bucket, String _filename, Boolean force) {
 		
