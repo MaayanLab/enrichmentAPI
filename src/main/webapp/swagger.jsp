@@ -134,6 +134,81 @@ paths:
                   - overlap
             required:
               - results
+  /enrich/rank:
+    post:
+      description: Perform enrichment for entity set to rank signatures
+      operationId: enrich.rank
+      security: []
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Signature search query
+          required: true
+          schema:
+            type: object
+            properties:
+              database:
+                type: string
+                description: The database to search against
+              entities:
+                type: array
+                description: Entity UUIDs to use for the analysis
+                items:
+                  type: string
+              signatures:
+                type: array
+                description: Signature UUIDs to use for the analysis, `[]` for all signatures in library
+                items:
+                  type: string
+              offset:
+                type: number
+                description: Skip `offset` number of results (sorted by significance)
+              limit:
+                type: number
+                description: Produce `limit` number of results (sorted by significance)
+            required:
+              - database
+              - entities
+              - signatures
+      produces:
+        - application/json
+      responses:
+        200:
+          description: The analysis results
+          schema:
+            type: object
+            properties:
+              signatures:
+                type: array
+                description: Signatures used for enrichment analysis
+                items:
+                  type: string
+              queryTimeSec:
+                type: number
+                description: How long it took to perform the query
+              results:
+                type: object
+                description: Results of the enrichment analysis
+                properties:
+                  uuid:
+                    type: string
+                  p-value:
+                    type: number
+                    x-nullable: true
+                  zscore:
+                    type: number
+                    x-nullable: true
+                  direction:
+                    type: number
+                required:
+                  - uuid
+                  - p-value
+                  - zscore
+                  - direction
+            required:
+              - results
   /enrich/ranktwosided:
     post:
       description: Perform two-sided rank set enrichment
