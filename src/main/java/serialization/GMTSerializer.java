@@ -325,12 +325,17 @@ public class GMTSerializer {
 			}
 			
 			int numGenelist = _genelist.length;
-			int totalBgGenes = 20000;
+			int totalBgGenes = 21000;
 			int gmtListSize =  gl.length;
 			int numOverlap = overlap;
-			//double oddsRatio = (numOverlap*1.0/(totalInputGenes - numOverlap))/(numGenelist*1.0/(totalBgGenes - numGenelist));
-			double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-			
+
+			int a = numOverlap;
+			int b = gmtListSize - numOverlap;
+			int c = numGenelist;
+			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+			double pvalue = f.getRightTailedP(a, b, c, d);
+
 			if(pvalue < 0.05) {
 				pvals.put(key, pvalue);
 			}
@@ -407,13 +412,17 @@ public class GMTSerializer {
 				}
 				
 				int numGenelist = genelistLength;
-				int totalBgGenes = 20000;
+				int totalBgGenes = 21000;
 				int gmtListSize =  gl.length;
 				int numOverlap = overlap;
-				
-				//double oddsRatio = (numOverlap*1.0/(totalInputGenes - numOverlap))/(numGenelist*1.0/(totalBgGenes - numGenelist));
-				double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-				
+
+				int a = numOverlap;
+				int b = gmtListSize - numOverlap;
+				int c = numGenelist;
+				int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+				double pvalue = f.getRightTailedP(a, b, c, d);
+
 				if(pvalue < 0.05) {
 					pvals.put(keys[i], pvalue);
 				}

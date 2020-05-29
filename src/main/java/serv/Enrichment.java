@@ -83,12 +83,17 @@ public class Enrichment {
 				}
 				
 				int numGenelist = genelistLength;
-				int totalBgGenes = 20000;
+				int totalBgGenes = 21000;
 				int gmtListSize =  gl.length;
 				int numOverlap = overlap;
 				
-				double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));	
-				
+				int a = numOverlap;
+				int b = gmtListSize - numOverlap;
+				int c = numGenelist;
+				int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+				double pvalue = f.getRightTailedP(a, b, c, d);
+
 				if(pvalue < 0.05) {
 					pvals.put(keys[i], pvalue);
 				}
@@ -292,10 +297,15 @@ public class Enrichment {
 			int totalBgGenes = 21000;
 			int gmtListSize =  gl.length;
 			int numOverlap = overlap;
-			
-			double pvalue = f.getRightTailedP(numOverlap, (gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));
-			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
-			
+
+			int a = numOverlap;
+			int b = gmtListSize - numOverlap;
+			int c = numGenelist;
+			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+			double pvalue = f.getRightTailedP(a, b, c, d);
+			double oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+
 			if(((pvalue <= _significance)) || showAll) {
 				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
@@ -427,9 +437,14 @@ public class Enrichment {
 			int gmtListSize =  gl.length;
 			int numOverlap = overlap;
 			
-			double pvalue = f.getRightTailedP(numOverlap,(gmtListSize - numOverlap), numGenelist, (totalBgGenes - numGenelist));
-			double oddsRatio = (numOverlap*1.0*(totalBgGenes - numGenelist))/((gmtListSize - numOverlap)*1.0*numGenelist);
-			
+			int a = numOverlap;
+			int b = gmtListSize - numOverlap;
+			int c = numGenelist;
+			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+			double pvalue = f.getRightTailedP(a, b, c, d);
+			double oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+
 			if((pvalue < 0.05 || _uids.length == 0) && overlap > 4 || showAll) {
 				Overlap o = new Overlap(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio);
 				pvals.add(o);
