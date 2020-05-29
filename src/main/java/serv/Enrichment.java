@@ -85,11 +85,10 @@ public class Enrichment {
 				int numGenelist = genelistLength;
 				int totalBgGenes = 21000;
 				int gmtListSize =  gl.length;
-				int numOverlap = overlap;
 				
-				int a = numOverlap;
-				int b = gmtListSize - numOverlap;
-				int c = numGenelist;
+				int a = overlap;
+				int b = gmtListSize - overlap;
+				int c = numGenelist - overlap;
 				int d = totalBgGenes - numGenelist - gmtListSize + overlap;
 
 				double pvalue = f.getRightTailedP(a, b, c, d);
@@ -296,11 +295,10 @@ public class Enrichment {
 			int numGenelist = geneId.length;
 			int totalBgGenes = 21000;
 			int gmtListSize =  gl.length;
-			int numOverlap = overlap;
 
-			int a = numOverlap;
-			int b = gmtListSize - numOverlap;
-			int c = numGenelist;
+			int a = overlap;
+			int b = gmtListSize - overlap;
+			int c = numGenelist - overlap;
 			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
 
 			double pvalue = f.getRightTailedP(a, b, c, d);
@@ -435,11 +433,10 @@ public class Enrichment {
 			int numGenelist = _genelist.length;
 			int totalBgGenes = 20100;
 			int gmtListSize =  gl.length;
-			int numOverlap = overlap;
 			
-			int a = numOverlap;
-			int b = gmtListSize - numOverlap;
-			int c = numGenelist;
+			int a = overlap;
+			int b = gmtListSize - overlap;
+			int c = numGenelist - overlap;
 			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
 
 			double pvalue = f.getRightTailedP(a, b, c, d);
