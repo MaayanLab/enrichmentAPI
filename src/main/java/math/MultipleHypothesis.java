@@ -9,6 +9,9 @@ public class MultipleHypothesis {
         MultipleHypothesis mp = new MultipleHypothesis();
 
         System.out.println("Test");
+
+        // This should be identical to the R implementation 
+        // p.adjust(c(0.001, 0.0021, 0.00045, 0.006, 0.001), method="fdr")
         double[] pvals = {0.001, 0.0021, 0.00045, 0.006, 0.001};
         double[] result = mp.benjaminiHochberg(pvals);
         System.out.println(Arrays.toString(result));
@@ -25,15 +28,11 @@ public class MultipleHypothesis {
                 .boxed().sorted((i, j) -> pvalues[i].compareTo(pvalues[j]) )
                 .mapToInt(ele -> ele).toArray();
 
-        System.out.println(Arrays.toString(_pvalues));
-        System.out.println(Arrays.toString(sortedIndices));
         double[] adjPvalues = new double[_pvalues.length];
         
         // iterate through all p-values:  largest to smallest
         double lastP = 0;
         for (int i = _pvalues.length - 1; i >= 0; i--) {
-            
-            System.out.println( _pvalues[sortedIndices[i]]);
             if (i == _pvalues.length - 1) {
                 adjPvalues[sortedIndices[i]] = _pvalues[sortedIndices[i]];
                 lastP = _pvalues[sortedIndices[i]];
