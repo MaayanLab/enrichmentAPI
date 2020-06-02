@@ -450,6 +450,70 @@ public class Enrichment {
 			if(overlap > 0) {
 				counter++;
 			}
+		}
+		
+		return pvals;
+	}
+
+	
+	public HashSet<Overlap> calculateEnrichmentBackground(short[] _genelist, short[] _background, String[] _uids) {
+		
+		short stepup = Short.MIN_VALUE;
+		HashSet<Overlap> pvals = new HashSet<Overlap>();
+		
+		boolean[] boolgenelist = new boolean[70000];
+		for(int i=0; i<_genelist.length; i++) {
+			boolgenelist[_genelist[i]-stepup] = true;
+		}
+		
+		short overlap = 0;
+		HashSet<String> listfilter = new HashSet<String>(genelists.keySet());
+		
+		// 
+		boolean showAll = false;
+		if(_uids.length > 0) {
+			if(!_uids[0].equals("")) {
+				
+				HashSet<String> temp = new HashSet<String>();
+				showAll = true;
+				for(int i=0; i<_uids.length; i++) {
+					temp.add(_uids[i]);
+				}
+				temp.retainAll(listfilter);
+				listfilter = new HashSet<String>(temp);
+			}
+		}
+		
+		short[] overset = new short[Short.MAX_VALUE*2];
+		
+		for(String key : listfilter) {
+			
+			short[] gl = genelists.get(key);
+			overlap = 0;
+			
+			for(int i=0; i< gl.length; i++) {
+				if(boolgenelist[gl[i]-Short.MIN_VALUE]) {
+					overset[overlap] = gl[i];
+					overlap++;
+				}
+			}
+			
+			int numGenelist = _genelist.length;
+			int totalBgGenes = 20100;
+			int gmtListSize =  gl.length;
+			
+			int a = overlap;
+			int b = gmtListSize - overlap;
+			int c = numGenelist - overlap;
+			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+			double pvalue = f.getRightTailedP(a, b, c, d);
+			double oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+
+			if((pvalue < 0.05 || _uids.length == 0) && overlap > 4 || showAll) {
+				Overlap o = new Overlap(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio);
+				pvals.add(o);
+			}
 			
 		}
 		
