@@ -9,7 +9,7 @@ public class MultipleHypothesis {
         MultipleHypothesis mp = new MultipleHypothesis();
 
         System.out.println("Test");
-
+        
         // This should be identical to the R implementation 
         // p.adjust(c(0.001, 0.0021, 0.00045, 0.006, 0.001), method="fdr")
         double[] pvals = {0.001, 0.0021, 0.00045, 0.006, 0.001};
@@ -17,7 +17,7 @@ public class MultipleHypothesis {
         System.out.println(Arrays.toString(result));
     }
 
-    static double[] benjaminiHochberg(double[] _pvalues){
+    public double[] benjaminiHochberg(double[] _pvalues){
 
         Double[] pvalues =  new Double[_pvalues.length];
         for(int i=0; i< pvalues.length; i++){
@@ -45,7 +45,7 @@ public class MultipleHypothesis {
         return adjPvalues;
     }
 
-    static double[] bonferroni(double[] _pvalues){
+    public double[] bonferroni(double[] _pvalues){
         double[] adjPvalues = new double[_pvalues.length];
         for(int i=0; i<_pvalues.length; i++){
             adjPvalues[i] = Math.min(_pvalues[i]*_pvalues.length, 1);

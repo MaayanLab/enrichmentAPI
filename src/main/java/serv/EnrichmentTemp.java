@@ -34,6 +34,7 @@ import org.json.JSONObject;
 
 import jsp.Result;
 import math.FastFisher;
+import math.MultipleHypothesis;
 
 /**
  * Servlet implementation class Test
@@ -245,8 +246,6 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			Arrays.sort(resultArray);
 			
-			System.out.println(_offset +" - "+_limit);
-			
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
 			
@@ -263,6 +262,14 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
+			MultipleHypothesis pcorrect = new MultipleHypothesis();
+			double[] pvals = new double[resultArray.length];
+			for(int i=0; i<resultArray.length; i++){
+				pvals[i] = resultArray[i].pval;
+			}
+			double[] pvals_bonferroni = pcorrect.bonferroni(pvals);
+			double[] pvals_fdr = pcorrect.benjaminiHochberg(pvals);
+
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
 			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
 			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
@@ -272,16 +279,20 @@ public class EnrichmentTemp extends HttpServlet {
 				Result res = resultArray[i];
 				String genesetName = res.name;
 				double pval = res.pval;
+				double fdr = pvals_fdr[i];
+				double pval_bonferroni = pvals_bonferroni[i];
 				short[] overlap = res.overlap;
 				double oddsratio = res.oddsRatio;
 				int setsize = res.setsize;	
 				
-				sb.append("{");
-				sb.append("\"uuid\" : \"").append(genesetName).append("\", ");
-				sb.append("\"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval).append(", ");
-				sb.append("\"oddsratio\" : ").append(Double.isNaN(oddsratio) ? "null" : oddsratio).append(", ");
-				sb.append("\"setsize\" : ").append(setsize).append(", ");
-				sb.append("\"overlap\" : [");
+				sb.append("{")
+					.append("\"uuid\" : \"").append(genesetName).append("\", ")
+					.append("\"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval).append(", ")
+					.append("\"p-value-bonferroni\" : ").append(Double.isNaN(pval_bonferroni) ? "null" : pval_bonferroni).append(", ")
+					.append("\"fdr\" : ").append(Double.isNaN(fdr) ? "null" : fdr).append(", ")
+					.append("\"oddsratio\" : ").append(Double.isNaN(oddsratio) ? "null" : oddsratio).append(", ")
+					.append("\"setsize\" : ").append(setsize).append(", ")
+					.append("\"overlap\" : [");
 				
 				for(short overgene : overlap){
 					sb.append("\"").append(revdict.get((Short)overgene)).append("\", ");	
@@ -333,10 +344,18 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
 			
+
+			MultipleHypothesis pcorrect = new MultipleHypothesis();
+			double[] pvals = new double[resultArray.length];
+			for(int i=0; i<resultArray.length; i++){
+				pvals[i] = resultArray[i].pval;
+			}
+			double[] pvals_bonferroni = pcorrect.bonferroni(pvals);
+			double[] pvals_fdr = pcorrect.benjaminiHochberg(pvals);
+
 			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
 			_limit = Math.max(1, _limit);
 			
-
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
 			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
 			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
@@ -348,8 +367,16 @@ public class EnrichmentTemp extends HttpServlet {
 				if(signature != null) {
 					String genesetName = signature;
 					double pval = enrichResult.get(signature).pval;
+					double pval_bonferroni = pvals_bonferroni[i];
+					double pval_fdr = pvals_fdr[i];
 					
-					sb.append("{\"uuid\":\"").append(genesetName).append("\", \"p-value\":").append(pval).append(", \"zscore\":").append(enrichResult.get(signature).zscore).append(", \"direction\":").append(enrichResult.get(signature).direction).append("}, ");
+					sb.append("{\"uuid\" : \"").append(genesetName)
+						.append("\", \"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval)
+						.append(", \"p-value-bonferroni\" : ").append(Double.isNaN(pval_bonferroni) ? "null" : pval_bonferroni)
+						.append(", \"fdr\" : ").append(Double.isNaN(pval_fdr) ? "null" : pval_fdr)
+						.append(", \"zscore\" : ").append(enrichResult.get(signature).zscore)
+						.append(", \"direction\" : ").append(enrichResult.get(signature).direction)
+						.append("}, ");
 				}
 			}
 			sb.append("]}");
@@ -378,29 +405,35 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			String[] keys = enrichResultUp.keySet().toArray(new String[0]);
 			
-			double[] pvalsUp = new double[keys.length];
-			double[] pvalsDown = new double[keys.length];
-			
 			for(int i=0; i<keys.length; i++) {
-				pvalsUp[i] = enrichResultUp.get(keys[i]).pval;
-				pvalsDown[i] = enrichResultDown.get(keys[i]).pval;
-				
-				enrichResultFisher.put(keys[i], Math.abs((enrichResultUp.get(keys[i]).zscore*enrichResultDown.get(keys[i]).zscore)));
-				enrichResultAvg.put(keys[i], Math.abs((enrichResultUp.get(keys[i]).zscore)+Math.abs(enrichResultDown.get(keys[i]).zscore)));
+				// remove numeric instability for low p-values
+				double pu = Math.max(enrichResultUp.get(keys[i]).pval, Double.MIN_VALUE);
+				double pd = Math.max(enrichResultDown.get(keys[i]).pval, Double.MIN_VALUE);
+
+				enrichResultFisher.put(keys[i], -Math.log(pu*pd));
+				enrichResultAvg.put(keys[i], Math.abs(pu+pd));
 			}
-			
-			System.out.println("Signatures: "+_signatures.size());
-			System.out.println("Result count: " + _resultUp.size());
-			
+
 			Map<String, Double> sortedFisher = sortByValues((Map<String,Double>)enrichResultFisher, 1);
 			String[] sortFish = new String[sortedFisher.size()];
 			
 			int counter = 0;
+			double[] pvalsUp = new double[keys.length];
+			double[] pvalsDown = new double[keys.length];
+			
 			for (Map.Entry<String, Double> me : sortedFisher.entrySet()) { 
 				sortFish[counter] = me.getKey();
+				pvalsUp[counter] = enrichResultUp.get(me.getKey()).pval;
+				pvalsDown[counter] = enrichResultDown.get(me.getKey()).pval;
 			    counter++;
 			} 
 			
+			MultipleHypothesis pcorrect = new MultipleHypothesis();
+			double[] pvals_bonferroni_up = pcorrect.bonferroni(pvalsUp);
+			double[] pvals_fdr_up = pcorrect.benjaminiHochberg(pvalsUp);
+			double[] pvals_bonferroni_down = pcorrect.bonferroni(pvalsDown);
+			double[] pvals_fdr_down = pcorrect.benjaminiHochberg(pvalsDown);
+
 			StringBuffer sb = new StringBuffer();
 			sb.append("{");
 			
@@ -423,7 +456,13 @@ public class EnrichmentTemp extends HttpServlet {
 				if(signature != null) {
 					String genesetName = signature;
 					double pvalUp = enrichResultUp.get(signature).pval;
+					double pvalUpBonferroni = pvals_bonferroni_up[i];
+					double pvalUpfdr = pvals_fdr_up[i];
+
 					double pvalDown = enrichResultDown.get(signature).pval;
+					double pvalDownBonferroni = pvals_bonferroni_down[i];
+					double pvalDownfdr = pvals_fdr_down[i];
+
 					double zUp = enrichResultUp.get(signature).zscore;
 					double zDown = enrichResultDown.get(signature).zscore;
 					double pvalFisher = enrichResultFisher.get(signature);
@@ -433,7 +472,11 @@ public class EnrichmentTemp extends HttpServlet {
 					
 					sb.append("{\"uuid\":\"").append(genesetName)
 						.append("\", \"p-up\":").append(Double.isNaN(pvalUp) ? "null" : pvalUp)
+						.append("\", \"p-up-bonferroni\":").append(Double.isNaN(pvalUpBonferroni) ? "null" : pvalUpBonferroni)
+						.append("\", \"p-up-fdr\":").append(Double.isNaN(pvalUpfdr) ? "null" : pvalUpfdr)
 						.append(", \"p-down\":").append(Double.isNaN(pvalDown) ? "null" : pvalDown)
+						.append(", \"p-down-bonferroni\":").append(Double.isNaN(pvalDownBonferroni) ? "null" : pvalDownBonferroni)
+						.append(", \"p-down-fdr\":").append(Double.isNaN(pvalDownfdr) ? "null" : pvalDownfdr)
 						.append(", \"z-up\":").append(Double.isNaN(zUp) ? "null" : zUp)
 						.append(", \"z-down\":").append(Double.isNaN(zDown) ? "null" : zDown)
 						.append(", \"logp-fisher\":").append(Double.isNaN(pvalFisher) ? "null" : pvalFisher)
@@ -441,7 +484,6 @@ public class EnrichmentTemp extends HttpServlet {
 						.append(", \"direction-up\":").append(direction_up)
 						.append(", \"direction-down\":").append(direction_down)
 						.append("}, ");
-					
 				}
 			}
 			sb.append("]}");
