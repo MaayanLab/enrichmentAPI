@@ -118,6 +118,10 @@ paths:
                     type: string
                   p-value:
                     type: number
+                  p-value-bonferroni:
+                    type: number
+                  fdr:
+                    type: number
                   oddsratio:
                     type: number
                   setsize:
@@ -129,6 +133,8 @@ paths:
                 required:
                   - uuid
                   - p-value
+                  - p-value-bonferroni
+                  - fdr
                   - oddsratio
                   - setsize
                   - overlap
@@ -197,6 +203,12 @@ paths:
                   p-value:
                     type: number
                     x-nullable: true
+                  p-value-bonferroni:
+                    type: number
+                    x-nullable: true
+                  fdr:
+                    type: number
+                    x-nullable: true
                   zscore:
                     type: number
                     x-nullable: true
@@ -205,6 +217,8 @@ paths:
                 required:
                   - uuid
                   - p-value
+                  - p-value-bonferroni
+                  - fdr
                   - zscore
                   - direction
             required:
@@ -278,7 +292,19 @@ paths:
                   p-up:
                     type: number
                     x-nullable: true
+                  p-up-bonferroni:
+                    type: number
+                    x-nullable: true
+                  fdr-up:
+                    type: number
+                    x-nullable: true
                   p-down:
+                    type: number
+                    x-nullable: true
+                  p-down-bonferroni:
+                    type: number
+                    x-nullable: true
+                  fdr-down:
                     type: number
                     x-nullable: true
                   z-up:
@@ -300,7 +326,11 @@ paths:
                 required:
                   - uuid
                   - p-up
+                  - p-up-bonferroni
+                  - fdr-up
                   - p-down
+                  - p-down-bonferroni
+                  - fdr-down
                   - z-up
                   - z-down
                   - logp-fisher
