@@ -411,7 +411,7 @@ public class EnrichmentTemp extends HttpServlet {
 				double pd = Math.max(enrichResultDown.get(keys[i]).pval, Double.MIN_VALUE);
 
 				enrichResultFisher.put(keys[i], -Math.log(pu*pd));
-				enrichResultAvg.put(keys[i], Math.abs(pu+pd));
+				enrichResultAvg.put(keys[i], -Math.log((pu+pd)/2));
 			}
 
 			Map<String, Double> sortedFisher = sortByValues((Map<String,Double>)enrichResultFisher, 1);
