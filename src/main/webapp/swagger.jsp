@@ -77,6 +77,8 @@ paths:
               background:
                 type: array
                 description: Entity background for correction of library entitiy sets
+                items:
+                  type: string
               offset:
                 type: number
                 description: Skip `offset` number of results (sorted by significance)
