@@ -301,9 +301,118 @@ public class Enrichment {
 			int c = numGenelist - overlap;
 			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
 
-			double pvalue = f.getRightTailedP(a, b, c, d);
-			double oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+			double pvalue = 1;
+			double oddsRatio = 1;
+			if(a > 0){
+				pvalue = f.getRightTailedP(a, b, c, d);
+				oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+			}
 
+			if(((pvalue <= _significance)) || showAll) {
+				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
+				results.put(key, o);
+			}
+		}
+		
+		System.out.println("Result size: "+results.size());
+		
+		return results;
+	}
+	
+	
+	public static HashMap<String, Result> calculateOverlapBackgroundEnrichment(String _db, String[] _entities, HashSet<String> _signatures, HashSet<String> _backgroundEntities, double _significance) {
+		
+		HashMap<String, Result> results = new HashMap<String, Result>();
+		
+		HashMap<String, Object> db = datastore.datasets.get(_db).getData();
+		HashMap<String, short[]> genelist = (HashMap<String, short[]>)db.get("geneset");
+		HashMap<String, Short> dictionary = (HashMap<String, Short>) db.get("dictionary");
+		
+		HashSet<Short> entityMapped = new HashSet<Short>();
+		HashSet<Short> backgroundMapped = new HashSet<Short>();
+
+	    for(String s : _entities) {
+	    	if(dictionary.containsKey(s)) {
+	    		entityMapped.add(dictionary.get(s));
+	    	}
+		}
+		
+		int backgroundSize = 0;
+		for(String s : _backgroundEntities) {
+	    	if(dictionary.containsKey(s)) {
+				backgroundMapped.add(dictionary.get(s));
+				backgroundSize++;
+	    	}
+	    }
+	    
+	    short[] geneId = new short[entityMapped.size()];
+	    Short[] temp = entityMapped.toArray(new Short[0]);
+	    for(int i=0; i<entityMapped.size(); i++) {
+	    	geneId[i] = (short) temp[i];
+	    }
+	    short stepup = Short.MIN_VALUE;
+		boolean[] boolgenelist = new boolean[65000];
+		for(int i=0; i< geneId.length; i++) {
+			boolgenelist[geneId[i] - stepup] = true;
+		}
+		
+	    short[] backgroundId = new short[backgroundMapped.size()];
+	    Short[] tempbackground = backgroundMapped.toArray(new Short[0]);
+	    for(int i=0; i<backgroundMapped.size(); i++) {
+	    	backgroundId[i] = (short) tempbackground[i];
+	    }
+
+		boolean[] boolbackground = new boolean[65000];
+		for(int i=0; i< backgroundId.length; i++) {
+			boolbackground[backgroundId[i] - stepup] = true;
+		}
+		
+		short overlap = 0;
+		boolean showAll = false;
+		
+		HashSet<String> signaturefilter = new HashSet<String>();
+		if(_signatures.size() == 0) {
+			signaturefilter = new HashSet<String>(genelist.keySet());
+		}
+		else {
+			signaturefilter = new HashSet<String>(_signatures);
+			showAll = true;
+		}
+		
+		// create overlap buffer
+		short[] overset = new short[Short.MAX_VALUE*2];
+		
+		for(String key : signaturefilter) {
+			
+			short[] gl = genelist.get(key);
+			overlap = 0;
+			
+			int glLength = 0;
+			for(int i=0; i< gl.length; i++) {
+				if(boolbackground[gl[i]-Short.MIN_VALUE]){
+					glLength++;
+					if(boolgenelist[gl[i]-Short.MIN_VALUE]) {
+						overset[overlap] = gl[i];
+						overlap++;
+					}
+				}
+			}
+			
+			int numGenelist = geneId.length;
+			int totalBgGenes = backgroundSize;
+			int gmtListSize =  glLength;
+
+			int a = overlap;
+			int b = gmtListSize - overlap;
+			int c = numGenelist - overlap;
+			int d = totalBgGenes - numGenelist - gmtListSize + overlap;
+
+			double pvalue = 1;
+			double oddsRatio = 1;
+			if(a > 0){
+				pvalue = f.getRightTailedP(a, b, c, d);
+				oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+			}
 			if(((pvalue <= _significance)) || showAll) {
 				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);

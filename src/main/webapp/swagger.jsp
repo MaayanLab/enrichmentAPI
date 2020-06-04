@@ -74,6 +74,9 @@ paths:
                 description: Signature UUIDs to use for the analysis, `[]` for all signatures in library
                 items:
                   type: string
+              background:
+                type: array
+                description: Entity background for correction of library entitiy sets
               offset:
                 type: number
                 description: Skip `offset` number of results (sorted by significance)

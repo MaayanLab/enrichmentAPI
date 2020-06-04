@@ -731,6 +731,7 @@ public class EnrichmentTemp extends HttpServlet {
 			String queryjson = jb.toString();
 			HashSet<String> signatures = new HashSet<String>();
 			ArrayList<String> entity_split = new ArrayList<String>();
+			HashSet<String> backgroundEntities = new HashSet<String>(); 
 			
 			String db = "";
 			int offset = 0;
@@ -752,9 +753,16 @@ public class EnrichmentTemp extends HttpServlet {
 			    if(obj.optJSONArray("signatures") != null) {
 				    final JSONArray querySignatures = obj.getJSONArray("signatures");
 				    n = querySignatures.length();
-				    
 				    for (int i = 0; i < n; ++i) {
 				    	signatures.add(querySignatures.getString(i));
+				    }
+				}
+				
+				if(obj.optJSONArray("background") != null) {
+				    final JSONArray querySignatures = obj.getJSONArray("background");
+				    n = querySignatures.length();
+				    for (int i = 0; i < n; ++i) {
+				    	backgroundEntities.add(querySignatures.getString(i));
 				    }
 			    }
 			    
@@ -762,12 +770,9 @@ public class EnrichmentTemp extends HttpServlet {
 			    	offset = (int) obj.get("offset");
 			    }
 			    
-			    
 			    if(obj.opt("limit") != null) {
 			    	limit = (int) obj.get("limit");
 			    }
-			    
-			    System.out.println("OL: "+offset+" - "+limit);
 			    
 			    if(obj.opt("significance") != null) {
 			    	significance = (double) obj.get("significance");
@@ -776,16 +781,13 @@ public class EnrichmentTemp extends HttpServlet {
 		    catch(Exception e) {
 		    	e.printStackTrace();
 				System.out.println(e.getStackTrace().toString());
-				
 		    	PrintWriter out = response.getWriter();
-				
 				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
 				out.write(json);
 		    }
 			
 			if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
 				// The database is a gene set collection	
-				
 				HashSet<String> entities = new HashSet<String>(entity_split);
 				HashMap<String, Short> dict = (HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("dictionary");
 				HashSet<String> dictEntities = new HashSet<String>(dict.keySet());
@@ -794,8 +796,13 @@ public class EnrichmentTemp extends HttpServlet {
 				HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("geneset")).keySet());
 				signatures.retainAll(sigs);
 				
-				HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, significance);
-				
+				HashMap<String, Result> enrichResult = null;
+				if(backgroundEntities.size() == 0){
+					enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, significance);
+				}
+				else{
+					enrichResult = enrich.calculateOverlapBackgroundEnrichment(db, entities.toArray(new String[0]), signatures, backgroundEntities, significance);
+				}
 				returnOverlapJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
 			}
 		}
