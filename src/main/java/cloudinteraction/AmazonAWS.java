@@ -164,7 +164,8 @@ public class AmazonAWS {
 
 		try {
 			InputStream reader = new BufferedInputStream(object.getObjectContent());
-			File file = new File(_outfile);      
+			File file = new File(_outfile);
+			file.getParentFile().mkdirs();
 			OutputStream writer = new BufferedOutputStream(new FileOutputStream(file));
 
 			int read = -1;
@@ -181,10 +182,13 @@ public class AmazonAWS {
 		}
 	}
 
-	public static List<String> listFiles(String _bucket) {
+	public static List<String> listFiles(String _bucket, String _prefix) {
 		AmazonS3 s3Client = getS3Client();
 		ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
 			.withBucketName(_bucket);
+		if (_prefix != null) {
+			listObjectsRequest = listObjectsRequest.withPrefix(_prefix);
+		}
 		ObjectListing objectListing;
 		List<String> files = new ArrayList<String>();
 		do {

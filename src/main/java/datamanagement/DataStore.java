@@ -59,9 +59,12 @@ public class DataStore {
 		String autoload = System.getenv("S3_AUTOLOAD");
 		if (autoload != null && autoload.equals("true")) {
 			String bucket = System.getenv("AWS_BUCKET");
+			if (bucket.equals("")) bucket = null;
+			String prefix = System.getenv("AWS_BUCKET_PREFIX");
+			if (prefix.equals("")) prefix = null;
 			if (bucket != null) {
 				System.out.println("Autoloading...");
-				this.initBucket(bucket);
+				this.initBucket(bucket, prefix);
 			} else {
 				System.err.println("Bucket not available");
 			}
@@ -72,10 +75,11 @@ public class DataStore {
 	 * Initialize all files from a bucket
 	 * @param _bucket Bucket name
 	 */
-	public void initBucket(String _bucket) {
+	public void initBucket(String _bucket, String _prefix) {
 		AmazonAWS aws = new AmazonAWS();
-		for (String filename : aws.listFiles(_bucket)) {
-			String datasetname = filename.substring(0, filename.indexOf("."));
+		for (String filename : aws.listFiles(_bucket, _prefix)) {
+			int ind = filename.lastIndexOf("/") + 1;
+			String datasetname = filename.substring(ind, filename.indexOf("."));
 			this.initFile(datasetname, _bucket, filename, false);
 		}
 	}
