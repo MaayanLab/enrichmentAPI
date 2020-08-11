@@ -27,7 +27,7 @@ public class Enrichment {
 	
 	//public static HashMap<String, HashMap<String, Object>> datasets = new HashMap<String, HashMap<String, Object>>();
 	
-	public static DataStore datastore;
+	public static DataStore datastore = null;
 	
 	static public HashMap<String, short[]> genelists = new HashMap<String, short[]>();
 	static public HashMap<String, Short> dictionary = new HashMap<String, Short>();
@@ -45,7 +45,8 @@ public class Enrichment {
 	 * Initialize all datasets
 	 */
 	public Enrichment() {
-		datastore = new DataStore();
+		if (datastore == null)
+			datastore = new DataStore();
 		System.out.println("Initialization complete.");
 	}
 	
