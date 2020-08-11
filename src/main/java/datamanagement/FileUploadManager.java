@@ -139,9 +139,9 @@ public class FileUploadManager  extends HttpServlet {
 	
 	private void sendError(HttpServletResponse response, String _message) {
 		try {
-			PrintWriter out = response.getWriter();
-			String json = "{\"error\": \""+_message+"\"}";
-			out.write(json);
+			JSONObject json = new JSONObject();
+			json.put("error", _message);
+			json.write(response.getWriter());
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -150,9 +150,9 @@ public class FileUploadManager  extends HttpServlet {
 	
 	private void sendStatus(HttpServletResponse response, String _message) {
 		try {
-			PrintWriter out = response.getWriter();
-			String json = "{\"status\": \""+_message+"\"}";
-			out.write(json);
+			JSONObject json = new JSONObject();
+			json.put("status", _message);
+			json.write(response.getWriter());
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -540,23 +540,30 @@ public class FileUploadManager  extends HttpServlet {
 	
 	private void listRepositories(HttpServletResponse _response) {
 		try {
-			StringBuffer sb = new StringBuffer( "{\"rank_repositories\": [");
-			
+
+			JSONObject json = new JSONObject();
+
+			JSONArray rank_repositories = new JSONArray();
 			for(String rep : repSignatures.keySet()) {
-				sb.append("{\"uuid\":\"").append(rep).append("\", \"entity_count\" : ").append(repEntities.get(rep).size()).append(", \"signature_count\":").append(repSignatures.get(rep).size()).append("},");
+				JSONObject rank_repository = new JSONObject();
+				rank_repository.put("uuid", rep);
+				rank_repository.put("entity_count", repEntities.get(rep).size());
+				rank_repository.put("signature_count", repSignatures.get(rep).size());
+				rank_repositories.put(rank_repository);
 			}
-			sb.append("], \"genelist_repositories\": [");
-			
+			json.put("rank_repositories", rank_repositories);
+
+			JSONArray genelist_repositories = new JSONArray();
 			for(String rep : genesetLibraries.keySet()) {
-				sb.append("{\"uuid\":\"").append(rep).append("\", \"entity_count\" : ").append(dictionaries.get(rep).size()).append(", \"signature_count\":").append(genesetLibraries.get(rep).size()).append("},");
+				JSONObject genelist_repository = new JSONObject();
+				genelist_repository.put("uuid", rep);
+				genelist_repository.put("entity_count", dictionaries.get(rep).size());
+				genelist_repository.put("signature_count", genesetLibraries.get(rep).size());
+				genelist_repositories.put(genelist_repository);
 			}
-			sb.append("]}");
+			json.put("genelist_repositories", genelist_repositories);
 			
-			String json = sb.toString();
-			json = json.replace(",]", "]");
-			
-			PrintWriter out = _response.getWriter();
-			out.write(json);
+			json.write(_response.getWriter());
 		}
 		catch(Exception e) {
 			e.printStackTrace();

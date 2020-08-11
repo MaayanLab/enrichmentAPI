@@ -108,20 +108,18 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 		else if(pathInfo.matches("^/listdata")){
 			//localhost:8080/EnrichmentAPI/enrichment/listcategories
-			PrintWriter out = response.getWriter();
+			JSONObject json = new JSONObject();
 			
-			StringBuffer sb = new StringBuffer();
-			
-			sb.append("{ \"repositories\": [");
-			
-			for(String db : enrich.datastore.datasets.keySet()){
-				sb.append("{\"uuid\": \"").append(db).append("\", \"datatype\":\"").append(enrich.datastore.datasets.get(db).getDatasetType()).append("\"},");
+			JSONArray json_repositories = new JSONArray();			
+			for (String db : enrich.datastore.datasets.keySet()) {
+				JSONObject json_repository = new JSONObject();
+				json_repository.put("uuid", db);
+				json_repository.put("datatype", enrich.datastore.datasets.get(db).getDatasetType());
+				json_repositories.put(json_repository);
 			}
-			sb.append("]}");
-			
-			String json = sb.toString();
-			json = json.replace(",]", "]");
-			out.write(json);
+			json.put("repositories", json_repositories);
+
+			json.write(response.getWriter());
 		}
 		else if(pathInfo.matches("^/enrich/overlap/.*")) {
 			
@@ -231,9 +229,7 @@ public class EnrichmentTemp extends HttpServlet {
 		try {
 			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
-			
-			PrintWriter out = _response.getWriter();
-			
+
 			HashMap<String, Result> enrichResult = _result;
 			HashMap<Short, String> revdict = (HashMap<Short, String>) enrich.datastore.datasets.get(_db).getData().get("revDictionary");
 			
@@ -245,22 +241,24 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 			
 			Arrays.sort(resultArray);
-			
-			StringBuffer sb = new StringBuffer();
-			sb.append("{");
-			
-			sb.append("\"signatures\" : [");
+
+			JSONObject json = new JSONObject();
+
+			JSONArray json_signatures = new JSONArray();
 			for(String ui : _signatures){
-				sb.append("\"").append(ui).append("\", ");	
+				json_signatures.put(ui);
 			}
-			sb.append("], ");
+			json.put("signatures", json_signatures);
 			
-			sb.append("\"matchingEntities\" : [");
+			JSONArray json_matchingEntities = new JSONArray();
 			for(String match : _entities){
-				sb.append("\"").append(match).append("\", ");	
+				json_matchingEntities.put(match);
 			}
+			json.put("matchingEntities", json_matchingEntities);
 			
-			sb.append("], \"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
+			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
+
+			JSONArray json_results = new JSONArray();
 			
 			MultipleHypothesis pcorrect = new MultipleHypothesis();
 			double[] pvals = new double[resultArray.length];
@@ -285,29 +283,27 @@ public class EnrichmentTemp extends HttpServlet {
 				double oddsratio = res.oddsRatio;
 				int setsize = res.setsize;	
 				
-				sb.append("{")
-					.append("\"uuid\" : \"").append(genesetName).append("\", ")
-					.append("\"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval).append(", ")
-					.append("\"p-value-bonferroni\" : ").append(Double.isNaN(pval_bonferroni) ? "null" : pval_bonferroni).append(", ")
-					.append("\"fdr\" : ").append(Double.isNaN(fdr) ? "null" : fdr).append(", ")
-					.append("\"oddsratio\" : ").append(Double.isNaN(oddsratio) ? "null" : oddsratio).append(", ")
-					.append("\"setsize\" : ").append(setsize).append(", ")
-					.append("\"overlap\" : [");
-				
+				JSONObject json_result = new JSONObject();
+
+				json_result.put("uuid", genesetName);
+				json_result.put("p-value", Double.isNaN(pval) ? null : pval);
+				json_result.put("p-value-bonferroni", Double.isNaN(pval_bonferroni) ? null : pval_bonferroni);
+				json_result.put("fdr", Double.isNaN(fdr) ? null : fdr);
+				json_result.put("oddsratio", Double.isNaN(oddsratio) ? null : oddsratio);
+				json_result.put("setsize", setsize);
+
+				JSONArray json_result_overlap = new JSONArray();
 				for(short overgene : overlap){
-					sb.append("\"").append(revdict.get((Short)overgene)).append("\", ");	
+					json_result_overlap.put(revdict.get((Short)overgene));
 				}
-				sb.append("]}, ");
+				json_result.put("overlap", json_result_overlap);
+
+				json_results.put(json_result);
 			}
+			json.put("results", json_results);
 			
-			sb.append("]}");
-			String json = sb.toString();
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
-			
-			System.out.println(json);
-			
-			out.write(json);
+			System.out.println(json.toString());
+			json.write(_response.getWriter());
 			
 		}
 		catch(Exception e) {
@@ -320,8 +316,6 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
 			
-			PrintWriter out = _response.getWriter();
-			
 			HashMap<String, Result> enrichResult = _result;
 			
 			Result[] resultArray = new Result[enrichResult.size()];
@@ -333,17 +327,17 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			Arrays.sort(resultArray);
 			
-			StringBuffer sb = new StringBuffer();
-			sb.append("{");
-			
-			sb.append("\"signatures\" : [");
+			JSONObject json = new JSONObject();
+
+			JSONArray json_signatures = new JSONArray();
 			for(String ui : _signatures){
-				sb.append("\"").append(ui).append("\", ");	
+				json_signatures.put(ui);
 			}
-			sb.append("], ");
+			json.put("signatures", json_signatures);
 			
-			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
-			
+			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
+
+			JSONArray json_results = new JSONArray();
 
 			MultipleHypothesis pcorrect = new MultipleHypothesis();
 			double[] pvals = new double[resultArray.length];
@@ -370,21 +364,21 @@ public class EnrichmentTemp extends HttpServlet {
 					double pval_bonferroni = pvals_bonferroni[i];
 					double pval_fdr = pvals_fdr[i];
 					
-					sb.append("{\"uuid\" : \"").append(genesetName)
-						.append("\", \"p-value\" : ").append(Double.isNaN(pval) ? "null" : pval)
-						.append(", \"p-value-bonferroni\" : ").append(Double.isNaN(pval_bonferroni) ? "null" : pval_bonferroni)
-						.append(", \"fdr\" : ").append(Double.isNaN(pval_fdr) ? "null" : pval_fdr)
-						.append(", \"zscore\" : ").append(enrichResult.get(signature).zscore)
-						.append(", \"direction\" : ").append(enrichResult.get(signature).direction)
-						.append("}, ");
+					JSONObject json_result = new JSONObject();
+					json_result.put("uuid", genesetName);
+					json_result.put("p-value", genesetName);
+					json_result.put("p-value", Double.isNaN(pval) ? null : pval);
+					json_result.put("p-value-bonferroni", Double.isNaN(pval_bonferroni) ? null : pval_bonferroni);
+					json_result.put("fdr", Double.isNaN(pval_fdr) ? null : pval_fdr);
+					json_result.put("zscore", enrichResult.get(signature).zscore);
+					json_result.put("direction", enrichResult.get(signature).direction);
+					
+					json_results.put(json_result);
 				}
 			}
-			sb.append("]}");
+			json.put("results", json_results);
 			
-			String json = sb.toString();
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
-			out.write(json);
+			json.write(_response.getWriter());
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -395,8 +389,6 @@ public class EnrichmentTemp extends HttpServlet {
 		try {
 			
 			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
-			
-			PrintWriter out = _response.getWriter();
 			
 			HashMap<String, Result> enrichResultUp = _resultUp;
 			HashMap<String, Result> enrichResultDown = _resultDown;
@@ -434,17 +426,17 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] pvals_bonferroni_down = pcorrect.bonferroni(pvalsDown);
 			double[] pvals_fdr_down = pcorrect.benjaminiHochberg(pvalsDown);
 
-			StringBuffer sb = new StringBuffer();
-			sb.append("{");
-			
-			sb.append("\"signatures\" : [");
+			JSONObject json = new JSONObject();
+
+			JSONArray json_signatures = new JSONArray();
 			for(String ui : _signatures){
-				sb.append("\"").append(ui).append("\", ");	
+				json_signatures.put(ui);
 			}
-			sb.append("], ");
+			json.put("signatures", json_signatures);
 			
-			sb.append("\"queryTimeSec\": ").append(((System.currentTimeMillis()*1.0 - _time)/1000)).append(", \"results\": [");
+			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
 			
+			JSONArray json_results = new JSONArray();
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
 			_offset = Math.min(Math.max(0, _offset), sortFish.length-1);
 			_limit = Math.min(_offset+Math.max(1, _limit), sortFish.length);
@@ -470,29 +462,28 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 					
-					sb.append("{\"uuid\":\"").append(genesetName)
-						.append("\", \"p-up\":").append(Double.isNaN(pvalUp) ? "null" : pvalUp)
-						.append("\", \"p-up-bonferroni\":").append(Double.isNaN(pvalUpBonferroni) ? "null" : pvalUpBonferroni)
-						.append("\", \"fdr-up\":").append(Double.isNaN(pvalUpfdr) ? "null" : pvalUpfdr)
-						.append(", \"p-down\":").append(Double.isNaN(pvalDown) ? "null" : pvalDown)
-						.append(", \"p-down-bonferroni\":").append(Double.isNaN(pvalDownBonferroni) ? "null" : pvalDownBonferroni)
-						.append(", \"fdr-down\":").append(Double.isNaN(pvalDownfdr) ? "null" : pvalDownfdr)
-						.append(", \"z-up\":").append(Double.isNaN(zUp) ? "null" : zUp)
-						.append(", \"z-down\":").append(Double.isNaN(zDown) ? "null" : zDown)
-						.append(", \"logp-fisher\":").append(Double.isNaN(pvalFisher) ? "null" : pvalFisher)
-						.append(", \"logp-avg\":").append(Double.isNaN(pvalSum) ? "null" : pvalSum)
-						.append(", \"direction-up\":").append(direction_up)
-						.append(", \"direction-down\":").append(direction_down)
-						.append("}, ");
+					JSONObject json_result = new JSONObject();
+					
+					json_result.put("uuid", genesetName);
+					json_result.put("p-up", Double.isNaN(pvalUp) ? null : pvalUp);
+					json_result.put("p-up-bonferroni", Double.isNaN(pvalUpBonferroni) ? null : pvalUpBonferroni);
+					json_result.put("fdr-up", Double.isNaN(pvalUpfdr) ? null : pvalUpfdr);
+					json_result.put("p-down", Double.isNaN(pvalDown) ? null : pvalDown);
+					json_result.put("p-down-bonferroni", Double.isNaN(pvalDownBonferroni) ? null : pvalDownBonferroni);
+					json_result.put("fdr-down", Double.isNaN(pvalDownfdr) ? null : pvalDownfdr);
+					json_result.put("z-up", Double.isNaN(zUp) ? null : zUp);
+					json_result.put("z-down", Double.isNaN(zDown) ? null : zDown);
+					json_result.put("logp-fisher", Double.isNaN(pvalFisher) ? null : pvalFisher);
+					json_result.put("logp-avg", Double.isNaN(pvalSum) ? null : pvalSum);
+					json_result.put("direction-up", direction_up);
+					json_result.put("direction-down", direction_down);
+
+					json_results.put(json_result);
 				}
 			}
-			sb.append("]}");
-			
-			String json = sb.toString();
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
-			out.write(json);
-			
+			json.put("results", json_results);
+
+			json.write(_response.getWriter());
 			System.out.println("data sent");
 		}
 		catch(Exception e) {
@@ -575,15 +566,14 @@ public class EnrichmentTemp extends HttpServlet {
 			    if(obj.opt("significance") != null) {
 			    	significance = (double) obj.get("significance");
 			    }
+			} catch(Exception e) {
+				e.printStackTrace();
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
 			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
-		    	
-		    	PrintWriter out = response.getWriter();
-				
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
 			
 			System.out.println(db);
 			if(enrich.datastore.datasets.get(db).getData().containsKey("rank")) {
@@ -666,15 +656,14 @@ public class EnrichmentTemp extends HttpServlet {
 			    if(obj.opt("significance") != null) {
 			    	significance = (double) obj.get("significance");
 			    }
+			} catch(Exception e) {
+				e.printStackTrace();
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
 			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
-		    	
-		    	PrintWriter out = response.getWriter();
-				
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
 			
 			System.out.println(db);
 			
@@ -777,14 +766,15 @@ public class EnrichmentTemp extends HttpServlet {
 			    if(obj.opt("significance") != null) {
 			    	significance = (double) obj.get("significance");
 			    }
-			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
+			} catch(Exception e) {
+				e.printStackTrace();
 				System.out.println(e.getStackTrace().toString());
-		    	PrintWriter out = response.getWriter();
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
+			}
 			
 			if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
 				// The database is a gene set collection	
@@ -799,8 +789,7 @@ public class EnrichmentTemp extends HttpServlet {
 				HashMap<String, Result> enrichResult = null;
 				if(backgroundEntities.size() == 0){
 					enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, significance);
-				}
-				else{
+				} else {
 					enrichResult = enrich.calculateOverlapBackgroundEnrichment(db, entities.toArray(new String[0]), signatures, backgroundEntities, significance);
 				}
 				returnOverlapJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
@@ -827,23 +816,21 @@ public class EnrichmentTemp extends HttpServlet {
 				final JSONObject obj = new JSONObject(queryjson);
 			    
 				db = (String) obj.get("database");
-			    
 
-			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    int n = querySignatures.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	signatures.add(querySignatures.getString(i));
-			    }
-			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
-		    
-		    	PrintWriter out = response.getWriter();
+				final JSONArray querySignatures = obj.getJSONArray("signatures");
+				int n = querySignatures.length();
 				
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
+				for (int i = 0; i < n; ++i) {
+					signatures.add(querySignatures.getString(i));
+				}
+			} catch(Exception e) {
+				e.printStackTrace();
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
+			}
 			
 			HashMap<String, String[]> res =  enrich.getSetData(db, signatures.toArray(new String[0]));
 			returnSetData(response, res);
@@ -880,32 +867,31 @@ public class EnrichmentTemp extends HttpServlet {
 				    }
 				}
 				
-			    final JSONArray querySignatures = obj.getJSONArray("signatures");
-			    int n = querySignatures.length();
-			    
-			    for (int i = 0; i < n; ++i) {
-			    	signatures.add(querySignatures.getString(i));
-			    }
-			    
-			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
-		    	
-		    	PrintWriter out = response.getWriter();
+				final JSONArray querySignatures = obj.getJSONArray("signatures");
+				int n = querySignatures.length();
 				
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
-			
+				for (int i = 0; i < n; ++i) {
+					signatures.add(querySignatures.getString(i));
+				}
+			    
+			} catch(Exception e) {
+				e.printStackTrace();
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
+			}
+
 			HashMap<String, Object> res =  enrich.getRankData(db, signatures.toArray(new String[0]), entity_split.toArray(new String[0]));
 			returnRankData(response, res);
 		}
 		else if(pathInfo.matches("^/reloadrepositories")){
 			enrich.reloadRepositories();
 			try {
-				PrintWriter out = response.getWriter();
-				String json = "{\"status\": \"Repositories loaded into memory. Data API ready to go.\"}";
-				out.write(json);
+				JSONObject json = new JSONObject();
+				json.put("status", "Repositories loaded into memory. Data API ready to go.");
+				json.write(response.getWriter());
 			}
 			catch(Exception e){
 				e.printStackTrace();
@@ -913,19 +899,18 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 		else if(pathInfo.matches("^/listdata")){
 			//localhost:8080/EnrichmentAPI/enrichment/listcategories
-			PrintWriter out = response.getWriter();
-			StringBuffer sb = new StringBuffer();
-			
-			sb.append("{ \"repositories\": [");
-			
+			JSONObject json = new JSONObject();
+
+			JSONArray json_repositories = new JSONArray();
 			for(String db : enrich.datastore.datasets.keySet()){
-				sb.append("{\"uuid\": \"").append(db).append("\", \"datatype\":\"").append(enrich.datastore.datasets.get(db).getDatasetType()).append("\"},");
+				JSONObject json_repository = new JSONObject();
+				json_repository.put("uuid", db);
+				json_repository.put("datatype", enrich.datastore.datasets.get(db).getDatasetType());
+				json_repositories.put(json_repository);
 			}
-			sb.append("]}");
+			json.put("repositories", json_repositories);
 			
-			String json = sb.toString();
-			json = json.replace(",]", "]");
-			out.write(json);
+			json.write(response.getWriter());
 		}
 		else if(pathInfo.matches("^/load") && validateToken(token)){
 			
@@ -956,24 +941,23 @@ public class EnrichmentTemp extends HttpServlet {
 				} else {
 					force = false;
 				}
+			} catch(Exception e) {
+				e.printStackTrace();
+			
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
 			}
-		    catch(Exception e) {
-		    	e.printStackTrace();
-		    
-		    	PrintWriter out = response.getWriter();
-				
-				String json = "{\"error\": \"malformed JSON query data\", \"endpoint:\" : \""+pathInfo+"\"}";
-				out.write(json);
-		    }
 			
 			enrich.datastore.initFile(datasetname, bucket, filename, force);
 			System.out.println("Done");
 
-			String json = "{\"success\": \"data successfully deployed\"}";
-			PrintWriter out = response.getWriter();
-			out.write(json);
-		}
-		else{
+			JSONObject json = new JSONObject();
+			json.put("success", "data successfully deployed");
+			json.put("endpoint", pathInfo);
+			json.write(response.getWriter());
+		} else {
 			System.out.println("endpoint not found, or no valid token for data opteration");
 		}
 	}
@@ -984,19 +968,24 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			PrintWriter out = _response.getWriter();
 			
-			StringBuffer sb = new StringBuffer();
-			sb.append("{");
+			JSONObject json = new JSONObject();
 			
-			sb.append("\"signatures\" : [ ");
+			JSONArray json_signatures = new JSONArray();
 			for(String ui : _sets.keySet()){
-				sb.append("{\"uid\" : \"").append(ui).append("\", \"entities\" : [\"").append(String.join("\",\"", _sets.get(ui))).append("\"]}, ");
+				JSONObject json_signature = new JSONObject();
+				json_signature.put("uid", ui);
+
+				JSONArray entities = new JSONArray();
+				for (String entity : _sets.get(ui)) {
+					entities.put(entity);
+				}
+				json_signature.put("entities", entities);
+
+				json_signatures.put(json_signature);
 			}
-			sb.append("]}");
+			json.put("signatures", json_signatures);
 			
-			String json = sb.toString();
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
-			out.write(json);
+			json.write(out);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -1014,23 +1003,33 @@ public class EnrichmentTemp extends HttpServlet {
 			String[] signatures = ranks.keySet().toArray(new String[0]);
 			String[] entities = (String[]) _ranks.get("entities");
 			
-			StringBuffer sb = new StringBuffer();
+			JSONObject json = new JSONObject();
 			
-			sb.append("{\"entities\" : [\"").append(String.join("\",\"", entities)).append("\"], \"maxrank\" : ").append(maxRank);
-			
-			sb.append(", \"signatures\" : [");
-			for(String ui : signatures){
-				short[] sigRank = ranks.get(ui);
-				sb.append("{\"uid\" : \"").append(ui).append("\", \"ranks\" : ").append(Arrays.toString(sigRank)).append("}, ");
+			JSONArray json_entities = new JSONArray();
+			for (String entity : entities) {
+				json_entities.put(entity);
 			}
-			sb.append("] }");
+			json.put("entities", json_entities);
+
+			json.put("maxrank", maxRank);
 			
-			String json = sb.toString();
+			JSONArray json_signatures = new JSONArray();
+			for(String ui : signatures){
+				JSONObject json_signature = new JSONObject();
+
+				short[] sigRank = ranks.get(ui);
+				json_signature.put("uid", ui);
+				JSONArray json_signature_rank = new JSONArray();
+				for (short rank : sigRank) {
+					json_signature_rank.put(rank);
+				}
+				json_signature.put("ranks", json_signature_rank);
+
+				json_signatures.put(json_signature);
+			}
+			json.put("signatures", json_signatures);
 			
-			
-			json = json.replace(", }", "}");
-			json = json.replace(", ]", "]");
-			out.write(json);
+			json.write(out);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
