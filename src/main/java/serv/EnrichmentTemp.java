@@ -269,7 +269,7 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] pvals_fdr = pcorrect.benjaminiHochberg(pvals);
 
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
 			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
 			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
 			
@@ -347,11 +347,11 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] pvals_bonferroni = pcorrect.bonferroni(pvals);
 			double[] pvals_fdr = pcorrect.benjaminiHochberg(pvals);
 
-			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
 			_limit = Math.max(1, _limit);
 			
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), resultArray.length-1);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
 			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
 			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
 			
@@ -438,7 +438,7 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			JSONArray json_results = new JSONArray();
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), sortFish.length-1);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, sortFish.length-1));
 			_limit = Math.min(_offset+Math.max(1, _limit), sortFish.length);
 			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortFish.length);
 			
