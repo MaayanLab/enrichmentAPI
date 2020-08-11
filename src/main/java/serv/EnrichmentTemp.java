@@ -91,6 +91,14 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
+	private Double safeJsonDouble(Double val) {
+		if (Double.isInfinite(val) || Double.isNaN(val)) {
+			return null;
+		} else {
+			return val;
+		}
+	}
+
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -286,10 +294,10 @@ public class EnrichmentTemp extends HttpServlet {
 				JSONObject json_result = new JSONObject();
 
 				json_result.put("uuid", genesetName);
-				json_result.put("p-value", Double.isNaN(pval) ? null : pval);
-				json_result.put("p-value-bonferroni", Double.isNaN(pval_bonferroni) ? null : pval_bonferroni);
-				json_result.put("fdr", Double.isNaN(fdr) ? null : fdr);
-				json_result.put("oddsratio", Double.isNaN(oddsratio) ? null : oddsratio);
+				json_result.put("p-value", safeJsonDouble(pval));
+				json_result.put("p-value-bonferroni", safeJsonDouble(pval_bonferroni));
+				json_result.put("fdr", safeJsonDouble(fdr));
+				json_result.put("oddsratio", safeJsonDouble(oddsratio));
 				json_result.put("setsize", setsize);
 
 				JSONArray json_result_overlap = new JSONArray();
@@ -367,9 +375,9 @@ public class EnrichmentTemp extends HttpServlet {
 					JSONObject json_result = new JSONObject();
 					json_result.put("uuid", genesetName);
 					json_result.put("p-value", genesetName);
-					json_result.put("p-value", Double.isNaN(pval) ? null : pval);
-					json_result.put("p-value-bonferroni", Double.isNaN(pval_bonferroni) ? null : pval_bonferroni);
-					json_result.put("fdr", Double.isNaN(pval_fdr) ? null : pval_fdr);
+					json_result.put("p-value", safeJsonDouble(pval));
+					json_result.put("p-value-bonferroni", safeJsonDouble(pval_bonferroni));
+					json_result.put("fdr", safeJsonDouble(pval_fdr));
 					json_result.put("zscore", enrichResult.get(signature).zscore);
 					json_result.put("direction", enrichResult.get(signature).direction);
 					
@@ -465,16 +473,16 @@ public class EnrichmentTemp extends HttpServlet {
 					JSONObject json_result = new JSONObject();
 					
 					json_result.put("uuid", genesetName);
-					json_result.put("p-up", Double.isNaN(pvalUp) ? null : pvalUp);
-					json_result.put("p-up-bonferroni", Double.isNaN(pvalUpBonferroni) ? null : pvalUpBonferroni);
-					json_result.put("fdr-up", Double.isNaN(pvalUpfdr) ? null : pvalUpfdr);
-					json_result.put("p-down", Double.isNaN(pvalDown) ? null : pvalDown);
-					json_result.put("p-down-bonferroni", Double.isNaN(pvalDownBonferroni) ? null : pvalDownBonferroni);
-					json_result.put("fdr-down", Double.isNaN(pvalDownfdr) ? null : pvalDownfdr);
-					json_result.put("z-up", Double.isNaN(zUp) ? null : zUp);
-					json_result.put("z-down", Double.isNaN(zDown) ? null : zDown);
-					json_result.put("logp-fisher", Double.isNaN(pvalFisher) ? null : pvalFisher);
-					json_result.put("logp-avg", Double.isNaN(pvalSum) ? null : pvalSum);
+					json_result.put("p-up", safeJsonDouble(pvalUp));
+					json_result.put("p-up-bonferroni", safeJsonDouble(pvalUpBonferroni));
+					json_result.put("fdr-up", safeJsonDouble(pvalUpfdr));
+					json_result.put("p-down", safeJsonDouble(pvalDown));
+					json_result.put("p-down-bonferroni", safeJsonDouble(pvalDownBonferroni));
+					json_result.put("fdr-down", safeJsonDouble(pvalDownfdr));
+					json_result.put("z-up", safeJsonDouble(zUp));
+					json_result.put("z-down", safeJsonDouble(zDown));
+					json_result.put("logp-fisher", safeJsonDouble(pvalFisher));
+					json_result.put("logp-avg", safeJsonDouble(pvalSum));
 					json_result.put("direction-up", direction_up);
 					json_result.put("direction-down", direction_down);
 
