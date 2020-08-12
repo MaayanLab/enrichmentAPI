@@ -14,7 +14,7 @@ import jsp.Overlap;
 import jsp.Result;
 import math.FastFisher;
 import fastset.FastHashSet;
-import fastset.FastKeyedHashSet;
+import fastset.FastHashSeq;
 
 /**
  * @author Alexander Lachmann - maayanlab
@@ -275,7 +275,7 @@ public class Enrichment {
 		}
 		
 		// create overlap buffer
-		FastKeyedHashSet overset = new FastKeyedHashSet(min_value, max_value);
+		FastHashSeq overset = new FastHashSeq(min_value, max_value);
 		
 		for(String key : signaturefilter) {
 			
