@@ -13,6 +13,8 @@ import datamanagement.DataStore;
 import jsp.Overlap;
 import jsp.Result;
 import math.FastFisher;
+import fastset.FastHashSet;
+import fastset.FastKeyedHashSet;
 
 /**
  * @author Alexander Lachmann - maayanlab
@@ -236,37 +238,31 @@ public class Enrichment {
 
 		return null;
 	}
-	
+
 	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures, double _significance) {
-		
+
+		final short min_value = Short.MIN_VALUE; // the shorts prepared by the controller start at Short.MIN_VALUE
+		final short max_value = Short.MAX_VALUE-1; // leave room for 0, note we could save some space by using min(dictionary.values()), max(dictionary.values())
+
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
 		HashMap<String, Object> db = datastore.datasets.get(_db).getData();
 		HashMap<String, short[]> genelist = (HashMap<String, short[]>)db.get("geneset");
 		HashMap<String, Short> dictionary = (HashMap<String, Short>) db.get("dictionary");
+
+		FastHashSet inputset = new FastHashSet(min_value, max_value);
 		
-		HashSet<Short> entityMapped = new HashSet<Short>();
-		
-	    for(String s : _entities) {
-	    	if(dictionary.containsKey(s)) {
-	    		entityMapped.add(dictionary.get(s));
-	    	}
-	    }
-	    
-	    short[] geneId = new short[entityMapped.size()];
-	    Short[] temp = entityMapped.toArray(new Short[0]);
-	    for(int i=0; i<entityMapped.size(); i++) {
-	    	geneId[i] = (short) temp[i];
-	    }
-	    
-	    short stepup = Short.MIN_VALUE;
-		
-		boolean[] boolgenelist = new boolean[65000];
-		for(int i=0; i< geneId.length; i++) {
-			boolgenelist[geneId[i] - stepup] = true;
+		// populate inputset from _entities
+		try {
+			for(String s : _entities) {
+				if(dictionary.containsKey(s)) {
+					inputset.add(dictionary.get(s));
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		
-		short overlap = 0;
+
 		boolean showAll = false;
 		
 		Iterable<String> signaturefilter;
@@ -279,21 +275,20 @@ public class Enrichment {
 		}
 		
 		// create overlap buffer
-		short[] overset = new short[Short.MAX_VALUE*2];
+		FastKeyedHashSet overset = new FastKeyedHashSet(min_value, max_value);
 		
 		for(String key : signaturefilter) {
 			
 			short[] gl = genelist.get(key);
-			overlap = 0;
-			
-			for(int i=0; i< gl.length; i++) {
-				if(boolgenelist[gl[i]-Short.MIN_VALUE]) {
-					overset[overlap] = gl[i];
-					overlap++;
-				}
+
+			try {
+				overset.overlapWithArray(inputset, gl);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			
-			int numGenelist = geneId.length;
+
+			int overlap = overset.size();
+			int numGenelist = inputset.size();
 			int totalBgGenes = 21000;
 			int gmtListSize =  gl.length;
 
@@ -310,7 +305,7 @@ public class Enrichment {
 			}
 
 			if(((pvalue <= _significance)) || showAll) {
-				Result o = new Result(key, Arrays.copyOfRange(overset, 0, overlap), pvalue, gl.length, oddsRatio, 0, 0);
+				Result o = new Result(key, overset.toArray(), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
 			}
 		}
