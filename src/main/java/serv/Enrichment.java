@@ -269,12 +269,12 @@ public class Enrichment {
 		short overlap = 0;
 		boolean showAll = false;
 		
-		HashSet<String> signaturefilter = new HashSet<String>();
+		Iterable<String> signaturefilter;
 		if(_signatures.size() == 0) {
-			signaturefilter = new HashSet<String>(genelist.keySet());
+			signaturefilter = genelist.keySet();
 		}
 		else {
-			signaturefilter = new HashSet<String>(_signatures);
+			signaturefilter = _signatures;
 			showAll = true;
 		}
 		
@@ -371,12 +371,12 @@ public class Enrichment {
 		short overlap = 0;
 		boolean showAll = false;
 		
-		HashSet<String> signaturefilter = new HashSet<String>();
+		Iterable<String> signaturefilter;
 		if(_signatures.size() == 0) {
-			signaturefilter = new HashSet<String>(genelist.keySet());
+			signaturefilter = genelist.keySet();
 		}
 		else {
-			signaturefilter = new HashSet<String>(_signatures);
+			signaturefilter = _signatures;
 			showAll = true;
 		}
 		
