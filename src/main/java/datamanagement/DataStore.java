@@ -143,7 +143,7 @@ public class DataStore {
 				short[][] rank = (short[][]) datapod.get("rank");
 				System.out.println("N Signatures: " + Integer.toString(signature_id.length));
 				System.out.println("N Entities: " + Integer.toString(entity_id.length));
-				System.out.println("Rank Matrix Shape: (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
+				System.out.println("Rank Matrix Shape (signatures, entities): (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
 			} catch (Exception e) {
 				System.err.println("Error loading file " + _filename + ": " + e.getMessage());
 			}
