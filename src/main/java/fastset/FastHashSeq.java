@@ -41,6 +41,10 @@ public class FastHashSeq {
     n = 0;
   }
 
+  /**
+    * This will compute overlap with an array but note that duplicates
+    *  in the array would be counted twice.
+    */
   public void overlapWithArray(FastSet a, short[] b) throws Exception {
     this.clear();
     for (int i = 0; i < b.length; i++) {

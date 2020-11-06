@@ -300,8 +300,15 @@ public class Enrichment {
 			double pvalue = 1;
 			double oddsRatio = 1;
 			if(a > 0){
-				pvalue = f.getRightTailedP(a, b, c, d);
-				oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+				try {
+					pvalue = f.getRightTailedP(a, b, c, d);
+					oddsRatio = (1.0 * a * d) / (1.0 * b * c);
+				} catch (Exception e) {
+					System.out.println("Detected problem with signature: "+key);
+					System.out.println("a: "+a+" b: "+b+" c: "+c+" d: "+d);
+					pvalue = 1;
+					oddsRatio = 1;
+				}
 			}
 
 			if(((pvalue <= _significance)) || showAll) {
