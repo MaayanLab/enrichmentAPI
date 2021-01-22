@@ -495,11 +495,11 @@ public class FileUploadManager  extends HttpServlet {
 				String[] sig_uuids = sigs.keySet().toArray(new String[0]);
 				String[] entity_uuids = repEntities.get(_uuid).toArray(new String[0]);
 				
-				short[][] rankMatrix = new short[entity_uuids.length][sig_uuids.length];
+				short[][] rankMatrix = new short[sig_uuids.length][entity_uuids.length];
 				for(int i=0; i<sig_uuids.length; i++) {
 					short[] rank = sigs.get(sig_uuids[i]);
 					for(int j=0; j<entity_uuids.length; j++) {
-						rankMatrix[j][i] = rank[j];
+						rankMatrix[i][j] = rank[j];
 					}
 				}
 				

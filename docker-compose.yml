@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/DockerfileAPI
-    image: maayanlab/enrichmentapi:1.3.1
+    image: maayanlab/enrichmentapi:1.4.0
     environment:
       token: token
       AWS_BUCKET: bucket
