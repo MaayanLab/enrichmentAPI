@@ -227,7 +227,7 @@ public class Enrichment {
 				direction = -1;
 			}
 			
-			boolean showAll = true;
+			boolean showAll = false;
 			if(p < _significance || showAll) {
 				Result r = new Result(keys[i], null, p, gl.length, 0, direction, z);
 				results.put(keys[i], r);
