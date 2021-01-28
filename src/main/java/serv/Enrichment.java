@@ -20,6 +20,7 @@ import fastset.FastHashSeq;
  * @author Alexander Lachmann - maayanlab
  *
  */
+
 public class Enrichment {
 	
 	int threadCount = 2;
@@ -169,6 +170,72 @@ public class Enrichment {
 		return pvals;
 	}
 	
+	public static HashMap<String, Result> calculateRankSetEnrichment(String _db, String[] _entities, Double[] _values, double _significance) {
+		
+		HashMap<String, Result> results = new HashMap<String, Result>();
+		HashMap<String, Object> db = datastore.datasets.get(_db).getData();
+		HashMap<String, short[]> genelist = (HashMap<String, short[]>)db.get("geneset");
+		HashMap<String, Short> dictionary = (HashMap<String, Short>) db.get("dictionary");
+		HashMap<Short, String> revDictionary = (HashMap<Short, String>) db.get("revDictionary");
+
+		System.out.println("Info: "+dictionary.size()+" - "+genelist.size());
+		HashMap<String, Short> values = new HashMap<String, Short>();
+		
+		HashSet<String> overlapEntities = new HashSet<String>(Arrays.asList(_entities));
+		overlapEntities.retainAll(dictionary.keySet());
+		
+		String[] entitiesOverlap = new String[overlapEntities.size()];
+		float[] valuesOverlap = new float[overlapEntities.size()];
+		int pointer = 0;
+		for(int i=0; i<_entities.length; i++){
+			if(overlapEntities.contains(_entities[i])){
+				entitiesOverlap[pointer] = _entities[i];
+				valuesOverlap[pointer] = (float)(double) _values[i];
+				pointer++;
+			}
+		}
+
+		short[] rank = ranksHash(valuesOverlap);
+
+		HashMap<String, Short> rankDictionary = new HashMap<String, Short>();
+		for(short i=0; i<entitiesOverlap.length; i++) {
+			rankDictionary.put(entitiesOverlap[i], i);
+		}
+
+		String[] keys = genelist.keySet().toArray(new String[0]);
+		for(int i=0; i<genelist.size(); i++){
+
+			short[] gl = genelist.get(keys[i]);
+			short[] gl_temp = new short[gl.length];
+			pointer = 0;
+			for(int j=0; j<gl.length; j++){
+				String tempEntity = revDictionary.get(gl[j]);
+				if(overlapEntities.contains(tempEntity)){
+					gl_temp[pointer] = rankDictionary.get(tempEntity);
+					pointer++;
+				}
+			}
+			gl = new short[pointer];
+			System.arraycopy(gl_temp, 0, gl, 0, pointer);
+
+			double z = mannWhitney(gl, rank);
+			double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
+			
+			System.out.println(keys[i]);
+			int direction = 1;
+			if(z < 0) {
+				direction = -1;
+			}
+			
+			boolean showAll = true;
+			if(p < _significance || showAll) {
+				Result r = new Result(keys[i], null, p, gl.length, 0, direction, z);
+				results.put(keys[i], r);
+			}
+		}
+		return results;
+	}
+
 	public static HashMap<String, Double> calculateSetSignatureEnrichmentFWD(String[] _genes, HashSet<String> _uids) {
 		
 		long time = System.currentTimeMillis();
@@ -767,7 +834,7 @@ public class Enrichment {
 		
 		return z;
 	}
-	
+
 	public double mannWhitney2(short[] _geneset, short[] _rank){
 		// smaller rank is better, otherwise return 1-CNDF 
 		
@@ -804,7 +871,6 @@ public class Enrichment {
 	    return (1d - neg) * y + neg * (1d - y);
 	}
 	
-
 	private Object deserialize(String _file) {
 		Object ob = null;
 		try{   
@@ -823,5 +889,24 @@ public class Enrichment {
         }
 		
 		return ob;
+	}
+
+	private static short[] ranksHash(float[] _temp) {
+		
+		float[] sc = new float[_temp.length];
+		System.arraycopy(_temp, 0, sc, 0, _temp.length);
+		Arrays.sort(sc);
+		
+		HashMap<Float, Short> hm = new HashMap<Float, Short>(sc.length);
+		for (short i = 0; i < sc.length; i++) {
+			hm.put(sc[i], i);
+		}
+		
+		short[] ranks = new short[sc.length];
+		
+		for (int i = 0; i < _temp.length; i++) {
+			ranks[i] = (short)(hm.get(_temp[i])+1);
+		}
+		return ranks;
 	}
 }

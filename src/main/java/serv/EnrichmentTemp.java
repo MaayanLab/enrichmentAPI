@@ -337,12 +337,14 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			JSONObject json = new JSONObject();
 
-			JSONArray json_signatures = new JSONArray();
-			for(String ui : _signatures){
-				json_signatures.put(ui);
+			if(_signatures.size() > 0){
+				JSONArray json_signatures = new JSONArray();
+				for(String ui : _signatures){
+					json_signatures.put(ui);
+				}
+				json.put("signatures", json_signatures);
 			}
-			json.put("signatures", json_signatures);
-			
+
 			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
 
 			JSONArray json_results = new JSONArray();
@@ -504,7 +506,7 @@ public class EnrichmentTemp extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String pathInfo = request.getPathInfo();
-		System.out.println(pathInfo);
+		System.out.println("Path: "+pathInfo);
 		
 		response.addHeader("Content-Type", "application/json");
 		response.addHeader("Access-Control-Allow-Origin", "*");
@@ -697,7 +699,7 @@ public class EnrichmentTemp extends HttpServlet {
 					HashMap<String, Result> enrichResultUp2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultUp.putAll(enrichResultUp2);
 				}
-			
+				
 				unionSignificant = new HashSet<String>(enrichResultUp.keySet());
 				unionSignificant.removeAll(enrichResultDown.keySet());
 				
@@ -801,6 +803,69 @@ public class EnrichmentTemp extends HttpServlet {
 					enrichResult = enrich.calculateOverlapBackgroundEnrichment(db, entities.toArray(new String[0]), signatures, backgroundEntities, significance);
 				}
 				returnOverlapJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
+			}
+		}
+		else if(pathInfo.matches("^/enrich/rankset")){
+			
+			long  time = System.currentTimeMillis();
+			
+			StringBuffer jb = new StringBuffer();
+			String line = null;
+			try {
+				BufferedReader reader = request.getReader();
+				while ((line = reader.readLine()) != null)
+					jb.append(line);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			String queryjson = jb.toString();
+			ArrayList<Double> values = new ArrayList<Double>();
+			ArrayList<String> entities = new ArrayList<String>();
+			
+			String db = "";
+			
+			int offset = 0;
+			int limit = 1000;
+			double significance = 0.05;
+			
+			try {
+				final JSONObject obj = new JSONObject(queryjson);
+				db = (String) obj.get("database");
+				
+				final JSONArray queryEntities = obj.getJSONArray("entity_ids");
+				final JSONArray queryValues = obj.getJSONArray("entity_values");
+			    int n = queryEntities.length();
+				
+			    for (int i = 0; i < n; ++i) {
+					values.add(queryValues.getDouble(i));
+			    	entities.add(queryEntities.getString(i));
+			    }
+				
+			    if(obj.opt("offset") != null) {
+			    	offset = (int) obj.get("offset");
+			    }
+			    if(obj.opt("limit") != null) {
+			    	limit = (int) obj.get("limit");
+			    }
+			    
+			    if(obj.opt("significance") != null) {
+			    	significance = (double) obj.get("significance");
+			    }
+			} catch(Exception e) {
+				e.printStackTrace();
+
+				JSONObject json = new JSONObject();
+				json.put("error", "malformed JSON query data");
+				json.put("endpoint", pathInfo);
+				json.write(response.getWriter());
+			}
+			
+			System.out.println(db);
+			if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
+				// jump
+				HashMap<String, Result> enrichResult = enrich.calculateRankSetEnrichment(db, entities.toArray(new String[0]), values.toArray(new Double[0]), significance);
+				returnRankJSON(response, enrichResult, db, new HashSet(), new HashSet(), time, offset, limit);
 			}
 		}
 		else if(pathInfo.matches("^/fetch/set")){
