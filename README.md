@@ -1,3 +1,37 @@
+# API documentation
+
+The API contains two main endpoints. One is for generation of new data called ```origin``` and ``` api/v1 ```
+
+#### Parameters
+<table>
+    <tr>
+        <td><strong>Name</strong></td>
+        <td><strong>Type</strong></td>
+        <td><strong>Description</strong></td>
+    </tr>
+    <tr>
+        <td><code>api_key</code></td>
+        <td>string</td>
+        <td>Your own API public key</td>
+    </tr>
+    <tr>
+        <td><code>timestamp</code></td>
+        <td>integer</td>
+        <td>Current unix timestamp (GMT+0) in <a href="http://www.epochconverter.com/">seconds</a></td>
+    </tr>
+    <tr>
+        <td><code>dev_hash</code></td>
+        <td>string</td>
+        <td>
+            Calculate with <code>timestamp</code> and <code>api_secret</code>
+            <br>
+            Formula: <code>md5(concatenate(&lt;timestamp&gt;, &lt;api_secret&gt;))</code>
+        </td>
+    </tr>
+</table>
+
+# Installation and docker packaging
+
 ## Build with Gradle
 ### Important tasks
 
@@ -44,6 +78,18 @@ To run gradle task, enter
 <a href="https://docs.gradle.org/current/userguide/java_plugin.html">The Java Plugin documentation</a><br>
 <a href="https://docs.gradle.org/current/userguide/war_plugin.html">The War Plugin documentation</a><br>
 <a href="https://github.com/bmuschko/gradle-tomcat-plugin">The Tomcat Plugin documentation</a>
+
+### Testing locally
+This will launch the enrichment API on the local machine and should be accessible through the localhost.
+```text
+./gradlew tomcatRunWar
+```
+
+### Stoping gradle process
+Processes need to be stopped manually if timcatRunWar has previously been executed.
+```text
+./gradlew stop
+```
 
 ### Docker-compose
 Getting started with docker-compose
