@@ -2,6 +2,9 @@
 
 The API contains two main endpoints. One is for generation of new data called ```origin/api/v1/*``` and another endpoint is the primary access point to data queries ```api/v1/*```.
 
+For a full documentation, please refer to the API documentation:
+https://maayanlab.cloud/sigcom/data-api/swagger.html
+
 # Adding data to Signature Commons
 
 Signature Commons can load libraries from a cloud repository on startup if the environmental variable ``` S3_AUTOLOAD ``` is set to ``` 'true' ```. 
