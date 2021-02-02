@@ -344,7 +344,89 @@ paths:
                   - direction-down
             required:
               - results
-
+  /enrich/rankset:
+  post:
+    description: Perform enrichment for full weighted signature to gene-set library 
+    operationId: enrich.rankset
+    security: []
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        description: Signature search query
+        required: true
+        schema:
+          type: object
+          properties:
+            database:
+              type: string
+              description: The database to search against
+            entity_ids:
+              type: array
+              description: Entity UUIDs of the signature
+              items:
+                type: string
+            entity_values:
+              type: array
+              description: Weights of entities, in the same order as entity_ids. This can be ranks (smallest rank is highest value) or differential gene expression scores (values < 0 entity is down-regulated, values > 0 entity is up-regulated).
+              items:
+                type: number
+            offset:
+              type: number
+              description: Skip `offset` number of results (sorted by significance)
+            limit:
+              type: number
+              description: Produce `limit` number of results (sorted by significance)
+          required:
+            - database
+            - entity_ids
+            - entity_values
+    produces:
+      - application/json
+    responses:
+      200:
+        description: The analysis results
+        schema:
+          type: object
+          properties:
+            signatures:
+              type: array
+              description: Signatures used for enrichment analysis
+              items:
+                type: string
+            queryTimeSec:
+              type: number
+              description: How long it took to perform the query
+            results:
+              type: object
+              description: Results of the enrichment analysis
+              properties:
+                uuid:
+                  type: string
+                p-value:
+                  type: number
+                  x-nullable: true
+                p-value-bonferroni:
+                  type: number
+                  x-nullable: true
+                fdr:
+                  type: number
+                  x-nullable: true
+                zscore:
+                  type: number
+                  x-nullable: true
+                direction:
+                  type: number
+              required:
+                - uuid
+                - p-value
+                - p-value-bonferroni
+                - fdr
+                - zscore
+                - direction
+          required:
+            - results
   /fetch/set:
     post:
       description: Obtain the actual set data of signature(s)
