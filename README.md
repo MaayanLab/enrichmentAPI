@@ -43,26 +43,18 @@ When launching SigCom it requires several environmental variabls.
         <th>Environmental Variable</th>
         <th>Description</th>
     </tr>
-    <tr><td>```TOKEN```</td><td>'pass code needed for several API endpoints'</td></tr>
-    <tr><td>```PREFIX```</td><td>/sigcom/data-api</td></tr>
-    <tr><td>```JAVA_OPTS```</td><td>'-Xmx30G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops'</td></tr>
-    <tr><td>```deployment```</td><td>'marathon_deployed'</td></tr>
-    <tr><td>```AWS_ACCESS_KEY_ID```</td><td>'access key id'</td></tr>
-    <tr><td>```AWS_SECRET_ACCESS_KEY```</td><td>'aws key with S3 credentials to upload new data to AWS bucket'</td></tr>
-    <tr><td>```AWS_ENDPOINT_URL```</td><td>'http://s3.amazonaws.com'</td></tr>
-    <tr><td>```AWS_BUCKET_PREFIX```</td><td>'sigcom/'</td></tr>
-    <tr><td>```AWS_BUCKET```</td><td>'name of bucket'</td></tr>
-    <tr><td>```S3_AUTOLOAD```</td><td>'true/false'</td></tr>
-TOKEN	'pass code needed for several API endpoints'
-PREFIX	/sigcom/data-api
-JAVA_OPTS	'-Xmx30G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops'
-deployment	'marathon_deployed'
-AWS_ACCESS_KEY_ID	'access key id'
-AWS_SECRET_ACCESS_KEY	'aws key with S3 credentials to upload new data to AWS bucket'
-AWS_ENDPOINT_URL	http://s3.amazonaws.com
-AWS_BUCKET_PREFIX	sigcom/
-AWS_BUCKET	'name of bucket'
-S3_AUTOLOAD	'true/false'
+    <tr><td>TOKEN</td><td>'pass code needed for several API endpoints'</td></tr>
+    <tr><td>PREFIX</td><td>'/sigcom/data-api'</td></tr>
+    <tr><td>JAVA_OPTS</td><td>'-Xmx30G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops'</td></tr>
+    <tr><td>deployment</td><td>'marathon_deployed'</td></tr>
+    <tr><td>AWS_ACCESS_KEY_ID</td><td>'access key id'</td></tr>
+    <tr><td>AWS_SECRET_ACCESS_KEY</td><td>'aws key with S3 credentials to upload new data to AWS bucket'</td></tr>
+    <tr><td>AWS_ENDPOINT_URL</td><td>'http://s3.amazonaws.com'</td></tr>
+    <tr><td>AWS_BUCKET_PREFIX</td><td>'sigcom/'</td></tr>
+    <tr><td>AWS_BUCKET</td><td>'name of bucket'</td></tr>
+    <tr><td>S3_AUTOLOAD</td><td>'true/false'</td></tr>
+</table>   
+    
 
 
 # Installation and docker packaging
