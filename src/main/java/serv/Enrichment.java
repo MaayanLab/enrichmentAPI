@@ -356,7 +356,7 @@ public class Enrichment {
 
 			int overlap = overset.size();
 			int numGenelist = inputset.size();
-			int totalBgGenes = 21000;
+			int totalBgGenes = dictionary.size();
 			if(_bgsize > 0) {
 				totalBgGenes = Math.min(_bgsize, dictionary.size());
 			}
