@@ -1,3 +1,67 @@
+# API documentation
+
+The API contains two main endpoints. One is for generation of new data called ```origin/api/v1/*``` and another endpoint is the primary access point to data queries ```api/v1/*```.
+
+For a full documentation, please refer to the API documentation:
+https://maayanlab.cloud/sigcom/data-api/swagger.html
+
+# Adding data to Signature Commons
+
+Signature Commons can load libraries from a cloud repository on startup if the environmental variable ``` S3_AUTOLOAD ``` is set to ``` 'true' ```. 
+
+#### Parameters
+<table>
+    <tr>
+        <td><strong>Name</strong></td>
+        <td><strong>Type</strong></td>
+        <td><strong>Description</strong></td>
+    </tr>
+    <tr>
+        <td><code>api_key</code></td>
+        <td>string</td>
+        <td>Your own API public key</td>
+    </tr>
+    <tr>
+        <td><code>timestamp</code></td>
+        <td>integer</td>
+        <td>Current unix timestamp (GMT+0) in <a href="http://www.epochconverter.com/">seconds</a></td>
+    </tr>
+    <tr>
+        <td><code>dev_hash</code></td>
+        <td>string</td>
+        <td>
+            Calculate with <code>timestamp</code> and <code>api_secret</code>
+            <br>
+            Formula: <code>md5(concatenate(&lt;timestamp&gt;, &lt;api_secret&gt;))</code>
+        </td>
+    </tr>
+</table>
+
+# Deploying to rancher or marathon
+
+When launching SigCom it requires several environmental variabls.
+
+<table>
+    <tr>
+        <th>Environmental Variable</th>
+        <th>Description</th>
+    </tr>
+    <tr><td><code>TOKEN</code></td><td>'pass code needed for several API endpoints'</td></tr>
+    <tr><td><code>PREFIX</code></td><td>'/sigcom/data-api'</td></tr>
+    <tr><td><code>JAVA_OPTS</code></td><td>'-Xmx30G -XX:PermSize=13G -XX:MaxPermSize=13G -XX:+UseCompressedOops'</td></tr>
+    <tr><td><code>deployment</code></td><td>'marathon_deployed'</td></tr>
+    <tr><td><code>AWS_ACCESS_KEY_ID</code></td><td>'access key id'</td></tr>
+    <tr><td><code>AWS_SECRET_ACCESS_KEY</code></td><td>'aws key with S3 credentials to upload new data to AWS bucket'</td></tr>
+    <tr><td><code>AWS_ENDPOINT_URL</code></td><td>'http://s3.amazonaws.com'</td></tr>
+    <tr><td><code>AWS_BUCKET_PREFIX</code></td><td>'sigcom/'</td></tr>
+    <tr><td><code>AWS_BUCKET</code></td><td>'name of bucket'</td></tr>
+    <tr><td><code>S3_AUTOLOAD</code></td><td>'true/false'</td></tr>
+</table>   
+    
+
+
+# Installation and docker packaging
+
 ## Build with Gradle
 ### Important tasks
 
@@ -44,6 +108,18 @@ To run gradle task, enter
 <a href="https://docs.gradle.org/current/userguide/java_plugin.html">The Java Plugin documentation</a><br>
 <a href="https://docs.gradle.org/current/userguide/war_plugin.html">The War Plugin documentation</a><br>
 <a href="https://github.com/bmuschko/gradle-tomcat-plugin">The Tomcat Plugin documentation</a>
+
+### Testing locally
+This will launch the enrichment API on the local machine and should be accessible through the localhost.
+```text
+./gradlew tomcatRunWar
+```
+
+### Stoping gradle process
+Processes need to be stopped manually if timcatRunWar has previously been executed.
+```text
+./gradlew stop
+```
 
 ### Docker-compose
 Getting started with docker-compose
