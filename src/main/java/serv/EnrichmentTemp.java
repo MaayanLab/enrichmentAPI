@@ -176,7 +176,7 @@ public class EnrichmentTemp extends HttpServlet {
 					HashSet<String> sigs = new HashSet<String>(((HashMap<String, Short>) enrich.datastore.datasets.get(db).getData().get("geneset")).keySet());
 					signatures.retainAll(sigs);
 					
-					HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, 0.5);
+					HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures,0, 0.5);
 					returnOverlapJSON(response, enrichResult, db, signatures, entities, time, 0, 1000);
 				}
 		    }
