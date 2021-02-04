@@ -85,6 +85,9 @@ paths:
               limit:
                 type: number
                 description: Produce `limit` number of results (sorted by significance)
+              bgsize:
+                type: number
+                description: If set use min(bgsize, number of entities in library) as background size in Fisher's Exact test
             required:
               - database
               - entities

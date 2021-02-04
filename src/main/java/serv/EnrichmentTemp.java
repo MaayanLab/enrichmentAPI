@@ -735,6 +735,7 @@ public class EnrichmentTemp extends HttpServlet {
 			String db = "";
 			int offset = 0;
 			int limit = 1000;
+			int bgsize = 0;
 			double significance = 0.05;
 			
 			try {
@@ -772,7 +773,11 @@ public class EnrichmentTemp extends HttpServlet {
 			    if(obj.opt("limit") != null) {
 			    	limit = (int) obj.get("limit");
 			    }
-			    
+				
+				if(obj.opt("bgsize") != null) {
+			    	bgsize = (int) obj.get("bgsize");
+			    }
+				
 			    if(obj.opt("significance") != null) {
 			    	significance = (double) obj.get("significance");
 			    }
@@ -798,7 +803,7 @@ public class EnrichmentTemp extends HttpServlet {
 				
 				HashMap<String, Result> enrichResult = null;
 				if(backgroundEntities.size() == 0){
-					enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, significance);
+					enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures, bgsize, significance);
 				} else {
 					enrichResult = enrich.calculateOverlapBackgroundEnrichment(db, entities.toArray(new String[0]), signatures, backgroundEntities, significance);
 				}
@@ -863,7 +868,6 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			System.out.println(db);
 			if(enrich.datastore.datasets.get(db).getData().containsKey("geneset")) {
-				// jump
 				HashMap<String, Result> enrichResult = enrich.calculateRankSetEnrichment(db, entities.toArray(new String[0]), values.toArray(new Double[0]), significance);
 				returnRankJSON(response, enrichResult, db, new HashSet(), new HashSet(), time, offset, limit);
 			}

@@ -306,7 +306,7 @@ public class Enrichment {
 		return null;
 	}
 
-	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures, double _significance) {
+	public static HashMap<String, Result> calculateOverlapEnrichment(String _db, String[] _entities, HashSet<String> _signatures, int _bgsize, double _significance) {
 
 		final short min_value = Short.MIN_VALUE; // the shorts prepared by the controller start at Short.MIN_VALUE
 		final short max_value = Short.MAX_VALUE-1; // leave room for 0, note we could save some space by using min(dictionary.values()), max(dictionary.values())
@@ -357,6 +357,9 @@ public class Enrichment {
 			int overlap = overset.size();
 			int numGenelist = inputset.size();
 			int totalBgGenes = 21000;
+			if(_bgsize > 0) {
+				totalBgGenes = Math.min(_bgsize, dictionary.size());
+			}
 			int gmtListSize =  gl.length;
 
 			int a = overlap;

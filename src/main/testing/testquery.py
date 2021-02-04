@@ -87,8 +87,6 @@ apiRequest(data, baseurl, "append")
 apiRequest(data, baseurl, "listrepositories")
 apiRequest(data, baseurl, "persist")
 
-
-
 query_url = "http://localhost:8080/enrichmentapi/api/v1"
 
 file = {
@@ -101,9 +99,8 @@ apiRequest(data, query_url, "listdata")
 
 data = {
     'database': repository_uuid,
-    'token': token,
-    "entity_ids" : ['a', 'b', 'c', 'd', 'ae', 'f', 'g', 'aa', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'],
-    "entity_values" : [1.23, 1.2342, 3.2332424, -3, -7, -4, -4, -10.5678, -9.0, -8.0, -7.0, -60.0, -50.0, -40.0, -30.0]
+    "entity_ids" : ['a', 'b', 'aa', 'd', 'ae', 'f', 'g', 'c', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'],
+    "entity_values" : [1000.23, 10000.2342, 3000.2332424, -3, -7, -4, -4, -10.5678, -9.0, -8.0, -7.0, -60.0, -50.0, -40.0, -30.0]
 }
 
 apiRequest(data, query_url, "enrich/rankset")
