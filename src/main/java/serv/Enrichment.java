@@ -296,7 +296,7 @@ public class Enrichment {
 
 			if (datastore.datasets.get(_db).getData().containsKey("geneset")) {
 				// The database is a gene set collection
-				return calculateOverlapEnrichment(_db, _entity, _signatures, 0.05);
+				return calculateOverlapEnrichment(_db, _entity, _signatures, 0, 0.05);
 			} else {
 				// The database contains rank transformed signatures
 				return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
