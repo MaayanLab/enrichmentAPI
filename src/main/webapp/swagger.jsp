@@ -11,8 +11,8 @@
 %>
 swagger: "2.0"
 info:
-  title: <%= System.getenv("TITLE") %>
-  description: <%= System.getenv("DESCRIPTION") %>
+  title: <%= System.getenv("OPENAPI_TITLE") %>
+  description: <%= System.getenv("OPENAPI_DESCRIPTION") %>
   version: 1.0.0
   license:
     name: Apache 2.0
