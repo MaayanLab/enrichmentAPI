@@ -9,10 +9,22 @@
     response.setHeader("Access-Control-Max-Age", "3600");
   }
 %>
+<%
+    String title = System.getenv("OPENAPI_TITLE");
+    if (title == null || title.isEmpty()) {
+      title = "Signature Commons Data API";
+    }
+
+    String description = System.getenv("OPENAPI_DESCRIPTION");
+    if (description == null || description.isEmpty()) {
+      description = "An API for efficient data-level queries on the Signature Commons.";
+    }
+  
+%>
 swagger: "2.0"
 info:
-  title: <%= System.getenv("OPENAPI_TITLE") %>
-  description: <%= System.getenv("OPENAPI_DESCRIPTION") %>
+  title: <%= title %>
+  description: <%= description %>
   version: 1.0.0
   license:
     name: Apache 2.0
