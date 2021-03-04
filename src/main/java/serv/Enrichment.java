@@ -381,7 +381,7 @@ public class Enrichment {
 				}
 			}
 
-			if(((pvalue <= _significance)) || showAll) {
+			if((pvalue <= _significance) || showAll) {
 				Result o = new Result(key, overset.toArray(), pvalue, gl.length, oddsRatio, 0, 0);
 				results.put(key, o);
 			}
