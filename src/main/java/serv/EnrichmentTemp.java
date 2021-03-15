@@ -91,9 +91,9 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
-	private Double safeJsonDouble(Double val) {
+	private Object safeJsonDouble(Double val) {
 		if (Double.isInfinite(val) || Double.isNaN(val)) {
-			return null;
+			return JSONObject.NULL;
 		} else {
 			return val;
 		}
