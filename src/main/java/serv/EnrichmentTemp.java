@@ -412,7 +412,7 @@ public class EnrichmentTemp extends HttpServlet {
 				double pu = Math.max(enrichResultUp.get(keys[i]).pval, Double.MIN_VALUE);
 				double pd = Math.max(enrichResultDown.get(keys[i]).pval, Double.MIN_VALUE);
 
-				enrichResultFisher.put(keys[i], -Math.log(pu*pd));
+				enrichResultFisher.put(keys[i], -Math.log(Math.max(pu*pd, Double.MIN_VALUE)));
 				enrichResultAvg.put(keys[i], -Math.log((pu+pd)/2));
 			}
 
@@ -425,8 +425,8 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			for (Map.Entry<String, Double> me : sortedFisher.entrySet()) { 
 				sortFish[counter] = me.getKey();
-				pvalsUp[counter] = enrichResultUp.get(me.getKey()).pval;
-				pvalsDown[counter] = enrichResultDown.get(me.getKey()).pval;
+				pvalsUp[counter] = Math.max(enrichResultUp.get(me.getKey()).pval, Double.MIN_VALUE);
+				pvalsDown[counter] = Math.max(enrichResultDown.get(me.getKey()).pval, Double.MIN_VALUE);
 			    counter++;
 			} 
 			
