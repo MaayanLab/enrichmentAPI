@@ -549,6 +549,7 @@ public class Enrichment {
 		
 		for(int i=0; i<ranks.length; i++) {
 			if(uids.contains(signature_id[i]) || uids.size() == 0) {
+				
 				double z = mannWhitney(inputShort, ranks[i]);	
 				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
@@ -558,7 +559,7 @@ public class Enrichment {
 				}
 				
 				if(p < _significance || showAll) {
-					Result r = new Result(signature_id[i], inputShort, p, inputShort.length, 0, direction, z);
+					Result r = new Result(signature_id[i], null, p, inputShort.length, 0, direction, z);
 					results.put(signature_id[i], r);
 				}
 			}
