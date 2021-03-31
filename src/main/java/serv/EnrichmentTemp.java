@@ -178,6 +178,7 @@ public class EnrichmentTemp extends HttpServlet {
 					
 					HashMap<String, Result> enrichResult = enrich.calculateOverlapEnrichment(db, entities.toArray(new String[0]), signatures,0, 0.5);
 					returnOverlapJSON(response, enrichResult, db, signatures, entities, time, 0, 1000);
+					enrichResult = null;
 				}
 		    }
 		}
@@ -227,6 +228,7 @@ public class EnrichmentTemp extends HttpServlet {
 						
 						HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, 0.05);
 						returnRankJSON(response, enrichResult, db, signatures, entities, time, 0, 1000);
+						enrichResult = null;
 					}
 			    }
 		    }
@@ -711,6 +713,8 @@ public class EnrichmentTemp extends HttpServlet {
 				}
 				
 				returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);
+				enrichResultUp = null;
+				enrichResultDown = null;
 			}
 		}
 		else if(pathInfo.matches("^/enrich/overlap")){
