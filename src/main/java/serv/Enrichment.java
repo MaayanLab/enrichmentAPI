@@ -549,7 +549,7 @@ public class Enrichment {
 		
 		for(int i=0; i<ranks.length; i++) {
 			if(uids.contains(signature_id[i]) || uids.size() == 0) {
-				
+
 				double z = mannWhitney(inputShort, ranks[i]);	
 				double p = Math.min(1, Math.min((1-CNDF(z)), CNDF(z))*2);
 				
@@ -566,7 +566,6 @@ public class Enrichment {
 		}
 		
 		System.out.println("Elapsed time: "+(System.currentTimeMillis() - time));
-		
 		return results;
 	}
 	
