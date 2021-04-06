@@ -700,6 +700,7 @@ public class EnrichmentTemp extends HttpServlet {
 				if(unionSignificant.size() > 0) {
 					HashMap<String, Result> enrichResultUp2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultUp.putAll(enrichResultUp2);
+					enrichResultUp2 = null;
 				}
 				
 				unionSignificant = new HashSet<String>(enrichResultUp.keySet());
@@ -710,6 +711,7 @@ public class EnrichmentTemp extends HttpServlet {
 					entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
 					HashMap<String, Result> enrichResultDown2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultDown.putAll(enrichResultDown2);
+					enrichResultDown2 = null;
 				}
 				
 				returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);

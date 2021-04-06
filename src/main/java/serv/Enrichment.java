@@ -302,7 +302,7 @@ public class Enrichment {
 				return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
 			}
 		}
-
+		
 		return null;
 	}
 
