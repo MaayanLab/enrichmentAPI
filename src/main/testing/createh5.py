@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 
-data = np.random.randint(0, 12000, size=(12000, 40000))
+data = np.random.randint(0, 12000, size=(12000, 10000))
 
 f = h5.File("data/test.h5", "w")
 f.create_dataset("data/expression", data=data, dtype=np.int16, chunks=True, compression="gzip")

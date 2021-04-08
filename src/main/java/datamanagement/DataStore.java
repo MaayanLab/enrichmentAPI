@@ -114,39 +114,56 @@ public class DataStore {
 			System.out.println("Using existing file");
 		}
 
-		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
 		String datatype;
+		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
+		
+		if(_filename.endsWith("so")){
+			
+			if(datapod.containsKey("geneset")) {
+				datatype = "geneset_library";
+				try {
+					System.out.println("Datatype: " + datatype);
+					HashMap<String, Short> dictionary = (HashMap<String, Short>) datapod.get("dictionary");
+					HashMap<String, Short> geneset = (HashMap<String, Short>) datapod.get("geneset");
+					System.out.println("N Entities: " + Integer.toString(dictionary.size()));
+					System.out.println("N Signatures: " + Integer.toString(geneset.size()));
+				} catch (Exception e) {
+					System.err.println("Error loading file " + _filename + ": " + e.getMessage());
+				}
+			} else {
+				datatype = "rank_matrix";
 
-		if(datapod.containsKey("geneset")) {
-			datatype = "geneset_library";
-			try {
-				System.out.println("Datatype: " + datatype);
-				HashMap<String, Short> dictionary = (HashMap<String, Short>) datapod.get("dictionary");
-				HashMap<String, Short> geneset = (HashMap<String, Short>) datapod.get("geneset");
-				System.out.println("N Entities: " + Integer.toString(dictionary.size()));
-				System.out.println("N Signatures: " + Integer.toString(geneset.size()));
-			} catch (Exception e) {
-				System.err.println("Error loading file " + _filename + ": " + e.getMessage());
+				if (datapod.containsKey("matrix") && !datapod.containsKey("rank")) {
+					System.out.println("Detected legacy format, correcting");
+					datapod.put("rank", datapod.remove("matrix"));
+				}
+
+				try {
+					System.out.println("Datatype: " + datatype);
+					String[] signature_id = (String[]) datapod.get("signature_id");
+					String[] entity_id = (String[]) datapod.get("entity_id");
+					short[][] rank = (short[][]) datapod.get("rank");
+					System.out.println("N Signatures: " + Integer.toString(signature_id.length));
+					System.out.println("N Entities: " + Integer.toString(entity_id.length));
+					System.out.println("Rank Matrix Shape (signatures, entities): (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
+				} catch (Exception e) {
+					System.err.println("Error loading file " + _filename + ": " + e.getMessage());
+				}
 			}
-		} else {
+		}
+		else if(_filename.endsWith("h5")){
 			datatype = "rank_matrix";
+			System.out.println("Datatype: "+datatype+" from H5");
+			String[] signature_id = null;
+			String[] entity_id = null;
+			short[][] rank = null;
+			datapod.put("signature_id", signature_id);
+			datapod.put("entity_id", entity_id);
+			datapod.put("rank", rank);
 
-			if (datapod.containsKey("matrix") && !datapod.containsKey("rank")) {
-				System.out.println("Detected legacy format, correcting");
-				datapod.put("rank", datapod.remove("matrix"));
-			}
-
-			try {
-				System.out.println("Datatype: " + datatype);
-				String[] signature_id = (String[]) datapod.get("signature_id");
-				String[] entity_id = (String[]) datapod.get("entity_id");
-				short[][] rank = (short[][]) datapod.get("rank");
-				System.out.println("N Signatures: " + Integer.toString(signature_id.length));
-				System.out.println("N Entities: " + Integer.toString(entity_id.length));
-				System.out.println("Rank Matrix Shape (signatures, entities): (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
-			} catch (Exception e) {
-				System.err.println("Error loading file " + _filename + ": " + e.getMessage());
-			}
+			System.out.println("N Signatures: " + Integer.toString(signature_id.length));
+			System.out.println("N Entities: " + Integer.toString(entity_id.length));
+			System.out.println("Rank Matrix Shape (signatures, entities): (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
 		}
 
 		Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2019");
