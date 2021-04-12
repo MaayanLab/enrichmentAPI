@@ -1,10 +1,8 @@
 package datamanagement;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -114,11 +111,11 @@ public class DataStore {
 			System.out.println("Using existing file");
 		}
 
-		String datatype;
-		HashMap<String, Object> datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
-		
+		String datatype = "";
+		HashMap<String, Object> datapod = new HashMap<String, Object>();
 		if(_filename.endsWith("so")){
-			
+			datapod = (HashMap<String, Object>) deserialize(datafolder+_filename);
+		
 			if(datapod.containsKey("geneset")) {
 				datatype = "geneset_library";
 				try {
@@ -153,10 +150,13 @@ public class DataStore {
 		}
 		else if(_filename.endsWith("h5")){
 			datatype = "rank_matrix";
+			
 			System.out.println("Datatype: "+datatype+" from H5");
-			String[] signature_id = null;
-			String[] entity_id = null;
-			short[][] rank = null;
+			LoadH5 lh5 = new LoadH5();
+			HashMap<String, Object> temp = lh5.loadh5(datafolder+_filename);
+			String[] signature_id = (String[])temp.get("signature_id");
+			String[] entity_id = (String[])temp.get("entity_id");
+			short[][] rank = (short[][]) temp.get("ranks");
 			datapod.put("signature_id", signature_id);
 			datapod.put("entity_id", entity_id);
 			datapod.put("rank", rank);
@@ -166,9 +166,11 @@ public class DataStore {
 			System.out.println("Rank Matrix Shape (signatures, entities): (" + Integer.toString(rank.length) + ", " + Integer.toString(rank[0].length) + ")");
 		}
 
-		Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2019");
-		data.setData(datapod);
-		datasets.put(_datasetname, data);
+		if(!datatype.equals("")){
+			Dataset data = new Dataset(_datasetname, _bucket+"/"+_filename, datatype, "maayanlab", "1", "2021");
+			data.setData(datapod);
+			datasets.put(_datasetname, data);
+		}
 	}
 	
 	/**

@@ -1,26 +1,23 @@
-package serialization;
+package datamanagement;
 
 import java.io.File;
+import java.util.HashMap;
 
 import io.jhdf.HdfFile;
-import io.jhdf.api.Dataset;
 import io.jhdf.api.Group;
 import io.jhdf.api.Node;
 
-public class TestVS {
-    public static void main(String[] args) {
-        long time = System.currentTimeMillis();
-        
+public class LoadH5 {
+
+    public HashMap<String, Object> loadh5(String _file){
         File file = new File("data/lincs_rank.h5");
         HdfFile hdfFile = new HdfFile(file);
 
         String[] colid = (String[]) hdfFile.getDatasetByPath("meta/colid").getData();
         String[] rowid = (String[]) hdfFile.getDatasetByPath("meta/rowid").getData();
-
         short[][] ranks = new short[colid.length][rowid.length];
 
         try{
-            
             Group g = (Group) hdfFile.getChild("data");
             Group g2 = (Group) g.getChild("expression");
 
@@ -39,20 +36,19 @@ public class TestVS {
                     colcount++;
                 }
             }
-            
-            System.out.println((System.currentTimeMillis() - time)/1000);
-            System.out.println(ranks.length+" - "+ranks[0].length);
-            
-            for(int v=0; v<5; v++){
-                for(int k=0; k<5; k++){
-                    System.out.print(ranks[v][k]+" - ");
-                }
-                System.out.println("");
-            }
-
         }
         catch(Exception e){
             e.printStackTrace();
         }
+
+        hdfFile.close();
+
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        result.put("signature_id", colid);
+        result.put("entity_id", rowid);
+        result.put("ranks", ranks);
+
+        return result;
     }
+
 }
