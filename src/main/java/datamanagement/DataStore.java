@@ -75,9 +75,13 @@ public class DataStore {
 	public void initBucket(String _bucket, String _prefix) {
 		AmazonAWS aws = new AmazonAWS();
 		for (String filename : aws.listFiles(_bucket, _prefix)) {
-			int ind = filename.lastIndexOf("/") + 1;
-			String datasetname = filename.substring(ind, filename.indexOf("."));
-			this.initFile(datasetname, _bucket, filename, false);
+			if(filename.length() > 3){
+				int ind = filename.lastIndexOf("/") + 1;
+				int extInd = filename.indexOf(".");
+				if (extInd == -1) continue;
+				String datasetname = filename.substring(ind, extInd);
+				this.initFile(datasetname, _bucket, filename, false);
+			}
 		}
 	}
 
