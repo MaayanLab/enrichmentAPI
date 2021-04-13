@@ -10,7 +10,7 @@ import io.jhdf.api.Node;
 public class LoadH5 {
 
     public HashMap<String, Object> loadh5(String _file){
-        File file = new File("data/lincs_rank.h5");
+        File file = new File(_file);
         HdfFile hdfFile = new HdfFile(file);
 
         String[] colid = (String[]) hdfFile.getDatasetByPath("meta/colid").getData();
