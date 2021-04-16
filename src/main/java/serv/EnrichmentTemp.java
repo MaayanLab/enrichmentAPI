@@ -321,6 +321,59 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
+
+	private void returnRankJSONMinimal(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
+		try {
+			
+			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
+			
+			HashMap<String, Result> enrichResult = _result;
+			
+			Result[] resultArray = new Result[enrichResult.size()];
+			int counter = 0;
+			for(String key : enrichResult.keySet()){
+				resultArray[counter] = enrichResult.get(key);
+				counter++;
+			}
+			
+			Arrays.sort(resultArray);
+			
+			JSONObject json = new JSONObject();
+
+			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
+
+			JSONArray json_results = new JSONArray();
+
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
+			_limit = Math.max(1, _limit);
+			
+			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
+			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
+			
+			for(int i=_offset; i<_limit; i++){
+				Result res = resultArray[i];
+				String signature = res.name;
+				if(signature != null) {
+					String genesetName = signature;
+					
+					JSONObject json_result = new JSONObject();
+					json_result.put("uuid", genesetName);
+					json_result.put("zscore", enrichResult.get(signature).zscore);
+					
+					json_results.put(json_result);
+				}
+			}
+			json.put("results", json_results);
+			
+			json.write(_response.getWriter());
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			
@@ -397,6 +450,59 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 	
+	private void returnRankTwoWayJSONMinimal(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
+		try {
+			
+			_response.addHeader("Access-Control-Expose-Headers", "Content-Range,X-Duration");
+			
+			HashMap<String, Result> enrichResultUp = _resultUp;
+			HashMap<String, Result> enrichResultDown = _resultDown;
+			
+			String[] keys = enrichResultUp.keySet().toArray(new String[0]);
+
+			JSONObject json = new JSONObject();
+
+			JSONArray json_signatures = new JSONArray();
+			for(String ui : _signatures){
+				json_signatures.put(ui);
+			}
+			json.put("signatures", json_signatures);
+			
+			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
+			
+			JSONArray json_results = new JSONArray();
+			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, enrichResultUp.size()-1));
+			_limit = Math.min(_offset+Math.max(1, _limit), enrichResultUp.size());
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+enrichResultUp.size());
+			
+			for(int i=_offset; i<_limit; i++){
+				String signature = keys[i];
+				
+				if(signature != null) {
+					
+					double zUp = enrichResultUp.get(signature).zscore;
+					double zDown = enrichResultDown.get(signature).zscore;
+					
+					JSONObject json_result = new JSONObject();
+					
+					json_result.put("uuid", signature);
+					json_result.put("z-up", safeJsonDouble(zUp));
+					json_result.put("z-down", safeJsonDouble(zDown));
+					
+					json_results.put(json_result);
+				}
+			}
+			json.put("results", json_results);
+
+			json.write(_response.getWriter());
+			System.out.println("data sent");
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			
@@ -537,7 +643,8 @@ public class EnrichmentTemp extends HttpServlet {
 			String queryjson = jb.toString();
 			HashSet<String> signatures = new HashSet<String>();
 			ArrayList<String> entity_split = new ArrayList<String>();
-			
+			HashMap<String, String[]> signature_group = new HashMap<String, String[]>();
+			boolean minout = false;
 			String db = "";
 			
 			int offset = 0;
@@ -564,7 +671,20 @@ public class EnrichmentTemp extends HttpServlet {
 				    	signatures.add(querySignatures.getString(i));
 				    }
 			    }
+
+				if(obj.optJSONArray("signatures") != null) {
+				    final JSONArray querySignatures = obj.getJSONArray("signatures");
+				    n = querySignatures.length();
+				    
+				    for (int i = 0; i < n; ++i) {
+				    	signatures.add(querySignatures.getString(i));
+				    }
+			    }
 			    
+				if(obj.opt("minimal") != null) {
+			    	minout = true;
+			    }
+
 			    if(obj.opt("offset") != null) {
 			    	offset = (int) obj.get("offset");
 			    }
@@ -598,7 +718,13 @@ public class EnrichmentTemp extends HttpServlet {
 				
 				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
 				System.out.println("ER: "+enrichResult.size());
-				returnRankJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
+				
+				if(minout){
+					returnRankJSONMinimal(response, enrichResult, db, signatures, entities, time, offset, limit);
+				}
+				else{
+					returnRankJSON(response, enrichResult, db, signatures, entities, time, offset, limit);
+				}
 			}
 		}
 		else if(pathInfo.matches("^/enrich/ranktwosided")){
@@ -625,7 +751,8 @@ public class EnrichmentTemp extends HttpServlet {
 			int offset = 0;
 			int limit = 0;
 			double significance = 0.05;
-			
+			boolean minout = false;
+
 			try {
 				final JSONObject obj = new JSONObject(queryjson);
 			    
@@ -654,6 +781,10 @@ public class EnrichmentTemp extends HttpServlet {
 				    }
 			    }
 			    
+				if(obj.opt("minimal") != null) {
+			    	minout = true;
+			    }
+
 			    if(obj.opt("offset") != null) {
 			    	offset = (int) obj.get("offset");
 			    }
@@ -700,7 +831,6 @@ public class EnrichmentTemp extends HttpServlet {
 				if(unionSignificant.size() > 0) {
 					HashMap<String, Result> enrichResultUp2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultUp.putAll(enrichResultUp2);
-					enrichResultUp2 = null;
 				}
 				
 				unionSignificant = new HashSet<String>(enrichResultUp.keySet());
@@ -711,12 +841,14 @@ public class EnrichmentTemp extends HttpServlet {
 					entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
 					HashMap<String, Result> enrichResultDown2 = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), unionSignificant, significance);
 					enrichResultDown.putAll(enrichResultDown2);
-					enrichResultDown2 = null;
 				}
 				
-				returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);
-				enrichResultUp = null;
-				enrichResultDown = null;
+				if(minout){
+					returnRankTwoWayJSONMinimal(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);
+				}
+				else{
+					returnRankTwoWayJSON(response, enrichResultUp, enrichResultDown, db, signatures, entities, time, offset, limit);
+				}
 			}
 		}
 		else if(pathInfo.matches("^/enrich/overlap")){
