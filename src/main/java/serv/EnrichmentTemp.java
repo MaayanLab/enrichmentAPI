@@ -461,12 +461,6 @@ public class EnrichmentTemp extends HttpServlet {
 			String[] keys = enrichResultUp.keySet().toArray(new String[0]);
 
 			JSONObject json = new JSONObject();
-
-			JSONArray json_signatures = new JSONArray();
-			for(String ui : _signatures){
-				json_signatures.put(ui);
-			}
-			json.put("signatures", json_signatures);
 			
 			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
 			
