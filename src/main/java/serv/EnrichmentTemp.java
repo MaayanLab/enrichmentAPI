@@ -506,6 +506,7 @@ public class EnrichmentTemp extends HttpServlet {
 			HashMap<String, Result> enrichResultDown = _resultDown;
 			HashMap<String, Double> enrichResultFisher = new HashMap<String, Double>();
 			HashMap<String, Double> enrichResultAvg = new HashMap<String, Double>();
+			HashMap<String, Double> enrichResultZscoreAbsProduct = new HashMap<String, Double>();
 			
 			String[] keys = enrichResultUp.keySet().toArray(new String[0]);
 			
@@ -516,19 +517,18 @@ public class EnrichmentTemp extends HttpServlet {
 
 				enrichResultFisher.put(keys[i], -Math.log(Math.max(pu*pd, Double.MIN_VALUE)));
 				enrichResultAvg.put(keys[i], -Math.log((pu+pd)/2));
+				enrichResultZscoreAbsProduct.put(keys[i], Math.abs(enrichResultUp.get(keys[i]).zscore * enrichResultDown.get(keys[i]).zscore));
 			}
 
-			Map<String, Double> sortedFisher = sortByValues((Map<String,Double>)enrichResultFisher, 1);
-			String[] sortFish = new String[sortedFisher.size()];
+			String[] sortZscoreAbsProduct = sortByValue((Map<String,Double>)enrichResultZscoreAbsProduct);
 			
 			int counter = 0;
 			double[] pvalsUp = new double[keys.length];
 			double[] pvalsDown = new double[keys.length];
 			
-			for (Map.Entry<String, Double> me : sortedFisher.entrySet()) { 
-				sortFish[counter] = me.getKey();
-				pvalsUp[counter] = Math.max(enrichResultUp.get(me.getKey()).pval, Double.MIN_VALUE);
-				pvalsDown[counter] = Math.max(enrichResultDown.get(me.getKey()).pval, Double.MIN_VALUE);
+			for (String me : sortZscoreAbsProduct) { 
+				pvalsUp[counter] = Math.max(enrichResultUp.get(me).pval, Double.MIN_VALUE);
+				pvalsDown[counter] = Math.max(enrichResultDown.get(me).pval, Double.MIN_VALUE);
 			    counter++;
 			} 
 			
@@ -550,12 +550,12 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			JSONArray json_results = new JSONArray();
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), Math.max(0, sortFish.length-1));
-			_limit = Math.min(_offset+Math.max(1, _limit), sortFish.length);
-			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortFish.length);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, sortZscoreAbsProduct.length-1));
+			_limit = Math.min(_offset+Math.max(1, _limit), sortZscoreAbsProduct.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortZscoreAbsProduct.length);
 			
 			for(int i=_offset; i<_limit; i++){
-				String signature = sortFish[i];
+				String signature = sortZscoreAbsProduct[i];
 				
 				if(signature != null) {
 					String genesetName = signature;
@@ -1265,48 +1265,23 @@ public class EnrichmentTemp extends HttpServlet {
 		return hashtext;
 	}
 	
-	public static String[] sortByValue(HashMap<String, Double> hm) { 
-        // Create a list from elements of HashMap 
-        List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(hm.entrySet()); 
-        
-        // Sort the list 
-        Collections.sort(list, new Comparator<Map.Entry<String, Double> >() { 
-            public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) { 
-                return (o1.getValue()).compareTo(o2.getValue()); 
-            } 
-        });
-        
-        String[] listKeys = new String[list.size()];
-        
-        // put data from sorted list to hashmap
-        int counter = 0;
-        for (Map.Entry<String, Double> me : list) { 
-            listKeys[counter] = me.getKey();
-            counter++;
-        } 
-        return listKeys;
-    }
-	
-	<K, V extends Comparable<V>> Map<K, V> sortByValues
-    (final Map<K, V> map, int ascending)
-	{
-	    Comparator<K> valueComparator =  new Comparator<K>() {         
-	       private int ascending;
-	       public int compare(K k1, K k2) {
-	           int compare = map.get(k2).compareTo(map.get(k1));
-	           if (compare == 0) return 1;
-	           else return ascending*compare;
-	       }
-	       public Comparator<K> setParam(int ascending)
-	       {
-	           this.ascending = ascending;
-	           return this;
-	       }
-	   }.setParam(ascending);
-	
-	   Map<K, V> sortedByValues = new TreeMap<K, V>(valueComparator);
-	   sortedByValues.putAll(map);
-	   return sortedByValues;
+	public static String[] sortByValue(Map<String, Double> hm) { 
+		// Create a list from elements of HashMap 
+		List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(hm.entrySet()); 
+		// Sort the list 
+		Collections.sort(list, new Comparator<Map.Entry<String, Double> >() { 
+				public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) { 
+						return o2.getValue().compareTo(o1.getValue()); 
+				} 
+		});
+		String[] listKeys = new String[list.size()];
+		// put data from sorted list to hashmap
+		int counter = 0;
+		for (Map.Entry<String, Double> me : list) { 
+				listKeys[counter] = me.getKey();
+				counter++;
+		} 
+		return listKeys;
 	}
 
 	private boolean validateToken(String _token) {
