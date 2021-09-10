@@ -506,7 +506,7 @@ public class EnrichmentTemp extends HttpServlet {
 			HashMap<String, Result> enrichResultDown = _resultDown;
 			HashMap<String, Double> enrichResultFisher = new HashMap<String, Double>();
 			HashMap<String, Double> enrichResultAvg = new HashMap<String, Double>();
-			HashMap<String, Double> enrichResultZscoreAbsProduct = new HashMap<String, Double>();
+			HashMap<String, Double> enrichResultZscoreAbsSum = new HashMap<String, Double>();
 			
 			String[] keys = enrichResultUp.keySet().toArray(new String[0]);
 			
@@ -517,16 +517,19 @@ public class EnrichmentTemp extends HttpServlet {
 
 				enrichResultFisher.put(keys[i], -Math.log(Math.max(pu*pd, Double.MIN_VALUE)));
 				enrichResultAvg.put(keys[i], -Math.log((pu+pd)/2));
-				enrichResultZscoreAbsProduct.put(keys[i], Math.abs(enrichResultUp.get(keys[i]).zscore * enrichResultDown.get(keys[i]).zscore));
+				// z-up > 0 means up genes are ranked on top, z-down < 0 means down genes are ranked on the bottom
+				// ideally, mimickers have positive z-up and negative z-down while reversers have negative z-up and positive z-down
+				// So as this does not cancel out during summation, z-down should be multiplied by -1 or z-up - z-down
+				enrichResultZscoreAbsSum.put(keys[i], Math.abs(enrichResultUp.get(keys[i]).zscore - enrichResultDown.get(keys[i]).zscore));
 			}
 
-			String[] sortZscoreAbsProduct = sortByValue((Map<String,Double>)enrichResultZscoreAbsProduct);
+			String[] sortZscoreAbsSum = sortByValue((Map<String,Double>)enrichResultZscoreAbsSum);
 			
 			int counter = 0;
 			double[] pvalsUp = new double[keys.length];
 			double[] pvalsDown = new double[keys.length];
 			
-			for (String me : sortZscoreAbsProduct) { 
+			for (String me : sortZscoreAbsSum) { 
 				pvalsUp[counter] = Math.max(enrichResultUp.get(me).pval, Double.MIN_VALUE);
 				pvalsDown[counter] = Math.max(enrichResultDown.get(me).pval, Double.MIN_VALUE);
 			    counter++;
@@ -550,12 +553,12 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			JSONArray json_results = new JSONArray();
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), Math.max(0, sortZscoreAbsProduct.length-1));
-			_limit = Math.min(_offset+Math.max(1, _limit), sortZscoreAbsProduct.length);
-			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortZscoreAbsProduct.length);
+			_offset = Math.min(Math.max(0, _offset), Math.max(0, sortZscoreAbsSum.length-1));
+			_limit = Math.min(_offset+Math.max(1, _limit), sortZscoreAbsSum.length);
+			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+sortZscoreAbsSum.length);
 			
 			for(int i=_offset; i<_limit; i++){
-				String signature = sortZscoreAbsProduct[i];
+				String signature = sortZscoreAbsSum[i];
 				
 				if(signature != null) {
 					String genesetName = signature;
@@ -569,6 +572,8 @@ public class EnrichmentTemp extends HttpServlet {
 
 					double zUp = enrichResultUp.get(signature).zscore;
 					double zDown = enrichResultDown.get(signature).zscore;
+					// See explanation above why this is a subtraction
+					double zsum = zUp - zDown;
 					double pvalFisher = enrichResultFisher.get(signature);
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
@@ -585,6 +590,7 @@ public class EnrichmentTemp extends HttpServlet {
 					json_result.put("fdr-down", safeJsonDouble(pvalDownfdr));
 					json_result.put("z-up", safeJsonDouble(zUp));
 					json_result.put("z-down", safeJsonDouble(zDown));
+					json_result.put("z-sum", safeJsonDouble(zsum));
 					json_result.put("logp-fisher", safeJsonDouble(pvalFisher));
 					json_result.put("logp-avg", safeJsonDouble(pvalSum));
 					json_result.put("direction-up", direction_up);
