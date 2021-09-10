@@ -333,6 +333,9 @@ paths:
                   z-down:
                     type: number
                     x-nullable: true
+                  z-sum:
+                    type: number
+                    x-nullable: true
                   logp-fisher:
                     type: number
                     x-nullable: true
