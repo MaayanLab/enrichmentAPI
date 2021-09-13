@@ -28,11 +28,13 @@ services:
         exit 0"
     environment:
       MINIO_BUCKET: bucket
-      MINIO_ACCESS_KEY: awsaccesskey
-      MINIO_SECRET_KEY: awssecret
+      MINIO_ROOT_USER: awsaccesskey
+      MINIO_ROOT_PASSWORD: awssecret
     # Expose minio web UI
-    # ports:
-    #   - 9000:9000
-    # Persist minio volume
-    # volumes:
-    #   - minio:/data
+#     ports:
+#       - 9000:9000
+#     # Persist minio volume
+#     volumes:
+#       - minio:/data
+# volumes:
+#   minio:
