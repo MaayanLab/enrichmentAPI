@@ -571,9 +571,9 @@ public class EnrichmentTemp extends HttpServlet {
 					double pvalDownfdr = pvals_fdr_down[i];
 
 					double zUp = enrichResultUp.get(signature).zscore;
-					double zDown = enrichResultDown.get(signature).zscore;
-					// See explanation above why this is a subtraction
-					double zsum = zUp - zDown;
+					// See explanation above why this is negated
+					double zDown = - enrichResultDown.get(signature).zscore;
+					double zsum = zUp + zDown;
 					double pvalFisher = enrichResultFisher.get(signature);
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
