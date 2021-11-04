@@ -497,6 +497,35 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 
+	private JSONObject processSignatureJSON(String signature, int rank, double pvalUp, double pvalUpBonferroni, double pvalUpfdr, double pvalDown, double pvalDownBonferroni, double pvalDownfdr, double zUp, double zDown, double zsum, double pvalFisher, double pvalSum, int direction_up, int direction_down) {
+		String genesetName = signature;
+		String type = "mimicker";
+		if (zsum < 0) {
+			type = "reverser";
+		}
+
+		JSONObject json_result = new JSONObject();
+		
+		json_result.put("uuid", genesetName);
+		json_result.put("p-up", safeJsonDouble(pvalUp));
+		json_result.put("p-up-bonferroni", safeJsonDouble(pvalUpBonferroni));
+		json_result.put("fdr-up", safeJsonDouble(pvalUpfdr));
+		json_result.put("p-down", safeJsonDouble(pvalDown));
+		json_result.put("p-down-bonferroni", safeJsonDouble(pvalDownBonferroni));
+		json_result.put("fdr-down", safeJsonDouble(pvalDownfdr));
+		json_result.put("z-up", safeJsonDouble(zUp));
+		json_result.put("z-down", safeJsonDouble(zDown));
+		json_result.put("z-sum", safeJsonDouble(zsum));
+		json_result.put("logp-fisher", safeJsonDouble(pvalFisher));
+		json_result.put("logp-avg", safeJsonDouble(pvalSum));
+		json_result.put("direction-up", direction_up);
+		json_result.put("direction-down", direction_down);
+		json_result.put("type", type);
+		json_result.put("rank", rank);
+		
+		return json_result;
+	}
+
 	private void returnRankTwoWayJSON(HttpServletResponse _response, HashMap<String, Result> _resultUp, HashMap<String, Result> _resultDown, String _db, HashSet<String> _signatures, HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			
@@ -531,6 +560,7 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] zsums = new double[keys.length];
 			int _mimickers_counter = 0;
 			int _reversers_counter = 0;
+			int _sig_counter = 0;
 			for (String me : sortZscoreSum) { 
 				pvalsUp[counter] = Math.max(enrichResultUp.get(me).pval, Double.MIN_VALUE);
 				pvalsDown[counter] = Math.max(enrichResultDown.get(me).pval, Double.MIN_VALUE);
@@ -541,6 +571,10 @@ public class EnrichmentTemp extends HttpServlet {
 				} else if (zsum < 0) {
 					_reversers_counter++;
 				}
+				if ((_signatures.size() > 0 && _signatures.contains(me)) || _signatures.size() == 0) {
+					_sig_counter++;
+				}
+				
 			    counter++;
 			} 
 			
@@ -565,33 +599,25 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			int sigNum = sortZscoreSum.length;
 			
-			int _start = Math.min(Math.max(0, _offset), Math.max(0, sigNum-1));
-			int _end = Math.min(_start+Math.max(1, _limit*2), sigNum);
-
-			int _mimickers_start = Math.min(Math.max(0, _offset), Math.max(0, _mimickers_counter-1));
-			int _mimickers_end = Math.min(_mimickers_start+Math.max(1, _limit), _mimickers_counter);
-
-
-			int _reversers_end =  Math.max(sigNum - Math.max(_offset, 0), sigNum-_reversers_counter);
-			int _reversers_start = Math.max(_reversers_end-Math.max(1, _limit), sigNum-_reversers_counter-1);
+			int _start = Math.min(Math.max(0, _offset*2), Math.max(0, _sig_counter-1));
+			int _end = Math.min(_start+Math.max(1, _limit*2), _sig_counter);
 			
+			_response.addHeader("Content-Range", ""+_start+"-"+_end+"/"+_sig_counter);
 			
-			_response.addHeader("Content-Range", ""+_start+"-"+_end+"/"+sigNum);
-			
-			JSONArray mimickers = new JSONArray();
-			JSONArray reversers = new JSONArray();
-			for(int i=0; i<sortZscoreSum.length; i++){
+			int _offset_count = 0;
+			int _limit_count = 0;
+			for(int i=0; i<_mimickers_counter; i++){
 				String signature = sortZscoreSum[i];
-				boolean included = false;
-				if (i >= _mimickers_start && i < _mimickers_end && zsums[i] > 0) {
-					included = true;
-				} else if (i >= _reversers_start && i < _reversers_end && zsums[i] < 0) {
-					included = true;
-				}
+				boolean included = true;
 				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
 					included = false;
 				}
+				if (included && _offset_count < Math.min(_offset, _mimickers_counter -1)) {
+					_offset_count++;
+					included = false;
+				}
 				if(signature != null && included) {
+					_limit_count++;
 					String genesetName = signature;
 					double pvalUp = enrichResultUp.get(signature).pval;
 					double pvalUpBonferroni = pvals_bonferroni_up[i];
@@ -609,32 +635,54 @@ public class EnrichmentTemp extends HttpServlet {
 					double pvalSum = enrichResultAvg.get(signature);
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
-					
-					String type = "mimicker";
-					if (zsum < 0) {
-						type = "reverser";
-					}
 
-					JSONObject json_result = new JSONObject();
-					
-					json_result.put("uuid", genesetName);
-					json_result.put("p-up", safeJsonDouble(pvalUp));
-					json_result.put("p-up-bonferroni", safeJsonDouble(pvalUpBonferroni));
-					json_result.put("fdr-up", safeJsonDouble(pvalUpfdr));
-					json_result.put("p-down", safeJsonDouble(pvalDown));
-					json_result.put("p-down-bonferroni", safeJsonDouble(pvalDownBonferroni));
-					json_result.put("fdr-down", safeJsonDouble(pvalDownfdr));
-					json_result.put("z-up", safeJsonDouble(zUp));
-					json_result.put("z-down", safeJsonDouble(zDown));
-					json_result.put("z-sum", safeJsonDouble(zsum));
-					json_result.put("logp-fisher", safeJsonDouble(pvalFisher));
-					json_result.put("logp-avg", safeJsonDouble(pvalSum));
-					json_result.put("direction-up", direction_up);
-					json_result.put("direction-down", direction_down);
-					json_result.put("type", type);
-					json_result.put("rank", i);
+					JSONObject json_result = processSignatureJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
 
 					json_results.put(json_result);
+				}
+				if (_limit_count == _limit) {
+					break;
+				}
+			}
+			
+			_offset_count = 0;
+			_limit_count = 0;
+			for(int i=sigNum-1; i>sigNum-_reversers_counter-1; i--){
+				String signature = sortZscoreSum[i];
+				boolean included = true;
+				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
+					included = false;
+				}
+				if (included && _offset_count < Math.min(_offset, _reversers_counter -1)) {
+					_offset_count++;
+					included = false;
+				}
+				if(signature != null && included) {
+					_limit_count++;
+					String genesetName = signature;
+					double pvalUp = enrichResultUp.get(signature).pval;
+					double pvalUpBonferroni = pvals_bonferroni_up[i];
+					double pvalUpfdr = pvals_fdr_up[i];
+
+					double pvalDown = enrichResultDown.get(signature).pval;
+					double pvalDownBonferroni = pvals_bonferroni_down[i];
+					double pvalDownfdr = pvals_fdr_down[i];
+
+					double zUp = enrichResultUp.get(signature).zscore;
+					// See explanation above why this is negated
+					double zDown = - enrichResultDown.get(signature).zscore;
+					double zsum = zsums[i];
+					double pvalFisher = enrichResultFisher.get(signature);
+					double pvalSum = enrichResultAvg.get(signature);
+					int direction_up = enrichResultUp.get(signature).direction;
+					int direction_down = enrichResultDown.get(signature).direction;
+
+					JSONObject json_result = processSignatureJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
+
+					json_results.put(json_result);
+				}
+				if (_limit_count == _limit) {
+					break;
 				}
 			}
 			json.put("results", json_results);
