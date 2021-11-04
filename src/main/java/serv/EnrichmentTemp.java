@@ -854,12 +854,12 @@ public class EnrichmentTemp extends HttpServlet {
 				HashSet<String > entities = new HashSet<String>(entity_split_up);
 				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
 				signatures.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("signature_id"))));
-				
-				HashMap<String, Result> enrichResultUp = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
+				HashSet<String> empty = new HashSet<String>();
+				HashMap<String, Result> enrichResultUp = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), empty, significance);
 				
 				entities = new HashSet<String>(entity_split_down);
 				entities.retainAll(Arrays.asList(((String[]) enrich.datastore.datasets.get(db).getData().get("entity_id"))));
-				HashMap<String, Result> enrichResultDown = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
+				HashMap<String, Result> enrichResultDown = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), empty, significance);
 				
 				HashSet<String> unionSignificant = new HashSet<String>(enrichResultDown.keySet());
 				unionSignificant.removeAll(enrichResultUp.keySet());
