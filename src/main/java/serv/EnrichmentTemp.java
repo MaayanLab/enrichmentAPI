@@ -563,7 +563,7 @@ public class EnrichmentTemp extends HttpServlet {
 			JSONArray json_results = new JSONArray();
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
 			
-			int sigNum = sortZscoreSum.length
+			int sigNum = sortZscoreSum.length;
 			
 			int _start = Math.min(Math.max(0, _offset), Math.max(0, sigNum-1));
 			int _end = Math.min(_start+Math.max(1, _limit*2), sigNum);
@@ -572,7 +572,7 @@ public class EnrichmentTemp extends HttpServlet {
 			int _mimickers_end = Math.min(_mimickers_start+Math.max(1, _limit), _mimickers_counter);
 
 
-			int _reversers_end =  Math.max(sigNum - Math.max(_offset, 0), sigNum-_reversers_counter)
+			int _reversers_end =  Math.max(sigNum - Math.max(_offset, 0), sigNum-_reversers_counter);
 			int _reversers_start = Math.max(_reversers_end-Math.max(1, _limit), sigNum-_reversers_counter-1);
 			
 			
@@ -632,6 +632,7 @@ public class EnrichmentTemp extends HttpServlet {
 					json_result.put("direction-up", direction_up);
 					json_result.put("direction-down", direction_down);
 					json_result.put("type", type);
+					json_result.put("rank", i);
 
 					json_results.put(json_result);
 				}
