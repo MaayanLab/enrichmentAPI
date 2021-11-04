@@ -431,7 +431,6 @@ public class EnrichmentTemp extends HttpServlet {
 					
 					JSONObject json_result = new JSONObject();
 					json_result.put("uuid", genesetName);
-					json_result.put("p-value", genesetName);
 					json_result.put("p-value", safeJsonDouble(pval));
 					json_result.put("p-value-bonferroni", safeJsonDouble(pval_bonferroni));
 					json_result.put("fdr", safeJsonDouble(pval_fdr));
@@ -497,7 +496,7 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 
-	private JSONObject processSignatureJSON(String signature, int rank, double pvalUp, double pvalUpBonferroni, double pvalUpfdr, double pvalDown, double pvalDownBonferroni, double pvalDownfdr, double zUp, double zDown, double zsum, double pvalFisher, double pvalSum, int direction_up, int direction_down) {
+	private JSONObject processRankTwoSidedJSON(String signature, int rank, double pvalUp, double pvalUpBonferroni, double pvalUpfdr, double pvalDown, double pvalDownBonferroni, double pvalDownfdr, double zUp, double zDown, double zsum, double pvalFisher, double pvalSum, int direction_up, int direction_down) {
 		String genesetName = signature;
 		String type = "mimicker";
 		if (zsum < 0) {
@@ -560,6 +559,8 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] zsums = new double[keys.length];
 			int _mimickers_counter = 0;
 			int _reversers_counter = 0;
+			int _mimickers_sig_counter = 0;
+			int _reversers_sig_counter = 0;
 			int _sig_counter = 0;
 			for (String me : sortZscoreSum) { 
 				pvalsUp[counter] = Math.max(enrichResultUp.get(me).pval, Double.MIN_VALUE);
@@ -573,6 +574,11 @@ public class EnrichmentTemp extends HttpServlet {
 				}
 				if ((_signatures.size() > 0 && _signatures.contains(me)) || _signatures.size() == 0) {
 					_sig_counter++;
+					if (zsum > 0) {
+						_mimickers_sig_counter++;
+					} else if (zsum < 0) {
+						_reversers_sig_counter++;
+					}
 				}
 				
 			    counter++;
@@ -612,7 +618,8 @@ public class EnrichmentTemp extends HttpServlet {
 				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
 					included = false;
 				}
-				if (included && _offset_count < Math.min(_offset, _mimickers_counter -1)) {
+				if (included && _offset_count < Math.min(_offset, _mimickers_sig_counter -1)) {
+					System.out.format("offset_count: %d\n", _offset_count);
 					_offset_count++;
 					included = false;
 				}
@@ -636,7 +643,7 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 
-					JSONObject json_result = processSignatureJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
+					JSONObject json_result = processRankTwoSidedJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
 
 					json_results.put(json_result);
 				}
@@ -653,7 +660,7 @@ public class EnrichmentTemp extends HttpServlet {
 				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
 					included = false;
 				}
-				if (included && _offset_count < Math.min(_offset, _reversers_counter -1)) {
+				if (included && _offset_count < Math.min(_offset, _reversers_sig_counter-1)) {
 					_offset_count++;
 					included = false;
 				}
@@ -677,7 +684,7 @@ public class EnrichmentTemp extends HttpServlet {
 					int direction_up = enrichResultUp.get(signature).direction;
 					int direction_down = enrichResultDown.get(signature).direction;
 
-					JSONObject json_result = processSignatureJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
+					JSONObject json_result = processRankTwoSidedJSON(signature, i, pvalUp, pvalUpBonferroni, pvalUpfdr, pvalDown, pvalDownBonferroni, pvalDownfdr, zUp, zDown, zsum, pvalFisher, pvalSum, direction_up, direction_down);
 
 					json_results.put(json_result);
 				}
