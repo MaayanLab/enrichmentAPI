@@ -518,7 +518,7 @@ public class Enrichment {
 			uids.add(signature_id[i]);
 		}
 		
-		uids.retainAll(_signatures);
+		// uids.retainAll(_signatures);
 		boolean showAll = uids.size() > 0;
 		
 		HashMap<String, Short> dictionary = new HashMap<String, Short>();
