@@ -374,6 +374,25 @@ public class EnrichmentTemp extends HttpServlet {
 		}
 	}
 
+	private JSONObject processRankJSON(String signature, int rank, double pval, double pval_bonferroni, double pval_fdr, double zscore, int direction) {
+		String type = "mimicker";
+		if (zscore < 0) {
+			type = "reverser";
+		}
+		
+		JSONObject json_result = new JSONObject();
+		json_result.put("uuid", signature);
+		json_result.put("p-value", safeJsonDouble(pval));
+		json_result.put("p-value-bonferroni", safeJsonDouble(pval_bonferroni));
+		json_result.put("fdr", safeJsonDouble(pval_fdr));
+		json_result.put("zscore", zscore);
+		json_result.put("direction", direction);
+		json_result.put("type", type);
+		json_result.put("rank", rank);
+
+		return json_result;
+	}
+
 	private void returnRankJSON(HttpServletResponse _response, HashMap<String, Result> _result, String _db, HashSet<String> _signatures,  HashSet<String> _entities, long _time, int _offset, int _limit) {
 		try {
 			
@@ -383,13 +402,35 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			Result[] resultArray = new Result[enrichResult.size()];
 			int counter = 0;
+			int _mimickers_counter = 0;
+			int _reversers_counter = 0;
+			int _mimickers_sig_counter = 0;
+			int _reversers_sig_counter = 0;
+			int _sig_counter = 0;
 			for(String key : enrichResult.keySet()){
 				resultArray[counter] = enrichResult.get(key);
 				counter++;
+				if (enrichResult.get(key).zscore > 0) {
+					_mimickers_counter++;
+				} else if (enrichResult.get(key).zscore < 0) {
+					_reversers_counter++;
+				}
+				if ((_signatures.size() > 0 && _signatures.contains(key)) || _signatures.size() == 0) {
+					_sig_counter++;
+					if (enrichResult.get(key).zscore > 0) {
+						_mimickers_sig_counter++;
+					} else if (enrichResult.get(key).zscore < 0) {
+						_reversers_sig_counter++;
+					}
+				}
 			}
 			
-			Arrays.sort(resultArray);
-			
+			// Arrays.sort(resultArray);
+			Arrays.sort(resultArray, new Comparator<Result>() { 
+					public int compare(Result r1, Result r2) { 
+							return r2.compareZscore(r1); 
+					} 
+			});
 			JSONObject json = new JSONObject();
 
 			if(_signatures.size() > 0){
@@ -412,32 +453,74 @@ public class EnrichmentTemp extends HttpServlet {
 			double[] pvals_bonferroni = pcorrect.bonferroni(pvals);
 			double[] pvals_fdr = pcorrect.benjaminiHochberg(pvals);
 
-			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
-			_limit = Math.max(1, _limit);
+			// _offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
+			// _limit = Math.max(1, _limit);
 			
 			_response.addHeader("X-Duration", ""+(System.currentTimeMillis()*1.0 - _time)/1000);
-			_offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
-			_limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
-			_response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
-			
-			for(int i=_offset; i<_limit; i++){
+			// _offset = Math.min(Math.max(0, _offset), Math.max(0, resultArray.length-1));
+			// _limit = Math.min(_offset+Math.max(1, _limit), resultArray.length);
+			// _response.addHeader("Content-Range", ""+_offset+"-"+_limit+"/"+resultArray.length);
+			int _start = Math.min(Math.max(0, _offset*2), Math.max(0, _sig_counter-1));
+			int _end = Math.min(_start+Math.max(1, _limit*2), _sig_counter);
+			_response.addHeader("Content-Range", ""+_start+"-"+_end+"/"+_sig_counter);
+
+			int _offset_count = 0;
+			int _limit_count = 0;
+			for(int i=0; i<_mimickers_counter; i++){
 				Result res = resultArray[i];
 				String signature = res.name;
-				if(signature != null) {
-					String genesetName = signature;
+				boolean included = true;
+				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
+					included = false;
+				}
+				if (included && _offset_count < Math.min(_offset, _mimickers_sig_counter -1)) {
+					_offset_count++;
+					included = false;
+				}
+				if(signature != null && included) {
+					_limit_count++;
 					double pval = enrichResult.get(signature).pval;
 					double pval_bonferroni = pvals_bonferroni[i];
 					double pval_fdr = pvals_fdr[i];
-					
-					JSONObject json_result = new JSONObject();
-					json_result.put("uuid", genesetName);
-					json_result.put("p-value", safeJsonDouble(pval));
-					json_result.put("p-value-bonferroni", safeJsonDouble(pval_bonferroni));
-					json_result.put("fdr", safeJsonDouble(pval_fdr));
-					json_result.put("zscore", enrichResult.get(signature).zscore);
-					json_result.put("direction", enrichResult.get(signature).direction);
-					
+					double zscore = enrichResult.get(signature).zscore;
+					int direction = enrichResult.get(signature).direction;
+
+					JSONObject json_result = processRankJSON(signature, i, pval, pval_bonferroni, pval_fdr, zscore, direction);
+
 					json_results.put(json_result);
+				}
+				if (_limit_count == _limit) {
+					break;
+				}
+			}
+			
+			_offset_count = 0;
+			_limit_count = 0;
+			for(int i=counter-1; i>counter-_reversers_counter-1; i--){
+				Result res = resultArray[i];
+				String signature = res.name;
+				boolean included = true;
+				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
+					included = false;
+				}
+				if (included && _offset_count < Math.min(_offset, _reversers_sig_counter-1)) {
+					_offset_count++;
+					included = false;
+				}
+				if(signature != null && included) {
+					_limit_count++;
+					double pval = enrichResult.get(signature).pval;
+					double pval_bonferroni = pvals_bonferroni[i];
+					double pval_fdr = pvals_fdr[i];
+					double zscore = enrichResult.get(signature).zscore;
+					int direction = enrichResult.get(signature).direction;
+
+					JSONObject json_result = processRankJSON(signature, i, pval, pval_bonferroni, pval_fdr, zscore, direction);
+
+					json_results.put(json_result);
+				}
+				if (_limit_count == _limit) {
+					break;
 				}
 			}
 			json.put("results", json_results);
@@ -809,7 +892,7 @@ public class EnrichmentTemp extends HttpServlet {
 				
 				System.out.println(entities.size()+" - "+signatures.size());
 				
-				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), signatures, significance);
+				HashMap<String, Result> enrichResult = enrich.calculateRankEnrichment(db, entities.toArray(new String[0]), new HashSet<String>(), significance);
 				System.out.println("ER: "+enrichResult.size());
 				
 				if(minout){

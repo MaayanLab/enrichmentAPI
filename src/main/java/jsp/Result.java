@@ -33,5 +33,17 @@ public class Result implements Comparable<Result>{
 			return 0;
 		}
 	}
+
+	public int compareZscore(Result over) {
+		if(zscore < over.zscore) {
+			return -1;
+		}
+		else if(zscore > over.zscore) {
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
 }
 	
