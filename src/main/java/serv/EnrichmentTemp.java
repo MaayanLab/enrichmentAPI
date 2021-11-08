@@ -375,9 +375,9 @@ public class EnrichmentTemp extends HttpServlet {
 	}
 
 	private JSONObject processRankJSON(String signature, int rank, double pval, double pval_bonferroni, double pval_fdr, double zscore, int direction) {
-		String type = "mimicker";
+		String type = "up";
 		if (zscore < 0) {
-			type = "reverser";
+			type = "down";
 		}
 		
 		JSONObject json_result = new JSONObject();
@@ -402,25 +402,25 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			Result[] resultArray = new Result[enrichResult.size()];
 			int counter = 0;
-			int _mimickers_counter = 0;
-			int _reversers_counter = 0;
-			int _mimickers_sig_counter = 0;
-			int _reversers_sig_counter = 0;
+			int _up_counter = 0;
+			int _down_counter = 0;
+			int _up_sig_counter = 0;
+			int _down_sig_counter = 0;
 			int _sig_counter = 0;
 			for(String key : enrichResult.keySet()){
 				resultArray[counter] = enrichResult.get(key);
 				counter++;
 				if (enrichResult.get(key).zscore > 0) {
-					_mimickers_counter++;
+					_up_counter++;
 				} else if (enrichResult.get(key).zscore < 0) {
-					_reversers_counter++;
+					_down_counter++;
 				}
 				if ((_signatures.size() > 0 && _signatures.contains(key)) || _signatures.size() == 0) {
 					_sig_counter++;
 					if (enrichResult.get(key).zscore > 0) {
-						_mimickers_sig_counter++;
+						_up_sig_counter++;
 					} else if (enrichResult.get(key).zscore < 0) {
-						_reversers_sig_counter++;
+						_down_sig_counter++;
 					}
 				}
 			}
@@ -466,14 +466,14 @@ public class EnrichmentTemp extends HttpServlet {
 
 			int _offset_count = 0;
 			int _limit_count = 0;
-			for(int i=0; i<_mimickers_counter; i++){
+			for(int i=0; i<_up_counter; i++){
 				Result res = resultArray[i];
 				String signature = res.name;
 				boolean included = true;
 				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
 					included = false;
 				}
-				if (included && _offset_count < Math.min(_offset, _mimickers_sig_counter -1)) {
+				if (included && _offset_count < Math.min(_offset, _up_sig_counter -1)) {
 					_offset_count++;
 					included = false;
 				}
@@ -496,14 +496,14 @@ public class EnrichmentTemp extends HttpServlet {
 			
 			_offset_count = 0;
 			_limit_count = 0;
-			for(int i=counter-1; i>counter-_reversers_counter-1; i--){
+			for(int i=counter-1; i>counter-_down_counter-1; i--){
 				Result res = resultArray[i];
 				String signature = res.name;
 				boolean included = true;
 				if (_signatures.size() > 0 && !_signatures.contains(signature)) {
 					included = false;
 				}
-				if (included && _offset_count < Math.min(_offset, _reversers_sig_counter-1)) {
+				if (included && _offset_count < Math.min(_offset, _down_sig_counter-1)) {
 					_offset_count++;
 					included = false;
 				}
@@ -581,9 +581,9 @@ public class EnrichmentTemp extends HttpServlet {
 
 	private JSONObject processRankTwoSidedJSON(String signature, int rank, double pvalUp, double pvalUpBonferroni, double pvalUpfdr, double pvalDown, double pvalDownBonferroni, double pvalDownfdr, double zUp, double zDown, double zsum, double pvalFisher, double pvalSum, int direction_up, int direction_down) {
 		String genesetName = signature;
-		String type = "mimicker";
+		String type = "mimickers";
 		if (zsum < 0) {
-			type = "reverser";
+			type = "reversers";
 		}
 
 		JSONObject json_result = new JSONObject();
