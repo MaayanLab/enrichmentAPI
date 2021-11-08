@@ -702,7 +702,6 @@ public class EnrichmentTemp extends HttpServlet {
 					included = false;
 				}
 				if (included && _offset_count < Math.min(_offset, _mimickers_sig_counter -1)) {
-					System.out.format("offset_count: %d\n", _offset_count);
 					_offset_count++;
 					included = false;
 				}
