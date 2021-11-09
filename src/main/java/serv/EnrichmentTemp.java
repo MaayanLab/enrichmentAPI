@@ -680,7 +680,7 @@ public class EnrichmentTemp extends HttpServlet {
 				json_signatures.put(ui);
 			}
 			json.put("signatures", json_signatures);
-			
+			json.put("maxRank", counter);
 			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
 			
 			JSONArray json_results = new JSONArray();
