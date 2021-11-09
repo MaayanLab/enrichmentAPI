@@ -433,6 +433,10 @@ public class EnrichmentTemp extends HttpServlet {
 			});
 			JSONObject json = new JSONObject();
 
+			json.put("maxRank", counter);
+			json.put("up", _up_counter);
+			json.put("down", _up_counter);
+			
 			if(_signatures.size() > 0){
 				JSONArray json_signatures = new JSONArray();
 				for(String ui : _signatures){
@@ -681,6 +685,8 @@ public class EnrichmentTemp extends HttpServlet {
 			}
 			json.put("signatures", json_signatures);
 			json.put("maxRank", counter);
+			json.put("mimickers", _mimickers_counter);
+			json.put("reversers", _reversers_counter);
 			json.put("queryTimeSec", (System.currentTimeMillis()*1.0 - _time)/1000);
 			
 			JSONArray json_results = new JSONArray();
