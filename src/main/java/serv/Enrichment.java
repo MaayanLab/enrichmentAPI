@@ -299,7 +299,7 @@ public class Enrichment {
 				return calculateOverlapEnrichment(_db, _entity, _signatures, 0, 0.05);
 			} else {
 				// The database contains rank transformed signatures
-				return calculateRankEnrichment(_db, _entity, _signatures, 0.05);
+				return calculateRankEnrichment(_db, _entity, _signatures, 0.05, false);
 			}
 		}
 		
@@ -497,7 +497,7 @@ public class Enrichment {
 		return results;
 	}
 	
-	public static HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures, double _significance) {
+	public static HashMap<String, Result> calculateRankEnrichment(String _db, String[] _entity, HashSet<String> _signatures, double _significance, boolean showAll) {
 		
 		HashMap<String, Result> results = new HashMap<String, Result>();
 		
@@ -519,7 +519,7 @@ public class Enrichment {
 		}
 		
 		uids.retainAll(_signatures);
-		boolean showAll = uids.size() > 0;
+		showAll = showAll || uids.size() > 0;
 		
 		HashMap<String, Short> dictionary = new HashMap<String, Short>();
 		for(short i=0; i<entity_id.length; i++) {
