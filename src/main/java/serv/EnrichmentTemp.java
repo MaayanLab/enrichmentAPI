@@ -435,7 +435,7 @@ public class EnrichmentTemp extends HttpServlet {
 
 			json.put("maxRank", counter);
 			json.put("up", _up_counter);
-			json.put("down", _up_counter);
+			json.put("down", _down_counter);
 			
 			if(_signatures.size() > 0){
 				JSONArray json_signatures = new JSONArray();
