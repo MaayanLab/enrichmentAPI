@@ -20,9 +20,9 @@ RUN gradle war
 
 FROM tomcat:9
 
-COPY --from=builder /work/docker/enrichmentapi.war /usr/local/tomcat/webapps/enrichmentapi.war
+COPY --from=builder /work/docker/enrichmentapi.war /enrichmentapi.war
 
-ENV JAVA_OPTS="-Xmx16G -XX:MetaspaceSize=13G -XX:MaxMetaspaceSize=13G -XX:+UseCompressedOops"
+ENV JAVA_OPTS="-Xmx16G -XX:MetaspaceSize=13G -XX:MaxMetaspaceSize=13G -XX:+UseCompressedOops --enable-native-access=ALL-UNNAMED"
 ENV PREFIX="/enrichmentapi"
 EXPOSE 8080
 
