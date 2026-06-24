@@ -2,10 +2,9 @@ version: '3'
 services:
   # Enrichment API
   data-api:
-    build:
-      context: .
-      dockerfile: docker/DockerfileAPI
-    image: maayanlab/enrichmentapi:1.6.4
+    build: .
+    image: maayanlab/enrichmentapi:1.7.0
+    platform: linux/amd64
     environment:
       token: token
       AWS_BUCKET: bucket
