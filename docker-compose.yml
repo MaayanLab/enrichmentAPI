@@ -3,7 +3,7 @@ services:
   # Enrichment API
   data-api:
     build: .
-    image: maayanlab/enrichmentapi:1.7.3
+    image: maayanlab/enrichmentapi:1.7.4
     platform: linux/amd64
     environment:
       token: token

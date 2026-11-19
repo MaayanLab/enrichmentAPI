@@ -1,6 +1,8 @@
-.gradle/
-.settings/
-bin/
-build/
-data/
-gradle/
+**
+!build.gradle
+!gradle.properties
+!settings.gradle
+!src/
+!src/**
+!docker/
+!docker/entrypoint.sh

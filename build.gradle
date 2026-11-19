@@ -12,15 +12,15 @@ version = '1.2.1'
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
-    implementation 'org.json:json:20180813'
-    implementation 'com.amazonaws:aws-java-sdk:1.11.510'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.4.0'
+    implementation 'org.json:json:20260814'
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.21.7')
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.797'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.5.11'
     implementation 'io.jhdf:jhdf:0.6.1'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
     // If required please use v >= 2.17.1
     // implementation 'org.slf4j:slf4j-log4j12:1.7.5'
     // implementation 'org.slf4j:slf4j-api:1.7.5'

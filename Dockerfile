@@ -15,10 +15,16 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 
 WORKDIR /work
 
-ADD . .
+COPY . .
 RUN gradle war
 
-FROM tomcat:9
+FROM tomcat:9.0.124-jre25-temurin-noble
+
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-get purge -y dirmngr gnupg gpg gpg-agent gpgconf gpgsm wget \
+  && rm -f /usr/bin/pebble \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /work/docker/enrichmentapi.war /enrichmentapi.war
 
